@@ -1,0 +1,110 @@
+<style scoped>
+.gcastdiv  {
+	margin:4px;display:block;padding:0px;
+	border: 1px solid white; border-radius:7px;
+	width:250px;height:300px;
+	height:calc(#playingSize# + 50px);height:calc(250px + #contentSize#);
+	height:calc(#playingSize# + #contentSize#);width:#playingSize#;
+	font-size:#fontSize#;color:#fontColor#;
+	background-color: #backColor#;font-family:#fontFamily#;
+}
+.content {height:50px;width:100%;height:#contentSize#;padding:1px;}
+.line1 {font-size:115%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-overflow:"…";}
+.line2 {overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-overflow:"…";}
+.pbcont {
+	position:absolute;top:47px;top:calc(#contentSize# - 3px);left:0px;
+	width:100%;height:4px;border-radius:2px;
+	padding-left:4px;padding-right:4px;
+}
+.pb {height:4px;background-color: #fontColor#;border-radius:2px;}
+.lineimg {width:250px;width:#playingSize#;padding:3px;}
+.picture {width:99%;border-radius:7px;}
+#additionalCss#
+</style>
+<div class="cmd cmd-widget gcastdiv" data-type="info" data-subtype="string" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#">
+	<center>
+	<div class='content'>
+		<div class="line1 marquee"></div>
+		<div class="line2"></div>
+	</div>
+	<div class="pbcont"><div class="progress" style="height:4x;background-color:unset;border-radius:0px;">
+		<div class="progress-bar pb" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" role="progressbar"></div>
+	</div></div>
+	<div class="lineimg">
+		<img class='picture' src="plugins/googlecast/desktop/images/chromecast2.png"/></div>
+	</center>
+	<script>
+	$('.cmd[data-cmd_id=#id#] .pbcont').hide();
+	colorFont = $('.cmd[data-cmd_id=#id#]').css('color');
+	$('.cmd[data-cmd_id=#id#] .pb').css('background-color', (colorFont.slice(-1)=="#")?'white':colorFont );
+	$('body').on("googlecast::#state#::nowplaying", function (_event,_data) {
+		//console.log(_data['nowplaying']);
+		var playing = _data['nowplaying'];
+
+		if ( playing['image'] ) {
+			$('.cmd[data-cmd_id=#id#] .picture').attr('src', playing['image']);
+		}
+		else {
+			//$('.cmd[data-cmd_id=#id#] .picture').attr('src','data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=');
+			$('.cmd[data-cmd_id=#id#] .picture').attr('src','plugins/googlecast/desktop/images/chromecast2.png');
+		}
+		if (playing['online']===true) {
+			if (playing['current_time'] && playing['duration'] && playing['duration']>0) {
+				calcP = Math.round(playing['current_time']/playing['duration']*100);
+				$('.cmd[data-cmd_id=#id#] .pbcont').show();
+				$('.cmd[data-cmd_id=#id#] .pb').css('width', calcP+'%').attr('aria-valuenow', calcP);
+			}
+			else {
+				$('.cmd[data-cmd_id=#id#] .pbcont').hide();
+			}
+			if (!playing['player_state'] || playing['player_state']!='UNKNOWN') {
+				if (!playing['series_title']) {
+					if (playing['title'])
+						$('.cmd[data-cmd_id=#id#] .line1').empty().append(playing['title']);
+					if (playing['artist'])
+						$('.cmd[data-cmd_id=#id#] .line2').empty().append(playing['artist']);
+					else
+						$('.cmd[data-cmd_id=#id#] .line2').empty().append('('+playing['player_state']+')');
+					if (playing['album_name'])
+						$('.cmd[data-cmd_id=#id#] .line1').attr('title', playing['album_name']);
+					if (playing['album_artist'])
+						$('.cmd[data-cmd_id=#id#] .line2').attr('title', playing['album_artist']);
+				}
+				else {
+					$('.cmd[data-cmd_id=#id#] .line2').empty();
+					$('.cmd[data-cmd_id=#id#] .line1').empty().append(playing['series_title']);
+					if (playing['season'] && playing['episode']) {
+						$('.cmd[data-cmd_id=#id#] .line2').empty().append(playing['season'] + ' - ' + playing['episode']);
+					}
+				}
+			}
+			else {
+				$('.cmd[data-cmd_id=#id#] .line1').empty().append(playing['status_text']);
+				$('.cmd[data-cmd_id=#id#] .line2').empty();
+			}
+		}
+		else {
+			$('.cmd[data-cmd_id=#id#] .line1').empty().append('Offline');
+			$('.cmd[data-cmd_id=#id#] .line2').empty();
+			$('.cmd[data-cmd_id=#id#] .pbcont').hide();
+		}
+	});
+	googlecastRefreshNowPlaying_#id# = function() {
+			if ($('.cmd[data-cmd_id=#id#]').length==0){
+				clearInterval(window['plugin_googlecast_timer_playing_#id#']);
+				return;
+			}
+			$.ajax({
+				type: "POST", url: 'plugins/googlecast/core/php/googlecast.ajax.php',
+				data: {	action: "nowplaying", uuid: "#state#" },
+				dataType: 'json', global : false,
+				success: function (data) {},
+				error: function (data) {}
+			 });
+		};
+	googlecastRefreshNowPlaying_#id#();
+	if (typeof window['plugin_googlecast_timer_playing_#id#'] !== 'undefined')
+		clearInterval(window['plugin_googlecast_timer_playing_#id#']);
+	window['plugin_googlecast_timer_playing_#id#'] = setInterval(googlecastRefreshNowPlaying_#id#, 1000*60*5);	// 5 minutes
+	</script>
+</div>

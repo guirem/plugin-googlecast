@@ -1,0 +1,10 @@
+<span class="cmd pull-left cursor tooltips" title="#name#" data-type="action" data-subtype="other" data-cmd_id="#id#" data-cmd_uid="#uid#" style="margin-top: 3px;margin-left:0px;" data-version="#version#">
+#name_display#
+</span>
+<script>
+    $('.cmd[data-cmd_uid=#uid#]:last').off('click').on('click', function () {
+        jeedom.cmd.execute({id: '#id#'});
+    });
+	dest = $('.cmd[data-cmd_uid=#uid#]').closest('.eqLogic-widget').find('.refresh');
+	$('.cmd[data-cmd_uid=#uid#]').detach().insertBefore(dest);
+</script>

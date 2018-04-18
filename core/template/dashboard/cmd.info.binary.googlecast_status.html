@@ -1,0 +1,19 @@
+<div class="pull-left cmd #history# tooltips cmd-widget" data-type="info" data-subtype="binary" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#">
+  <center>
+     <span style="margin-top: 3px;margin-left: 5px;font-size: 1.2em;font-weight: bold;" class="iconCmd"></span>
+  </center>
+  <script>
+    jeedom.cmd.update['#id#'] =function(_options){
+      $('.cmd[data-cmd_id=#id#]').attr('title','' +((_options.display_value==0)?'Offline':'Online')+ ' (valeur du '+_options.valueDate+', collectée le '+_options.collectDate + ')')
+      if (_options.display_value == '1') {
+       $('.cmd[data-cmd_id=#id#] .iconCmd').empty().append('<i class="fa fa-check"></i>');
+     }else {
+      $('.cmd[data-cmd_id=#id#] .iconCmd').empty().append('<i class="fa fa-times"></i>');
+    }
+  }
+  jeedom.cmd.update['#id#']({display_value:'#state#',valueDate:'#valueDate#',collectDate:'#collectDate#',alertLevel:'#alertLevel#'});
+
+  dest = $('.cmd[data-cmd_id=#id#]').closest('.eqLogic-widget').find('.refresh');
+  $('.cmd[data-cmd_id=#id#]').detach().insertBefore(dest);
+</script>
+</div>
