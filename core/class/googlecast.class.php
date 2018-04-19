@@ -24,17 +24,53 @@ class googlecast extends eqLogic {
 	private $_collectDate = '';
 	public static $_widgetPossibility = array('custom' => true);
 
+	const GCAST_MODELS = array(
+		'chromecast audio' => 'model_chromecast_audio.png',
+		'chromecast' => 'model_chromecast_video.png',
+		'google home mini' => 'model_googlehome_mini.png',
+		'google home' => 'model_googlehome.png',
+		'google cast group' => 'model_googlehome.png',
+		'tv' => 'model_tv.png',
+	);
+
 	/*     * ***********************Methode static*************************** */
 
 
 	/*     * *********************Methode d'instance************************* */
 
 	public function preUpdate() {
-		/*
-		if ($this->getConfiguration('socketport') == '') {
-			throw new Exception(__('Le champs Port Socket ne peut etre vide', __FILE__));
+		$this->disallowDevice();
+
+		// manage logo
+		$found = False;
+		$imgRoot = "plugins/googlecast/desktop/models/";
+		$imgLogo = $imgRoot . 'model_default.png';
+		$modelName = strtolower( $this->getConfiguration('model_name','UNKOWN') );
+
+		if ( array_key_exists($modelName, googlecast::GCAST_MODELS) ) {
+			$imgLogo = $imgRoot . googlecast::GCAST_MODELS[$modelName];
+			$found = True;
 		}
-		*/
+		if (!$found) {	// try to guess based on model name aproximation
+			foreach (googlecast::GCAST_MODELS as $key => $logo) {
+				if (strpos($key, $modelName) !== false) {
+					$imgLogo = $imgRoot . $logo;
+					$found = True;
+					break;
+				}
+			}
+		}
+		if (!$found) {	// try to guess based on manufacturer
+			$castType = $this->getConfiguration('cast_type');
+			if ($this->getConfiguration('manufacturer')=='Google Inc.') {
+				if ($castType=='audio')
+					$imgLogo = $imgRoot . 'model_googlehome.png';
+				if ($castType=='cast')
+					$imgLogo = $imgRoot . 'model_chromecast_video.png';
+			}
+		}
+		$this->setConfiguration('logoDevice', $imgLogo);
+
 	}
 
 	public function preRemove() {
@@ -64,9 +100,9 @@ class googlecast extends eqLogic {
 			$cmd->setLogicalId('online');
 			$cmd->setIsVisible(1);
 			$cmd->setName(__('Online', __FILE__));
-			$cmd->setTemplate('dashboard', 'googlecast_status');
 			$cmd->setConfiguration('googlecast_cmd', true);
 		}
+		$cmd->setTemplate('dashboard', 'googlecast_status');
 		$cmd->setType('info');
 		$cmd->setSubType('binary');
 		$cmd->setEqLogic_id($this->getId());
@@ -79,10 +115,10 @@ class googlecast extends eqLogic {
 			$cmd->setLogicalId('reboot');
 			$cmd->setName(__('Restart', __FILE__));
 			$cmd->setIsVisible(1);
-			$cmd->setTemplate('dashboard', 'googlecast_reboot');
 			$cmd->setDisplay('icon', '<i class="fa fa-power-off"></i>');
 			$cmd->setConfiguration('googlecast_cmd', true);
 		}
+		$cmd->setTemplate('dashboard', 'googlecast_reboot');
 		$cmd->setType('action');
 		$cmd->setSubType('other');
 		$cmd->setEqLogic_id($this->getId());
@@ -94,9 +130,9 @@ class googlecast extends eqLogic {
 			$cmd->setLogicalId('is_busy');
 			$cmd->setIsVisible(1);
 			$cmd->setName(__('Occupé', __FILE__));
-			$cmd->setTemplate('dashboard', 'googlecast_busy');
 			$cmd->setConfiguration('googlecast_cmd', true);
 		}
+		$cmd->setTemplate('dashboard', 'googlecast_busy');
 		$cmd->setType('info');
 		$cmd->setSubType('binary');
 
@@ -349,10 +385,10 @@ class googlecast extends eqLogic {
 			$cmd->setLogicalId('nowplaying');
 			$cmd->setName(__('Playing Widget', __FILE__));
 			$cmd->setIsVisible(1);
-			$cmd->setTemplate('dashboard','googlecast_playing');
 			$cmd->setConfiguration('googlecast_cmd', true);
 			$cmd->setOrder($order++);
 		}
+		$cmd->setTemplate('dashboard','googlecast_playing');
 		$cmd->setType('info');
 		$cmd->setSubType('string');
 		$cmd->setEqLogic_id($this->getId());
@@ -438,9 +474,12 @@ class googlecast extends eqLogic {
 			$this->save();
 		}
 
+
 		$this->checkAndUpdateCmd('nowplaying', $this->getLogicalId());
 
-		$this->allowDevice();
+		if ( $this->getIsEnable() ) {
+			$this->allowDevice();
+		}
 	}
 
 	public static function createFromDef($_def) {
@@ -605,6 +644,21 @@ class googlecast extends eqLogic {
 		}
 	}
 
+	public static function sendDisplayAction($_uuid, $_cmd, $_options = null) {
+		if ( $_cmd == "customcmd" and !isset($_options['message']) ) {
+			return false;	// message is mandatory for customcmd
+		}
+		$eqLogic = eqLogic::byId($_uuid);
+		if ($eqLogic) {
+			$cmd = $eqLogic->getCmd(null, $_cmd);
+			if (is_object($_cmd)) {
+				$cmd->execute($_options);
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public static function sendIdToDeamon() {
 		foreach (self::byType('googlecast') as $eqLogic) {
 			$eqLogic->allowDevice();
@@ -619,7 +673,10 @@ class googlecast extends eqLogic {
 		if ($this->getLogicalId() != '') {
 			$value['device'] = array(
 				'uuid' => $this->getLogicalId(),
-				'name' => $this->getConfiguration('friendly_name','Unknown')
+				'name' => $this->getConfiguration('friendly_name','Unknown'),
+				'options' => array (
+					'ignore_CEC' => $this->getConfiguration('ignore_CEC','0')
+				)
 			);
 			$value = json_encode($value);
 			self::socket_connection($value,True);
@@ -635,20 +692,7 @@ class googlecast extends eqLogic {
 			self::socket_connection($value,True);
 		#}
 	}
-/*
-	public function followRealtime() {
-		$value = array('apikey' => jeedom::getApiKey('googlecast'), 'cmd' => 'realtime');
 
-		if ($this->getLogicalId() != '') {
-			$value['device'] = array(
-				'uuid' => $this->getLogicalId(),
-				'name' => $this->getConfiguration('friendly_name','Unknown')
-			);
-			$value = json_encode($value);
-			self::socket_connection($value,True);
-		}
-	}
-*/
 	public function disallowDevice() {
 		if ($this->getLogicalId() == '') {
 			return;

@@ -1,3 +1,19 @@
+# This file is part of Jeedom.
+#
+# Jeedom is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Jeedom is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
+#
+
 import time
 
 JEEDOM_COM = ''
@@ -7,7 +23,6 @@ GCAST_DEVICES = {}
 
 NOWPLAYING_TIMEOUT = 15*60  # 15 minutes
 NOWPLAYING_FREQUENCY = 15     # 30 seconds
-NOWPLAYING_LAST = int(time.time())
 
 LEARN_BEGIN = int(time.time())
 LEARN_MODE = False          # is learn mode ?
@@ -22,15 +37,11 @@ SCAN_FREQUENCY = 60         # in seconds
 SCAN_PENDING = False        # is scanner running?
 SCAN_LAST = 0               # when last started
 
-EVENTLISTENER_FILTERDELAY = 1          # in seconds, filter out multiple events that trigger in the same time
-EVENTLISTENER_LASTEVENT = 0
-EVENTLISTENER_NBTRIES = 10
-
 LOSTDEVICE_RESENDNOTIFDELAY = 60*5        # not used yet
 
 IFACE_DEVICE = 0
 
-log_level = "debug"
+log_level = "info"
 pidfile = '/tmp/googlecast.pid'
 apikey = ''
 callback = ''
@@ -39,10 +50,3 @@ daemonname=''
 socketport=55012
 sockethost=''
 device=''
-
-# dev
-callback = 'http://127.0.0.1:80/plugins/googlecast/core/php/googlecast.api.php'
-apikey = '4UMYbYhLSDhxrZ8dPlgFkOQLMZ9ndlEe'
-sockethost = '127.0.0.1'
-#KNOWN_DEVICES['d2fd3db1-bd0f-fe4c-d8dd-ce8c44033b44'] = {}
-#REALTIME_DEVICES['d2fd3db1-bd0f-fe4c-d8dd-ce8c44033b44'] = {}

@@ -23,7 +23,7 @@
 
  $('#bt_healthgooglecast').on('click', function () {
     $('#md_modal').dialog({title: "{{Santé GoogleCast}}"});
-    $('#md_modal').load('index.php?v=d&plugin=googlecast&modal=health').dialog('open');
+    $('#md_modal').load('index.php?v=d&plugin=googlecast&modal=googlecast.health').dialog('open');
 });
 
 $('body').on('googlecast::includeState', function (_event,_options) {
@@ -33,7 +33,6 @@ $('body').on('googlecast::includeState', function (_event,_options) {
 				$.hideAlert();
 				$('.include:not(.card)').removeClass('btn-default').addClass('btn-success');
 				$('.include').attr('data-state', 0);
-				//$('.include.card').css('background-color','#8000FF');
 				$('.include.card span center').text('{{Arrêter le scan}}');
 				$('.includeicon').empty().append('<i class="fa fa-spinner fa-pulse" style="font-size : 6em;color:red;font-weight: bold;"></i>');
                 $('.includeicon_text').css('color', 'red').css('font-weight', 'bold');
@@ -89,7 +88,6 @@ function changeIncludeState(_state,_mode,_type='') {
 
 
 $("#table_cmd").sortable({axis: "y", cursor: "move", items: ".cmd", placeholder: "ui-state-highlight", tolerance: "intersect", forcePlaceholderSize: true});
-
 
 function addCmdToTable(_cmd) {
    if (!isset(_cmd)) {
@@ -176,7 +174,7 @@ function addCmdToTable(_cmd) {
         if (_cmd.configuration.googlecast_cmd_mod===undefined) {
             tr += '<i class="fa fa-minus-circle pull-right cmdAction cursor" data-action="remove"></i></td>';
         }
-}
+    }
    tr += '</tr>';
    $('#table_cmd tbody').append(tr);
    var tr = $('#table_cmd tbody tr:last');

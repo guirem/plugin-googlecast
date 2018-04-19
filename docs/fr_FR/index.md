@@ -8,9 +8,11 @@ Plugin pour commander les équipements compatibles Google Cast.
 
 **Fonctionnalités :**
 
-- Contrôle du son (mute, +/-),
-- Contrôle des média (play/pause/stop...)
+- Contrôle du son (mute, +/-)
+- Contrôle des médias (play/pause/stop...)
+- Arrêt appli en cours, reboot
 - Diffuser une page web sur un écran
+- Lecture de fichier audio et vidéo via url
 - Retour d'état sur les principales Fonctionnalités
 - Affichage de la lecture en cours
 
@@ -43,7 +45,7 @@ Configuration du plugin
 
 Après téléchargement du plugin, activer le plugin puis s'assurer que le Démon est bien démarré.
 
-Ne modifier le port du socket dans la section configuration que si nécessaire (ex: s'il est déjà pris par un autres plugin)
+Ne modifier le port du socket interne de communication dans la section configuration que si nécessaire (ex: s'il est déjà pris par un autres plugin)
 
 Configuration des équipements
 =============================
@@ -53,6 +55,9 @@ La configuration des équipements GoogleCast est accessible à partir du menu *P
 ![Configuration](../images/configuration.png "Configuration")
 
 Une fois les équipements alimentés, lancer un scan pour détecter et ajouter automatiquement. Si aucun équipement apparait, bien vérifier que les équipements sont accessibles et alimentés.
+
+La vue santé permet d'avoir une vue synthétique des équipements et de leurs états.
+
 
 ### Onglet Commandes
 
@@ -78,20 +83,23 @@ La commande de type information appelée 'Playing Widget' (visible par défaut) 
 
 L'afficheur se rafraichit toutes les 20 secondes par défaut.
 
+![Display 1](../images/display1.png "Display 1")
+
 Installation / configuration :
 - Affiché par défaut après installation. Désactiver l'affichage pour cacher.
 - Pour une utilisation dans un dashboard, iL est possible d'utiliser un virtuel en créant une commande de type *info / autres* avec pour valeur la commande *Display* de l'ampli. Appliquer alors le widget dashboard *googlecast_playing* (via onglet *Affichage* de la configuration avancée de la commande)
 - Pour une utilisation dans un design, ajouter la commande *Playing Widget* directement dans le design.
 
-![Display 1](../images/display1.png "Display 1")
-
-Paramêtres CSS optionels (via '*Paramètres optionnels widget*'):
+Paramêtres CSS optionnels (via '*Paramètres optionnels widget*'):
 - *fontSize* (ex: 35px, défaut=25px) : taille de police de base
 - *fontColor* (ex: blue, défaut=white) : couleur de l'afficheur
 - *fontFamily* (ex: 'Arial') : change la police de l'afficheur
 - *backColor* (ex: blue, défaut=black) : couleur du fond de l'afficheur
-- *playingSize* (ex 35px) : Taille de l'image de lecture en cours
+- *playingSize* (ex: 300px, défaut 250px) : Largeur et hauteur de l'image de lecture en cours
+- *contentSize* (ex: 70px,défaut 50px) : Hauteur de la partie textuelle
 - *additionalCss* (format css, ex: '.blabla {...}') : pour ajouter/modifier d'autres CSS (utilisateur avancé)
+
+![Configuration CSS](../images/configuration_css.png "Configuration CSS")
 
 > **Notes**   
 > Non disponible pour mobile pour le moment

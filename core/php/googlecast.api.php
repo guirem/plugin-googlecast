@@ -57,9 +57,14 @@ if (isset($result['started'])) {
 		googlecast::sendIdToDeamon();
 	}
 }
+if (isset($result['stopped'])) {
+	if ($result['stopped'] == 1) {
+		log::add('googlecast','info','Process stopped !');
+	}
+}
 if (isset($result['heartbeat'])) {
 	if ($result['heartbeat'] == 1) {
-		log::add('googlecast','info','Googlecast program heartbeat');
+		log::add('googlecast','warn','Googlecast program heartbeat');
 	}
 }
 
@@ -89,12 +94,13 @@ if (isset($result['devices'])) {
 			));
 			event::add('googlecast::includeDevice', $googlecast->getId());
 		}
-
-		foreach ($googlecast->getCmd('info') as $cmd) {
-			$logicalId = $cmd->getLogicalId();
-			$result = array_flatten($data);
-			if ( isset($result[$logicalId]) ) {
-				$cmd->event($result[$logicalId]);
+		else {
+			$flattenResults = array_flatten($data);
+			foreach ($googlecast->getCmd('info') as $cmd) {
+				$logicalId = $cmd->getLogicalId();
+				if ( isset($flattenResults[$logicalId]) ) {
+					$cmd->event($flattenResults[$logicalId]);
+				}
 			}
 		}
 	}

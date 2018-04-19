@@ -87,3 +87,8 @@ nav ul a,nav {
 .dropdown-content li>a, .dropdown-content li>span{
 	color : #95C12B !important;
 }
+@-moz-document url-prefix() {
+ .side-nav {
+   height: 100% !important;
+ }
+}

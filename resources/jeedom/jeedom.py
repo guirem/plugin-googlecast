@@ -159,7 +159,11 @@ class jeedom_utils():
 	@staticmethod
 	def set_log_level(level = 'error'):
 		FORMAT = '[%(asctime)-15s][%(levelname)s] : %(message)s'
-		
+		if level=='default' :
+			level='info'
+		if level=='1000' :
+			level='critical'
+
 		if level=='debug' :
 			logging.getLogger("pychromecast").setLevel(logging.ERROR)
 			logging.getLogger("urllib3").setLevel(logging.ERROR)

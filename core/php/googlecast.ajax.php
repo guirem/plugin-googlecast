@@ -35,39 +35,9 @@ try {
         ajax::success(googlecast::registerNowPlayging(init('uuid')));
     }
 
-/*
-    if (init('action') == 'getMobileHealth') {
-        ajax::success(blea::getMobileHealth());
-    }
-
-	if (init('action') == 'loadplaying') {
-		$request_http = new com_http(init('url'));
-		try {
-			$ret = $request_http->exec(1);
-			if ($ret && strlen($ret)>0) {
-				ajax::success(base64_encode ($ret));
-			}
-			else {
-				ajax::error();
-			}
-		} catch (Exception $e) {
-			ajax::error();
-		}
-	}
-*/
-/*
-	if (init('action') == 'loaddisplay') {
-		$jsondata = googlecast::getAjaxDisplayData(init('equid'));
-		if ($jsondata && strlen($jsondata)>2) {
-			ajax::success($jsondata);
-		}
-		else {
-			ajax::error();
-		}
-	}
 
 	if (init('action') == 'sendcmd') {
-		$ret = googlecast::sendDisplayAction(init('equid'),init('cmd'));
+		$ret = googlecast::sendDisplayAction(init('uuid'),init('cmd'), init('options'));
 		if ($ret) {
 			ajax::success();
 		}
@@ -76,17 +46,7 @@ try {
 		}
 	}
 
-	if (init('action') == 'getCmd') {
-		$jsondata = googlecast::getDisplayCommandList(init('equid'));
-		if ($jsondata && strlen($jsondata)>0) {
-			ajax::success($jsondata);
-		}
-		else {
-			ajax::error();
-		}
-	}
-*/
-    //throw new Exception(__('Aucune methode correspondante à : ', __FILE__) . init('action'));
+    throw new Exception(__('Aucune methode correspondante à : ', __FILE__) . init('action'));
     /*     * *********Catch exeption*************** */
 } catch (Exception $e) {
     ajax::error(displayExeption($e), $e->getCode());

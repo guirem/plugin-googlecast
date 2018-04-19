@@ -21,7 +21,7 @@ if (config::byKey('include_mode', 'googlecast', 0) == 1) {
     <div class="bs-sidebar">
       <ul id="ul_eqLogic" class="nav nav-list bs-sidenav">
         <li class="filter" style="margin-bottom: 5px;"><input class="filter form-control input-sm" placeholder="{{Rechercher}}" style="width: 100%"/></li>
-        <?php
+<?php
 foreach ($eqLogics as $eqLogic) {
 	echo '<li class="cursor li_eqLogic" data-eqLogic_id="' . $eqLogic->getId() . '"><a>' . $eqLogic->getHumanName(true) . '</a></li>';
 }
@@ -32,7 +32,7 @@ foreach ($eqLogics as $eqLogic) {
  <div class="col-lg-10 col-md-9 col-sm-8 eqLogicThumbnailDisplay" style="border-left: solid 1px #EEE; padding-left: 25px;">
    <legend><i class="fa fa-cog"></i>  {{Gestion}}</legend>
    <div class="eqLogicThumbnailContainer">
-    <?php
+<?php
 if (config::byKey('include_mode', 'googlecast', 0) == 1) {
 	echo '<div class="cursor changeIncludeState include card" data-mode="1" data-state="0" style="background-color : #ffffff; height : 140px;margin-bottom : 10px;padding : 5px;border-radius: 2px;width : 160px;margin-left : 10px;" >';
 	echo '<center class="includeicon">';
@@ -55,20 +55,26 @@ if (config::byKey('include_mode', 'googlecast', 0) == 1) {
     </center>
     <span style="font-size : 1.1em;position:relative; top : 15px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;color:#767676"><center>{{Configuration}}</center></span>
   </div>
+  <div class="cursor" id="bt_healthgooglecast" style="background-color : #ffffff; height : 120px;margin-bottom : 10px;padding : 5px;border-radius: 2px;width : 160px;margin-left : 10px;" >
+    <center>
+      <i class="fa fa-medkit" style="font-size : 6em;color:#767676;"></i>
+    </center>
+    <span style="font-size : 1.1em;position:relative; top : 15px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;color:#767676"><center>{{Santé}}</center></span>
+  </div>
 </div>
 <legend><i class="icon techno-cable1"></i>  {{Mes équipements GoogleCast}}
 </legend>
 <div class="eqLogicThumbnailContainer">
-  <?php
+<?php
 foreach ($eqLogics as $eqLogic) {
 	$opacity = '';
 	if ($eqLogic->getIsEnable() != 1) {
 		$opacity = 'opacity:0.3;';
 	}
 	echo '<div class="eqLogicDisplayCard cursor" data-eqLogic_id="' . $eqLogic->getId() . '" style="text-align: center; background-color : #ffffff; height : 200px;margin-bottom : 10px;padding : 5px;border-radius: 2px;width : 160px;margin-left : 10px;' . $opacity . '" >';
-	echo '<img src="' . $plugin->getPathImgIcon() . '" height="105" width="105" />';
+	echo '<img src="' . $eqLogic->getConfiguration('logoDevice', 'plugins/googlecast/desktop/images/model_default.png') . '" height="125" width="120" />';
 	echo "<br>";
-	echo '<span style="font-size : 1.1em;position:relative; top : 15px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;">' . $eqLogic->getHumanName(true, true) . '</span>';
+	echo '<span style="font-size : 1.1em;position:relative; top : 10px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;">' . $eqLogic->getHumanName(true, true) . '</span>';
 	echo '</div>';
 	$url = network::getNetworkAccess('external') . '/plugins/googlecast/core/php/googlecast.ajax.php?apikey=' . jeedom::getApiKey('googlecast') . '&id=' . $eqLogic->getId();
 }
@@ -157,6 +163,13 @@ foreach (jeedom::getConfiguration('eqLogic:category') as $key => $value) {
         <label class="col-lg-3 control-label">{{Type}}</label>
         <div class="col-lg-4">
           <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="cast_type" readonly/>
+        </div>
+      </div>
+	  <div class="form-group">
+        <label class="col-lg-3 control-label">{{Ignorer contrôle CEC}}</label>
+        <div class="col-lg-4">
+          <input type="checkbox" class="eqLogicAttr" data-l1key="configuration" data-l2key="ignore_CEC"/>
+		  {{CEC_message}}
         </div>
       </div>
     </fieldset>
