@@ -49,7 +49,17 @@ if (isset($result['learn_mode'])) {
 		);
 	}
 }
-
+if (isset($result['discovery'])) {
+	$disableNotification = config::byKey('disableNotification', 'googlecast');
+	if ( isset($result['uuid']) and isset($result['friendly_name']) && $disableNotification==false ) {
+		$googlecast = googlecast::byLogicalId($result['uuid'], 'googlecast');
+		if (!is_object($googlecast) or $googlecast->getIsEnable() != false) {
+			$msg = 'Un nouveau GoogleCast ('. $result['friendly_name'] .") existe sur le réseau ! Vous pouvez lancer un scan via le plugin pour l'ajouter.";
+			$action = 'Lancer un scan';
+			message::add('Google Cast', $msg, $action, null);
+		}
+	}
+}
 if (isset($result['started'])) {
 	if ($result['started'] == 1) {
 		log::add('googlecast','info','Process started. Sending known devices now...');

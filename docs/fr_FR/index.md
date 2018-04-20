@@ -43,9 +43,15 @@ Dashboard
 Configuration du plugin
 =======================
 
-Après téléchargement du plugin, activer le plugin puis s'assurer que le Démon est bien démarré.
+Après téléchargement du plugin :
+- Activer le plugin
+- Lancer l'installation des dépendances
+- Niveau de log recommandé : info
+- Lancer le démon.
 
-Ne modifier le port du socket interne de communication dans la section configuration que si nécessaire (ex: s'il est déjà pris par un autres plugin)
+Les paramêtres de configuration n'ont généralement pas besoin d'être modifiés
+- Port du socket interne de communication. Ne modifier que si nécessaire (ex: s'il est déjà pris par un autres plugin)
+- Désactiver notif pour nouveaux GoogleCast : ce sont des notifications lors de la découverte de nouveaux Google Cast non configurés
 
 Configuration des équipements
 =============================
@@ -171,14 +177,23 @@ FAQ
 
 #### Aucune détection lors du scan
 
-- Vérifier que le Google Cast est disponible à partir d'une application permettant la visulisation des appareils compatibles,
-- Jeedom doit se trouver sur le même réseau que les équipements Google Cast
-- Vérifier qu'il n'y a pas de blocages au niveau du firewall pour la découverte via le protocol 'Zeroconf'
+- Vérifier que le Google Cast est disponible à partir d'une application permettant la visulisation des appareils compatibles ;
+- Jeedom doit se trouver sur le même réseau que les équipements Google Cast    
+(pour docker, le container est soit en mode Host, soit est configuré pour être sur le même réseau ; en VM, la machine est en mode bridge) ;
+- Vérifier qu'il n'y a pas de blocages au niveau du firewall pour la découverte via le protocol 'Zeroconf' ;
 
 #### Aucune commande ne semble fonctionner
 
-- Vérifier que le Google Cast est disponible à partir d'une application permettant la visulisation des appareils compatibles,
+- Vérifier que le Google Cast fonctionne avec d'autres équipements ;
+- Vérifier que rien n'a changé depuis le scan ;
 
+#### Certaines commandes ne fonctionnent pas
+
+- Cela peut dépendre du modèle et de l'application l'utilisant ;
+
+#### Les dépendances ne s'installent pas
+
+- Vérifier dans les logs la provenance de l'erreur. Le plugin nécessite l'installation de python3 et pip3.
 
 Changelog
 =============================

@@ -28,7 +28,7 @@ foreach ($eqLogics as $eqLogic) {
 ?>
      </ul>
    </div>
- </div>
+</div>
  <div class="col-lg-10 col-md-9 col-sm-8 eqLogicThumbnailDisplay" style="border-left: solid 1px #EEE; padding-left: 25px;">
    <legend><i class="fa fa-cog"></i>  {{Gestion}}</legend>
    <div class="eqLogicThumbnailContainer">
@@ -169,7 +169,7 @@ foreach (jeedom::getConfiguration('eqLogic:category') as $key => $value) {
         <label class="col-lg-3 control-label">{{Ignorer contrôle CEC}}</label>
         <div class="col-lg-4">
           <input type="checkbox" class="eqLogicAttr" data-l1key="configuration" data-l2key="ignore_CEC"/>
-		  {{CEC_message}}
+		  {{Si le statut 'Occupé' ne remonte pas bien}}
         </div>
       </div>
     </fieldset>

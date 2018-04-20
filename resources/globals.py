@@ -36,6 +36,10 @@ READ_FREQUENCY = 60         # in seconds
 SCAN_FREQUENCY = 60         # in seconds
 SCAN_PENDING = False        # is scanner running?
 SCAN_LAST = 0               # when last started
+SCAN_TIMEOUT = 10           # timout of gcast scan
+
+DISCOVERY_FREQUENCY = 14400         # every 4 hours
+DISCOVERY_LAST = int(time.time())   # when last started
 
 LOSTDEVICE_RESENDNOTIFDELAY = 60*5        # not used yet
 
@@ -48,5 +52,4 @@ callback = ''
 cycle = 0.3
 daemonname=''
 socketport=55012
-sockethost=''
-device=''
+sockethost='127.0.0.1'

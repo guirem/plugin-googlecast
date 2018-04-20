@@ -26,6 +26,28 @@
     $('#md_modal').load('index.php?v=d&plugin=googlecast&modal=googlecast.health').dialog('open');
 });
 
+$('#bt_healthrefresh').on('click', function () {
+    $.ajax({// fonction permettant de faire de l'ajax
+        type: "POST", // methode de transmission des données au fichier php
+        url: "plugins/googlecast/core/php/googlecast.ajax.php", // url du fichier php
+        data: {
+            action: "refreshall"
+        },
+        dataType: 'json',
+        error: function (request, status, error) {
+            handleAjaxError(request, status, error);
+        },
+        success: function (data) { // si l'appel a bien fonctionné
+            if (data.state != 'ok') {
+                $('#div_alert').showAlert({message: data.result, level: 'danger'});
+                return;
+            }
+            $('#md_modal').dialog({title: "{{Santé GoogleCast}}"});
+            $('#md_modal').load('index.php?v=d&plugin=googlecast&modal=googlecast.health').dialog('open');
+        }
+    });
+});
+
 $('body').on('googlecast::includeState', function (_event,_options) {
 	if (_options['mode'] == 'learn') {
 		if (_options['state'] == 1) {

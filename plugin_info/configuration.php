@@ -24,12 +24,19 @@ if (!isConnect('admin')) {
 <form class="form-horizontal">
     <fieldset>
     <legend><i class="icon loisir-darth"></i> {{Démon}}</legend>
-   <div class="form-group">
-    <label class="col-lg-4 control-label">{{Port socket interne (modification dangereuse)}}</label>
-    <div class="col-lg-2">
-        <input class="configKey form-control" data-l1key="socketport" placeholder="{{55012}}" />
+    <div class="form-group">
+	    <label class="col-lg-4 control-label">{{Port socket interne (modification dangereuse)}}</label>
+	    <div class="col-lg-2">
+	        <input class="configKey form-control" data-l1key="socketport" placeholder="{{55012}}" />
+	    </div>
     </div>
-</div>
+	<legend><i class="fa fa-envelope-o"></i> {{Notifications}}</legend>
+	<div class="form-group">
+	    <label class="col-lg-4 control-label">{{Désactiver notif pour nouveaux GoogleCast}}</label>
+	    <div class="col-lg-2">
+	        <input  type="checkbox" class="configKey" data-l1key="disableNotification"/>
+	    </div>
+    </div>
 </fieldset>
 </form>
 <script>

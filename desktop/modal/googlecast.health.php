@@ -20,7 +20,11 @@ if (!isConnect('admin')) {
 }
 $eqLogics = googlecast::byType('googlecast');
 ?>
-
+<!--
+<div class="eqLogic" style="border-left: solid 1px #EEE; padding-left: 25px;">
+<center><a id="bt_healthrefresh" class="btn btn-primary eqLogicAction" data-action="refresh"><i class="fa fa-refresh"></i> {{Rafraichir}}</a><center>
+</div>
+-->
 <table class="table table-condensed tablesorter" id="table_health">
 	<thead>
 		<tr>
@@ -49,9 +53,9 @@ foreach ($eqLogics as $eqLogic) {
 	echo '<td><span class="label label-info" style="font-size:1em;cursor:default;">' . $eqLogic->getConfiguration('model_name') . '</span></td>';
 	echo '<td><span class="label label-info" style="font-size:1em;cursor:default;">' . $eqLogic->getConfiguration('cast_type') . '</span></td>';
 	$onlinecmd = $eqLogic->getCmd('info', 'online');
-	$online = '<span class="label label-danger" style="font-size:1em;cursor:default;">{{Offline}}</span>';
+	$online = '<span class="label label-danger" style="font-size:1em;cursor:default;">{{Non}}</span>';
 	if ($onlinecmd->execCmd() == 1) {
-		$online = '<span class="label label-success" style="font-size:1em;cursor:default;">{{Online}}</span>';
+		$online = '<span class="label label-success" style="font-size:1em;cursor:default;">{{Oui}}</span>';
 	}
 	echo '<td>' . $online . '</td>';
 	$busycmd = $eqLogic->getCmd('info', 'is_busy');

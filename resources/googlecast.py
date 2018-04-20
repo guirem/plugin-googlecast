@@ -47,40 +47,42 @@ except ImportError:
 
 
 class JeedomChromeCast :
-	def __init__(self, gcast, options=None):
+	def __init__(self, gcast, options=None, scan_mode=False):
+		self.uuid = str(gcast.device.uuid)
+		self.friendly_name = gcast.device.friendly_name
 		self.gcast = gcast
-		self.gcast.media_controller.register_status_listener(self)
-		self.gcast.register_status_listener(self)
 		self.previous_status = {"uuid" : self.uuid, "online" : False}
-		self.gcast.register_connection_listener(self)
 		self.now_playing = False
+		self.now_playing_thread = False
 		self.online = True
-		# manage CEC exception
-		if options and 'ignore_CEC' in options :
-			if options['ignore_CEC'] == "1" and self.friendly_name not in pychromecast.IGNORE_CEC :
+		self.being_shutdown = True
+		self.scan_mode = scan_mode
+		if scan_mode == False :
+			self.customplayer = None
+			self.customplayername = ""
+			self.gcast.media_controller.register_status_listener(self)
+			self.gcast.register_status_listener(self)
+			self.gcast.register_connection_listener(self)
+			self.options = options
+			# manage CEC exception
+			if options and 'ignore_CEC' in options :
+				if options['ignore_CEC'] == "1" and self.friendly_name not in pychromecast.IGNORE_CEC :
+					pychromecast.IGNORE_CEC.append(self.gcast.device.friendly_name)
+			# CEC always disable for audio chromecast
+			if self.gcast.device.cast_type != 'cast' and self.friendly_name not in pychromecast.IGNORE_CEC:
 				pychromecast.IGNORE_CEC.append(self.gcast.device.friendly_name)
-		# CEC always disable for audio chromecast
-		if self.gcast.device.cast_type != 'cast' and self.friendly_name not in pychromecast.IGNORE_CEC:
-			pychromecast.IGNORE_CEC.append(self.gcast.device.friendly_name)
 
-		if self.gcast.socket_client :
-			self.gcast.socket_client.tries = 3
-			self.gcast.socket_client.retry_wait = 5
-			self.gcast.socket_client.timeout = 5
+			if self.gcast.socket_client :
+				self.gcast.socket_client.tries = int(round(globals.SCAN_FREQUENCY)/10/2)
+				self.gcast.socket_client.retry_wait = 5
+				self.gcast.socket_client.timeout = 5
 
 	@property
 	def device(self):
 		return self.gcast.device
 
-	@property
-	def uuid(self):
-		return str(self.gcast.device.uuid)
-
-	def friendly_name(self):
-		return self.gcast.device.friendly_name
-
 	def startNowPlaying(self):
-		if self.now_playing == False and self.online == True:
+		if self.now_playing == False and self.online == True and self.now_playing_thread == False:
 			logging.debug("JEEDOMCHROMECAST------ Starting monitoring of " + self.uuid)
 			self.now_playing = True
 			thread.start_new_thread(self.thread_nowlaying, ("nowPlayingTHread",))
@@ -95,14 +97,19 @@ class JeedomChromeCast :
 
 	def new_connection_status(self, new_status):
 		logging.debug("JEEDOMCHROMECAST------ Connection " + str(new_status.status))
-		if new_status.status == "DISCONNECTED" :
+		self.online = False
+		if new_status.status == "DISCONNECTED" and self.being_shutdown == False:
 			self.disconnect()
-		elif new_status.status == "CONNECTED" :
+			logging.info("JEEDOMCHROMECAST------ Chromecast has beend disconnected : " + self.friendly_name)
+		if new_status.status == "LOST" :
+			self._internal_refresh_status(True)
+		elif new_status.status == "CONNECTED" :	# is reborn...
 			self.online = True
+			if self.uuid not in globals.GCAST_DEVICES :
+				globals.GCAST_DEVICES[self.uuid] = self
+			self._internal_refresh_status(True)
 			if self.now_playing == True :
 				self.sendNowPlaying()
-		else :
-			self.online = True
 
 	def sendDeviceStatus(self, _force=True):
 		try :
@@ -112,48 +119,75 @@ class JeedomChromeCast :
 			pass
 		self._internal_refresh_status(_force)
 
-	def disconnect(self):
-		#if self.online == True :
-		self.online = False
-		if self.now_playing :
-			self.now_playing = False
-			self._internal_send_now_playing()
-			time.sleep(0.5)
-		if self.uuid in globals.GCAST_DEVICES :
-			del globals.GCAST_DEVICES[self.uuid]
-		self.gcast.disconnect()
-
 	def sendDeviceStatusIfNew(self):
 		self.sendDeviceStatus(False)
 
-	def loadControler(self, controler, _quit_app_before=True, _force_register=False):
+	def disconnect(self):
+		if self.scan_mode == False :
+			self._internal_refresh_status(True)
+			if self.now_playing == True :
+				self.now_playing = False
+				self._internal_send_now_playing()
+			if self.uuid in globals.GCAST_DEVICES :
+				del globals.GCAST_DEVICES[self.uuid]
+			logging.debug("JEEDOMCHROMECAST------ Chromecast disconnected : " + self.friendly_name)
+		self.gcast.disconnect()
+		self.being_shutdown = True
+		del self
+
+	def loadPlayer(self, playername, params=None, token=None) :
 		if self.gcast.socket_client :
-			if controler.namespace in self.gcast.socket_client._handlers and not _force_register :
-				logging.debug("JEEDOMCHROMECAST------ Loading controller from memory " + str(controler.namespace))
-				return self.gcast.socket_client._handlers[controler.namespace]
-			else :
-				logging.debug("JEEDOMCHROMECAST------ Initiating controler " + str(controler.namespace))
-				self.gcast.register_handler(controler)
-				time.sleep(1)
-				if not self.gcast.is_idle and _quit_app_before:
+			forceReload = False
+			if params and 'forcereload' in params :
+				forceReload = True
+			if not self.customplayer or self.customplayername != playername or forceReload==True :
+				if playername == 'web' :
+					player = dashcast.DashCastController()
+					self.gcast.register_handler(player)
+				elif playername == 'youtube' :
+					player = youtube.YouTubeController()
+					self.gcast.register_handler(player)
+				elif playername == 'spotify' :
+					player = spotify.SpotifyController(token)
+					self.gcast.register_handler(player)
+				elif playername == 'plex' :
+					player = plex.PlexController()
+				else :
+					player = self.gcast.media_controller
+				logging.debug("JEEDOMCHROMECAST------ Initiating player " + str(player.namespace))
+				self.customplayer = player
+				self.customplayername = playername
+				if params and 'waitbeforequit' in params :
+					time.sleep(params['waitbeforequit'])
+				if params and 'quitapp' in params :
 					self.gcast.quit_app()
-					time.sleep(3)
-				return controler
+				if params and 'wait' in params :
+					time.sleep(params['wait'])
+			return self.customplayer
+		return None
+
+	def resetPlayer(self) :
+		if self.customplayer is not None :
+			if self.gcast.socket_client and self.customplayer.namespace in self.gcast.socket_client._handlers :
+				del self.gcast.socket_client._handlers[self.customplayer.namespace]
+			self.customplayer = None
 
 	def _internal_refresh_status(self,_force = False):
-		uuid = str(self.device.uuid)
+		uuid = self.uuid
 		status = self._internal_get_status()
-		if _force or self._internal_status_different(status)  :
+		if _force or self._internal_status_different(status) :
 			logging.debug("Detected changes in status of " +self.device.friendly_name)
 			globals.KNOWN_DEVICES[uuid]['status'] = status
 			self.previous_status = status
 			globals.KNOWN_DEVICES[uuid]['online'] = self.online
+			if self.online == False :
+				globals.KNOWN_DEVICES[uuid]['lastOfflineSent'] = int(time.time())
 			globals.JEEDOM_COM.add_changes('devices::'+uuid,globals.KNOWN_DEVICES[uuid])
 			globals.KNOWN_DEVICES[uuid]['lastSent'] = int(time.time())
 
+
 	def _internal_get_status(self):
-		if self.gcast.status!=None :
-			self.online = True
+		if self.gcast.status!=None and self.online == True:
 			uuid = self.uuid
 			status = {
 				"uuid" : uuid,
@@ -169,7 +203,6 @@ class JeedomChromeCast :
 			}
 			return status
 		else :
-			self.online = False
 			return {
 				"uuid" : self.uuid,
 				"friendly_name" : "", "is_stand_by" :  False, "is_active_input" : False,
@@ -199,7 +232,6 @@ class JeedomChromeCast :
 		return False
 
 	def getDefinition(self):
-		uuid = str(self.gcast.device.uuid)
 		status = {
 			"friendly_name" : self.gcast.device.friendly_name,
 			"model_name" : self.gcast.device.model_name,
@@ -214,18 +246,19 @@ class JeedomChromeCast :
 
 
 	def thread_nowlaying(self, name):
-		logging.debug(" JEEDOMCHROMECAST------Starting NowPlaying thread for " + self.uuid)
+		logging.debug("JEEDOMCHROMECAST------ Starting NowPlaying thread for " + self.uuid)
+		self.now_playing_thread = True
 		delay = 0
 		firstTime = True
-		while self.now_playing :
+		while self and self.now_playing :
 			if delay >= globals.NOWPLAYING_FREQUENCY or firstTime :
 				self.sendNowPlaying()
 				firstTime = False
 				delay = 0
 			delay = delay + 1
 			time.sleep(1)
-
-		logging.debug(" JEEDOMCHROMECAST------Closing NowPlaying thread for " + self.uuid)
+		self.now_playing_thread = False
+		logging.debug("JEEDOMCHROMECAST------ Closing NowPlaying thread for " + self.uuid)
 
 	def sendNowPlaying(self):
 		try :
@@ -235,9 +268,8 @@ class JeedomChromeCast :
 			pass
 
 	def _internal_send_now_playing(self, message=None):
-		#logging.debug(" JEEDOMCHROMECAST------crap message " + str(crap))
 		uuid = self.uuid
-		if self.gcast.status:
+		if self.gcast.status and self.online == True :
 			playStatus = self.gcast.media_controller.status
 			if len(playStatus.images) > 0 :
 				img = str(playStatus.images[0].url)
@@ -275,7 +307,6 @@ class JeedomChromeCast :
 				'idle_reason': playStatus.idle_reason
 			}
 			globals.JEEDOM_COM.send_change_immediate({'uuid' :  uuid, 'nowplaying':data});
-
 		else :
 			data = {
 				"uuid" : uuid,
@@ -317,7 +348,8 @@ def action_handler(message):
 	logging.debug("ACTION------ " + rootcmd + " - " + cmd + ' - ' + uuid + ' - ' + str(value)+ ' - ' + app)
 	if uuid in globals.KNOWN_DEVICES and uuid in globals.GCAST_DEVICES and rootcmd == "action":
 
-		gcast = globals.GCAST_DEVICES[uuid].gcast
+		jcast = globals.GCAST_DEVICES[uuid]
+		gcast = jcast.gcast
 		if cmd == 'refresh':
 			logging.debug("ACTION------Refresh action")
 		elif cmd == 'reboot':
@@ -347,10 +379,10 @@ def action_handler(message):
 			gcast.media_controller.skip()
 		elif cmd == 'seek':
 			logging.debug("ACTION------Seek action")
-			gcast.media_controller.seek(0 if value==None else value)
+			gcast.media_controller.seek(0 if value is None else value)
 		elif cmd == 'start_app':
 			logging.debug("ACTION------Stop action")
-			gcast.start_app('' if value==None else value)
+			gcast.start_app('' if value is None else value)
 		elif cmd == 'quit_app':
 			logging.debug("ACTION------Stop action")
 			gcast.quit_app()
@@ -363,8 +395,8 @@ def action_handler(message):
 		elif cmd == 'mute_off':
 			logging.debug("ACTION------Mute off action")
 			gcast.set_volume_muted(False)
-		elif app != None:
-			logging.debug("ACTION------Plyaing action " + cmd + ' for application ' + app)
+		elif app is not None:
+			logging.debug("ACTION------Playing action " + cmd + ' for application ' + app)
 			try:
 				quit_app_before=True
 				if 'quit_app_before' in message['command'] :
@@ -377,15 +409,13 @@ def action_handler(message):
 					force_register=True
 					possibleCmd = ['load_url']
 					if cmd in possibleCmd :
-						player = dashcast.DashCastController()
-						player = globals.GCAST_DEVICES[uuid].loadControler(player, quit_app_before, force_register)
+						player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before}, None)
 						eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
 				elif app == 'youtube':  # app=youtube|cmd=play_video|value=fra4QBLF3GU
 					if gcast.device.cast_type == 'cast' :
 						possibleCmd = ['play_video', 'add_to_queue', 'update_screen_id', 'clear_playlist']
 						if cmd in possibleCmd :
-							player = youtube.YouTubeController()
-							player = globals.GCAST_DEVICES[uuid].loadControler(player, quit_app_before, force_register)
+							player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before}, None)
 							eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
 					else :
 						logging.error("ACTION------ YouTube not availble on Chromecast Audio")
@@ -395,8 +425,7 @@ def action_handler(message):
 						if 'token' not in message['command'] :
 							logging.error("ACTION------ Token missing for Spotify")
 						else :
-							player = spotify.SpotifyController(message['command']['token'])
-							player = globals.GCAST_DEVICES[uuid].loadControler(player, quit_app_before, force_register)
+							player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before}, message['command']['token'])
 							player.launch_app()
 				elif app == 'backdrop':  # also called backdrop
 					if gcast.device.cast_type == 'cast' :
@@ -407,15 +436,15 @@ def action_handler(message):
 					quit_app_before=False
 					possibleCmd = ['play', 'stop', 'pause']
 					if cmd in possibleCmd :
-						player = plex.PlexController()
-						player = globals.GCAST_DEVICES[uuid].loadControler(player, quit_app_before, force_register)
-						time.sleep(1)
+						player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before}, None)
 						eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
 				else : # media		# app=media|cmd=play_media|value=http://bit.ly/2JzYtfX,video/mp4,Mon film
 					possibleCmd = ['play', 'stop', 'pause', 'play_media']
-					eval( 'gcast.media_controller.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
+					player = jcast.loadPlayer('media', { 'quitapp' : quit_app_before}, None)
+					eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
 			except Exception as e:
 				logging.error("ACTION------Error while playing "+app+" : %s" % str(e))
+				logging.debug(traceback.format_exc())
 
 		else:
 			logging.debug("ACTION------NOT IMPLEMENTED : " + cmd)
@@ -443,52 +472,44 @@ def gcast_prepareAppParam(params):
 		elif p == 'True' or p == 'False' or p == 'None' :
 			ret = ret + ',' + prefix + p
 		else :
-			if p.startswith( "'" ) :	# if starts already with simple quote
+			if p.startswith( "'" ) and p.endswith("'") :	# if starts already with simple quote
 				ret = ret + ',' + prefix + p
 			else :
 				ret = ret + ',' + prefix + '"'+ p +'"'	# else add quotes
+	logging.debug("PARAMPARSER---- Returned: " + str(ret[1:])
 	return ret[1:]
 
 
-def read_device(name):
-	while 1:
-		now = datetime.datetime.utcnow()
-		try:
-			for uuid in list(globals.KNOWN_DEVICES):
-				if (int(time.time())-globals.KNOWN_DEVICES[uuid]['lastSent']) > globals.READ_FREQUENCY:
-					globals.JEEDOM_COM.add_changes('devices::'+uuid, globals.KNOWN_DEVICES[uuid])
-					globals.KNOWN_DEVICES[uuid]['lastSent'] = int(time.time())
-		except Exception as e:
-			logging.error("READER------Exception on read device : %s" % str(e))
-		time.sleep(10)
-
-
-def listen():
+def start(cycle=2):
 	jeedom_socket.open()
-	logging.info("GLOBAL------Start listening...")
 	logging.info("GLOBAL------Socket started...")
+	logging.info("GLOBAL------Waiting for messages...")
 	thread.start_new_thread( read_socket, ('socket',))
-	logging.debug('GLOBAL------Heartbeat Thread Launched')
-	thread.start_new_thread( heartbeat_handler, (19,))
 	globals.JEEDOM_COM.send_change_immediate({'started' : 1,'source' : globals.daemonname});
 
 	try:
-		while 1:
+		while True :
 			try:
+				current_time = int(time.time())
+				if globals.LEARN_MODE and (globals.LEARN_BEGIN+globals.LEARN_TIMEOUT)  < current_time :
+					globals.LEARN_MODE = False
+					logging.info('HEARTBEAT------Quitting learn mode (60s elapsed)')
+					globals.JEEDOM_COM.send_change_immediate({'learn_mode' : 0,'source' : globals.daemonname})
 
-				if not globals.SCAN_PENDING and globals.LEARN_MODE :
-					thread.start_new_thread( scanner, ('scan learn',))
+				if (globals.LAST_BEAT + globals.HEARTBEAT_FREQUENCY/2)  < current_time :
+					globals.JEEDOM_COM.send_change_immediate({'heartbeat' : 1,'source' : globals.daemonname})
+					globals.LAST_BEAT = current_time
+
+				if globals.LEARN_MODE and not globals.SCAN_PENDING :
+					thread.start_new_thread( scanner, ('learn',))
 
 				if not globals.SCAN_PENDING and (int(time.time()) - globals.SCAN_LAST) > globals.SCAN_FREQUENCY :
 					thread.start_new_thread( scanner, ('scanner',))
 
-				while globals.SCAN_PENDING:
-					time.sleep(1)
-
 				if globals.LEARN_MODE :
 					time.sleep(0.2)
 				else :
-					time.sleep(3)
+					time.sleep(cycle)
 
 			except Exception as e:
 				logging.error("GLOBAL------Exception on scanner")
@@ -499,12 +520,11 @@ def listen():
 
 
 def read_socket(name):
-	while 1:
+	while True :
 		try:
 			global JEEDOM_SOCKET_MESSAGE
 			if not JEEDOM_SOCKET_MESSAGE.empty():
 				logging.debug("SOCKET-READ------Message received in socket JEEDOM_SOCKET_MESSAGE")
-				#message = json.loads(jeedom_utils.stripped(JEEDOM_SOCKET_MESSAGE.get()))
 				message = json.loads(JEEDOM_SOCKET_MESSAGE.get())
 				if message['apikey'] != globals.apikey:
 					logging.error("SOCKET-READ------Invalid apikey from socket : " + str(message))
@@ -527,13 +547,13 @@ def read_socket(name):
 					logging.debug('SOCKET-READ------Remove device : '+str(message['device']))
 					if 'uuid' in message['device']:
 						uuid = message['device']['uuid']
-						if uuid in globals.KNOWN_DEVICES :
-							del globals.KNOWN_DEVICES[uuid]
-						if uuid in globals.GCAST_DEVICES :
-							globals.GCAST_DEVICES[uuid].disconnect()
-							del globals.GCAST_DEVICES[uuid]
 						if uuid in globals.NOWPLAYING_DEVICES :
 							del globals.NOWPLAYING_DEVICES[uuid]
+						if uuid in globals.GCAST_DEVICES :
+							globals.GCAST_DEVICES[uuid].disconnect()
+							# del globals.GCAST_DEVICES[uuid] no need because disconnect did it
+						if uuid in globals.KNOWN_DEVICES :
+							del globals.KNOWN_DEVICES[uuid]
 						globals.SCAN_LAST = 0
 				elif message['cmd'] == 'nowplaying':
 					if 'uuid' in message:
@@ -558,7 +578,10 @@ def read_socket(name):
 					uuid = message['device']['uuid']
 					if uuid in globals.GCAST_DEVICES :
 						globals.GCAST_DEVICES[uuid].sendDeviceStatus()
-					thread.start_new_thread( read_device, ('action',))
+				elif message['cmd'] == 'refreshall':
+					logging.debug('SOCKET-READ------Attempt a refresh on all devices')
+					for uuid in globals.GCAST_DEVICES :
+						globals.GCAST_DEVICES[uuid].sendDeviceStatus()
 				elif message['cmd'] in ['action']:
 					logging.debug('SOCKET-READ------Attempt an action on a device')
 					thread.start_new_thread( action_handler, (message,))
@@ -583,6 +606,7 @@ def read_socket(name):
 					shutdown()
 		except Exception as e:
 			logging.error("SOCKET-READ------Exception on socket : %s" % str(e))
+			logging.debug(traceback.format_exc())
 		time.sleep(0.3)
 
 
@@ -590,37 +614,41 @@ def scanner(name):
 	try:
 		logging.debug("SCANNER------ Start scanning...")
 		globals.SCAN_PENDING = True
-		DISCOVER_DEVICES = {}
 
 		scanForced = False
-		for known in globals.KNOWN_DEVICES :
-			if known not in globals.GCAST_DEVICES :
-				scanForced = scanForced or True
+		if (int(time.time())-globals.DISCOVERY_LAST)>globals.DISCOVERY_FREQUENCY :
+			scanForced = True
+		else :
+			for known in globals.KNOWN_DEVICES :
+				if known not in globals.GCAST_DEVICES :
+					scanForced = scanForced or True
 
 		if scanForced==True or globals.LEARN_MODE==True:
 			logging.debug("SCANNER------ Looking for chromecasts on network...")
-			casts = pychromecast.get_chromecasts(tries=1, retry_wait=2, timeout=10)
+			rawcasts = pychromecast.get_chromecasts(tries=1, retry_wait=2, timeout=globals.SCAN_TIMEOUT)
+			casts = []
+			for cast in rawcasts :
+				casts.append( JeedomChromeCast(cast, scan_mode=True) )
 		else :
 			logging.debug("SCANNER------ No need to scan network, all devices are present")
 			casts = list(globals.GCAST_DEVICES.values())
 
 		for cast in casts :
-			uuid = str(cast.device.uuid)
-			DISCOVER_DEVICES[uuid] = {'friendly_name':cast.device.friendly_name, 'uuid': uuid, 'lastScan': int(time.time()) }
+			uuid = cast.uuid
+			current_time = int(time.time())
 
 			# starting event thread
 			if uuid in globals.KNOWN_DEVICES :
-				#globals.KNOWN_DEVICES[uuid]['uuid'] = uuid
 				globals.KNOWN_DEVICES[uuid]['online'] = True
-				globals.KNOWN_DEVICES[uuid]['lastScan'] = int(time.time())
-				globals.KNOWN_DEVICES[uuid]["lastOnline"] = int(time.time())
+				globals.KNOWN_DEVICES[uuid]['lastScan'] = current_time
+				globals.KNOWN_DEVICES[uuid]["lastOnline"] = current_time
 
 				if uuid not in globals.GCAST_DEVICES :
-					logging.info("SCANNER------ Detected chromecast : " + cast.device.friendly_name)
-					globals.GCAST_DEVICES[uuid] = JeedomChromeCast(cast, globals.KNOWN_DEVICES[uuid]["options"])
+					logging.info("SCANNER------ Detected chromecast : " + cast.friendly_name)
+					globals.GCAST_DEVICES[uuid] = JeedomChromeCast(cast.gcast, globals.KNOWN_DEVICES[uuid]["options"])
 
 				if uuid in globals.NOWPLAYING_DEVICES :
-					if (int(time.time())-globals.NOWPLAYING_DEVICES[uuid]) > globals.NOWPLAYING_TIMEOUT :
+					if (current_time-globals.NOWPLAYING_DEVICES[uuid]) > globals.NOWPLAYING_TIMEOUT :
 						del globals.NOWPLAYING_DEVICES[uuid]
 						globals.GCAST_DEVICES[uuid].stopNowPlaying()
 					else :
@@ -630,25 +658,34 @@ def scanner(name):
 
 			else :
 				if globals.LEARN_MODE :
-					data = {}
-					jcast = JeedomChromeCast(cast)
-					data = {'friendly_name':cast.device.friendly_name, 'uuid': uuid, 'lastScan': int(time.time()) }
-					data['def'] = jcast.getDefinition()
-					data['status'] = jcast.getStatus()
+					data = {'friendly_name':cast.friendly_name, 'uuid': uuid, 'lastScan': current_time }
+					data['def'] = cast.getDefinition()
+					data['status'] = cast.getStatus()
 					data['learn'] = 1;
 					logging.info("SCANNER------ LEARN MODE : New device : " + uuid + ' (' + data["friendly_name"] + ')')
 					globals.JEEDOM_COM.add_changes('devices::'+uuid,data)
 
+				elif (current_time-globals.DISCOVERY_LAST)>globals.DISCOVERY_FREQUENCY :
+					logging.debug("SCANNER------ DISCOVERY MODE : New device : " + uuid + ' (' + cast.friendly_name + ')')
+					globals.JEEDOM_COM.send_change_immediate({'discovery' : 1, 'uuid' : uuid, 'friendly_name' : cast.friendly_name})
+					globals.DISCOVERY_LAST = current_time
+
+				cast.gcast.disconnect()
+				del cast
+
 		for known in globals.KNOWN_DEVICES :
-			if known not in DISCOVER_DEVICES :
+			current_time = int(time.time())
+			if known not in [cast.uuid for cast in casts] :
 				logging.debug("SCANNER------No connection to device " + known)
+				if globals.KNOWN_DEVICES[known]['online']==True :
+					logging.info("SCANNER------Connection lost to device " + known)
 				if known in globals.GCAST_DEVICES :
 					globals.GCAST_DEVICES[known].disconnect()
-					del globals.GCAST_DEVICES[known]
-				globals.KNOWN_DEVICES[known]['lastScan'] = int(time.time())
-				if ( globals.KNOWN_DEVICES[known]['online']==True or (int(time.time())-globals.KNOWN_DEVICES[known]['lastOfflineSent'])>globals.LOSTDEVICE_RESENDNOTIFDELAY ) :
+					#del globals.GCAST_DEVICES[known]
+				globals.KNOWN_DEVICES[known]['lastScan'] = current_time
+				if ( globals.KNOWN_DEVICES[known]['online']==True or (current_time-globals.KNOWN_DEVICES[known]['lastOfflineSent'])>globals.LOSTDEVICE_RESENDNOTIFDELAY ) :
 					globals.KNOWN_DEVICES[known]['online'] = False
-					globals.KNOWN_DEVICES[known]['lastOfflineSent'] = int(time.time())
+					globals.KNOWN_DEVICES[known]['lastOfflineSent'] = current_time
 					globals.KNOWN_DEVICES[known]['status'] = status = {
 						"uuid" : known,
 						"friendly_name" : "",
@@ -660,6 +697,7 @@ def scanner(name):
 					}
 					#globals.JEEDOM_COM.add_changes('devices::'+known, globals.KNOWN_DEVICES[known])
 					globals.JEEDOM_COM.send_change_immediate_device(known, globals.KNOWN_DEVICES[known])
+					globals.KNOWN_DEVICES[known]['lastSent'] = current_time
 					if known in globals.NOWPLAYING_DEVICES:
 						data = {
 							"uuid" : known,
@@ -679,7 +717,7 @@ def scanner(name):
 						globals.JEEDOM_COM.send_change_immediate({'uuid' :  known, 'nowplaying':data});
 
 			else :
-				globals.KNOWN_DEVICES[known]["lastScan"] = int(time.time())
+				globals.KNOWN_DEVICES[known]["lastScan"] = current_time
 
 	except Exception as e:
 		logging.error("SCANNER------Exception on scanner : %s" % str(e))
@@ -687,20 +725,6 @@ def scanner(name):
 
 	globals.SCAN_LAST = int(time.time())
 	globals.SCAN_PENDING = False
-
-
-def heartbeat_handler(delay):
-	while True:
-		if globals.LEARN_MODE and (globals.LEARN_BEGIN + globals.LEARN_TIMEOUT/2)  < int(time.time()):
-			globals.LEARN_MODE = False
-			logging.info('HEARTBEAT------Quitting learn mode (60s elapsed)')
-			globals.JEEDOM_COM.send_change_immediate({'learn_mode' : 0,'source' : globals.daemonname});
-
-		if (globals.LAST_BEAT + globals.HEARTBEAT_FREQUENCY/2 -5)  < int(time.time()):
-			globals.JEEDOM_COM.send_change_immediate({'heartbeat' : 1,'source' : globals.daemonname});
-			globals.LAST_BEAT = int(time.time())
-
-		time.sleep(10)		# every 10 secondes
 
 
 def handler(signum=None, frame=None):
@@ -729,20 +753,21 @@ def shutdown():
 # -------------------------------------------
 # ------ PROGRAM STARTS HERE ----------------
 # -------------------------------------------
-parser = argparse.ArgumentParser(description='Blead Daemon for Jeedom plugin')
-parser.add_argument("--device", help="Device", type=str)
+parser = argparse.ArgumentParser(description='GoogleCast Daemon for Jeedom plugin')
 parser.add_argument("--loglevel", help="Log Level for the daemon", type=str)
-parser.add_argument("--pidfile", help="Value to write", type=str)
-parser.add_argument("--callback", help="Value to write", type=str)
-parser.add_argument("--apikey", help="Value to write", type=str)
+parser.add_argument("--pidfile", help="PID filname", type=str)
+parser.add_argument("--callback", help="Callback url", type=str)
+parser.add_argument("--apikey", help="Jeedom API key", type=str)
 parser.add_argument("--socketport", help="Socket Port", type=str)
 parser.add_argument("--sockethost", help="Socket Host", type=str)
 parser.add_argument("--daemonname", help="Daemon Name", type=str)
+parser.add_argument("--scantimeout", help="GoogleCast scan timeout", type=str)
 parser.add_argument("--cycle", help="Cycle to send event", type=str)
 args = parser.parse_args()
 
-if args.device:
-	globals.device = args.device
+
+if args.scantimeout:
+	globals.SCAN_TIMEOUT = int(args.scantimeout)
 if args.loglevel:
 	globals.log_level = args.loglevel
 if args.pidfile:
@@ -764,7 +789,10 @@ globals.socketport = int(globals.socketport)
 globals.cycle = float(globals.cycle)
 
 jeedom_utils.set_log_level(globals.log_level)
-logging.info('GLOBAL------Start googlecast')
+logging.info('------------------------------------------------------')
+logging.info('------------------------------------------------------')
+logging.info('GLOBAL------STARTING googlecast')
+logging.info('GLOBAL------Scan Timeout : '+str(globals.SCAN_TIMEOUT))
 logging.info('GLOBAL------Log level : '+str(globals.log_level))
 logging.info('GLOBAL------Socket port : '+str(globals.socketport))
 logging.info('GLOBAL------Socket host : '+str(globals.sockethost))
@@ -772,10 +800,11 @@ logging.info('GLOBAL------PID file : '+str(globals.pidfile))
 logging.info('GLOBAL------Apikey : '+str(globals.apikey))
 logging.info('GLOBAL------Callback : '+str(globals.callback))
 logging.info('GLOBAL------Cycle : '+str(globals.cycle))
+logging.info('------------------------------------------------------')
 
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)
-#globals.IFACE_DEVICE = int(globals.device[-1:])
+
 try:
 	jeedom_utils.write_pid(str(globals.pidfile))
 	globals.JEEDOM_COM = jeedom_com(apikey = globals.apikey,url = globals.callback,cycle=globals.cycle)
@@ -785,7 +814,8 @@ try:
 	else :
 		logging.info('GLOBAL------Network communication to jeedom OK.')
 	jeedom_socket = jeedom_socket(port=globals.socketport,address=globals.sockethost)
-	listen()
+	start(2)
+
 except Exception as e:
 	logging.error('GLOBAL------Fatal error : '+str(e))
 	logging.debug(traceback.format_exc())

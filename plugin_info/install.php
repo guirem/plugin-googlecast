@@ -18,28 +18,51 @@
 
 require_once dirname(__FILE__) . '/../../../core/php/core.inc.php';
 
+function get_plugin_version() {
+	$data = json_decode(file_get_contents(dirname(__FILE__) . '/info.json'), true);
+    if (!is_array($data)) {
+        $core_version = 0;
+    }
+    try {
+        $core_version = $data['version'];
+    } catch (\Exception $e) {
+        $core_version = 0;
+    }
+	return $core_version;
+}
+
 function googlecast_update() {
-	linkTemplate('cmd.info.string.googlecast_playing.html');
+	linkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
+
+	$core_version = get_plugin_version();
+	config::save('plugin_version', $core_version, 'googlecast');
 
 	foreach (googlecast::byType('googlecast') as $googlecast) {
 		try {
 			$googlecast->save();
 		} catch (Exception $e) {}
 	}
+	message::add('googlecast', 'Mise à jour du plugin Google Cast terminé (version ' . $core_version . ').', null, null);
 }
 
 function googlecast_install() {
-	linkTemplate('cmd.info.string.googlecast_playing.html');
+	$core_version = get_plugin_version();
+	config::save('plugin_version', $core_version, 'googlecast');
+
+	linkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
+
+	message::removeAll('googlecast');
+    message::add('googlecast', 'Installation du plugin Google Cast terminé (version ' . $core_version . ').', null, null);
 }
 
 function googlecast_remove() {
-	unlinkTemplate('cmd.info.string.googlecast_playing.html');
+	unlinkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
 }
 
 function linkTemplate($templateFilename) {
-	log::add('googlecast','info',"Création du lien sur template " . $templateFilename);
-	$pathSrc = dirname(__FILE__) . '/../core/template/dashboard/'.$templateFilename;
-	$pathDest = dirname(__FILE__) . '/../../../core/template/dashboard/'.$templateFilename;
+	#log::add('googlecast','info',"Création du lien sur template " . $templateFilename);
+	$pathSrc = dirname(__FILE__) . '/../core/template/'.$templateFilename;
+	$pathDest = dirname(__FILE__) . '/../../../core/template/'.$templateFilename;
 
 	if (!file_exists($pathDest)) {
 		shell_exec('ln -s '.$pathSrc. ' '. $pathDest);
@@ -47,8 +70,8 @@ function linkTemplate($templateFilename) {
 }
 
 function unlinkTemplate($templateFilename) {
-	log::add('googlecast','info',"Suppression du lieu du template " . $templateFilename);
-	$path = dirname(__FILE__) . '/../../../core/template/dashboard/'.$templateFilename;
+	#log::add('googlecast','info',"Suppression du lien du template " . $templateFilename);
+	$path = dirname(__FILE__) . '/../../../core/template/'.$templateFilename;
 
 	if (file_exists($path)) {
 		unlink($path);

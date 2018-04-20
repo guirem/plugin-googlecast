@@ -35,6 +35,10 @@ try {
         ajax::success(googlecast::registerNowPlayging(init('uuid')));
     }
 
+    if (init('action') == 'refreshall') {
+        ajax::success(googlecast::refreshStatusAll());
+    }
+
 
 	if (init('action') == 'sendcmd') {
 		$ret = googlecast::sendDisplayAction(init('uuid'),init('cmd'), init('options'));

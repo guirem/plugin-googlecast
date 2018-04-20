@@ -39,7 +39,9 @@ class googlecast extends eqLogic {
 	/*     * *********************Methode d'instance************************* */
 
 	public function preUpdate() {
-		$this->disallowDevice();
+		if ( $this->getIsEnable() == false ) {
+			$this->disallowDevice();
+		}
 
 		// manage logo
 		$found = False;
@@ -440,7 +442,7 @@ class googlecast extends eqLogic {
 			$cmd->setEqLogic_id($this->getId());
 			$cmd->save();
 
-			$logid = "app=media|cmd=play_media|value='http://bit.ly/2JzYtfX,video/mp4','Mon film'";
+			$logid = "app=media|cmd=play_media|value='http://bit.ly/2JzYtfX','video/mp4','Mon film'";
 			$cmd = $this->getCmd(null, $logid);
 			if (!is_object($cmd)) {
 				$cmd = new googlecastCmd();
@@ -556,19 +558,18 @@ class googlecast extends eqLogic {
 		$return = array();
 		$return['log'] = 'googlecast_update';
 		$return['progress_file'] = '/tmp/dependancy_googlecast_in_progress';
-		if (exec('sudo pip list | grep -E "bluepy" | wc -l') < 1) {
-			$return['state'] = 'nok';
-		} else {
+		$cmd = 'sudo /bin/bash ' . dirname(__FILE__) . '/../../resources/install_check.sh';
+		if (exec($cmd) == "ok") {
 			$return['state'] = 'ok';
+		} else {
+			$return['state'] = 'nok';
 		}
 		return $return;
 	}
 
 	public static function dependancy_install() {
-		log::remove('googlecast_update');
-		$cmd = 'sudo /bin/bash ' . dirname(__FILE__) . '/../../resources/install.sh';
-		$cmd .= ' >> ' . log::getPathToLog('googlecast_dependancy') . ' 2>&1 &';
-		exec($cmd);
+		log::remove(__CLASS__ . '_update');
+		return array('script' => dirname(__FILE__) . '/../../resources/install.sh', 'log' => log::getPathToLog(__CLASS__ . '_update'));
 	}
 
 	public static function deamon_start() {
@@ -577,11 +578,10 @@ class googlecast extends eqLogic {
 		if ($deamon_info['launchable'] != 'ok') {
 			throw new Exception(__('Veuillez vérifier la configuration', __FILE__));
 		}
-		$port = "hey";
 		$googlecast_path = realpath(dirname(__FILE__) . '/../../resources');
 		$cmd = 'sudo /usr/bin/python3 ' . $googlecast_path . '/googlecast.py';
+		#$cmd .= ' --scantimeout 10';
 		$cmd .= ' --loglevel ' . log::convertLogLevel(log::getLogLevel('googlecast'));
-		$cmd .= ' --device ' . $port;
 		$cmd .= ' --socketport ' . config::byKey('socketport', 'googlecast');
 		$cmd .= ' --sockethost 127.0.0.1';
 		$cmd .= ' --callback ' . network::getNetworkAccess('internal', 'proto:127.0.0.1:port:comp') . '/plugins/googlecast/core/php/googlecast.api.php';
@@ -590,7 +590,7 @@ class googlecast extends eqLogic {
 		log::add('googlecast', 'info', 'Lancement démon googlecast : ' . $cmd);
 		$result = exec($cmd . ' >> ' . log::getPathToLog('googlecast_local') . ' 2>&1 &');
 		$i = 0;
-		while ($i < 30) {
+		while ($i < 20) {
 			$deamon_info = self::deamon_info();
 			if ($deamon_info['state'] == 'ok') {
 				break;
@@ -666,6 +666,12 @@ class googlecast extends eqLogic {
 		}
 	}
 
+	public static function registerNowPlayging($uuid) {
+		$value = array('apikey' => jeedom::getApiKey('googlecast'), 'cmd' => 'nowplaying', 'uuid' => $uuid);
+		$value = json_encode($value);
+		self::socket_connection($value,True);
+	}
+
 
 	public function allowDevice() {
 		$value = array('apikey' => jeedom::getApiKey('googlecast'), 'cmd' => 'add');
@@ -683,16 +689,6 @@ class googlecast extends eqLogic {
 		}
 	}
 
-
-	public static function registerNowPlayging($uuid) {
-		#$googlecast = googlecast::byLogicalId($uuid, 'googlecast');
-		#if (!is_object($googlecast)) {
-			$value = array('apikey' => jeedom::getApiKey('googlecast'), 'cmd' => 'nowplaying', 'uuid' => $uuid);
-			$value = json_encode($value);
-			self::socket_connection($value,True);
-		#}
-	}
-
 	public function disallowDevice() {
 		if ($this->getLogicalId() == '') {
 			return;
@@ -701,16 +697,42 @@ class googlecast extends eqLogic {
 		self::socket_connection($value,True);
 	}
 
-	public function getCurrentPlaying($id) {
-		$eqLogic = eqLogic::byId($id);
-		if ($eqLogic) {
-			$cmd = $eqLogic->getCmd(null, 'nowplaying');
-			if (!is_object($cmd)) {
-				$cmd->getCache('nowplaying');
-			}
-			return $eqLogic->getDisplayData();
-		}
-		return 'Error fetching '.$id;
+
+	public function refreshStatusAll() {
+		$value = array('apikey' => jeedom::getApiKey('googlecast'),
+				'cmd' => 'refreshall');
+		$value = json_encode($value);
+		self::socket_connection($value,True);
+	}
+
+	public function refreshStatusByUUID($uuid) {
+		$value = array('apikey' => jeedom::getApiKey('googlecast'),
+				'cmd' => 'refresh',
+				'uuid' => $uuid);
+		$value = json_encode($value);
+		self::socket_connection($value,True);
+	}
+
+	private function helperSendSimpleCmd($command_name) {
+        $data = array(
+            'cmd' => $command_name
+        );
+		$this->helperSendCustomCmd($data);
+        return true;
+    }
+
+    public function helperSendCustomCmd($_commands) {
+        $commands = $_commands;
+        $data = array('apikey' => jeedom::getApiKey('googlecast'),
+            'cmd' => 'action',
+            'device' => array(
+                'uuid' => $this->getLogicalId(),
+                'command' => $commands
+            )
+        );
+        $json = json_encode($data);
+		self::socket_connection($json,True);
+        return true;
 	}
 
 }
@@ -778,12 +800,7 @@ class googlecastcmd extends cmd {
 		if (count($data) == 0) {
 			return;
 		}
-		if ($this->getLogicalId() == 'refresh'){
-			$data['name'] = $eqLogic->getConfiguration('name','0');
-			$value = json_encode(array('apikey' => jeedom::getApiKey('googlecast'), 'cmd' => $this->getLogicalId(), 'device' => array('uuid' => $eqLogic->getLogicalId()), 'command' => $data));
-		} else {
-			$value = json_encode(array('apikey' => jeedom::getApiKey('googlecast'), 'cmd' => 'action', 'device' => array('uuid' => $eqLogic->getLogicalId()), 'command' => $data));
-		}
+		$value = json_encode(array('apikey' => jeedom::getApiKey('googlecast'), 'cmd' => 'action', 'device' => array('uuid' => $eqLogic->getLogicalId()), 'command' => $data));
 		log::add('googlecast','debug',"Envoi d'une commande depuis Jeedom");
 		googlecast::socket_connection($value);
 
