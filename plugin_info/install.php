@@ -48,6 +48,9 @@ function googlecast_update() {
 function googlecast_install() {
 	$core_version = get_plugin_version();
 	config::save('plugin_version', $core_version, 'googlecast');
+	if ( config::byKey('socketport', 'googlecast') == '' ) {
+		config::save('socketport','55012', 'googlecast');
+	}
 
 	linkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
 

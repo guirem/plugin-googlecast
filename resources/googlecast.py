@@ -476,7 +476,7 @@ def gcast_prepareAppParam(params):
 				ret = ret + ',' + prefix + p
 			else :
 				ret = ret + ',' + prefix + '"'+ p +'"'	# else add quotes
-	logging.debug("PARAMPARSER---- Returned: " + str(ret[1:])
+	logging.debug("PARAMPARSER---- Returned: " + str(ret[1:]))
 	return ret[1:]
 
 
