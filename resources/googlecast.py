@@ -55,11 +55,12 @@ class JeedomChromeCast :
 		self.now_playing = False
 		self.now_playing_thread = False
 		self.online = True
-		self.being_shutdown = True
+		self.being_shutdown = False
 		self.scan_mode = scan_mode
 		if scan_mode == False :
 			self.customplayer = None
 			self.customplayername = ""
+			self.nowplaying_lastupdated = 0
 			self.gcast.media_controller.register_status_listener(self)
 			self.gcast.register_status_listener(self)
 			self.gcast.register_connection_listener(self)
@@ -85,7 +86,6 @@ class JeedomChromeCast :
 		if self.now_playing == False and self.online == True and self.now_playing_thread == False:
 			logging.debug("JEEDOMCHROMECAST------ Starting monitoring of " + self.uuid)
 			self.now_playing = True
-			thread.start_new_thread(self.thread_nowlaying, ("nowPlayingTHread",))
 
 	def stopNowPlaying(self):
 		logging.debug("JEEDOMCHROMECAST------ Stopping monitoring of " + self.uuid)
@@ -94,11 +94,17 @@ class JeedomChromeCast :
 	def new_cast_status(self, new_status):
 		#logging.debug("JEEDOMCHROMECAST------ Status " + str(new_status))
 		self._internal_refresh_status(False)
+		self.sendNowPlaying(force=True)
+
+	def new_media_status(self, new_mediastatus):
+		#logging.debug("JEEDOMCHROMECAST------ New media status " + str(new_mediastatus))
+		if self.now_playing==True and new_mediastatus.player_state!="BUFFERING" :
+			self._internal_send_now_playing()
 
 	def new_connection_status(self, new_status):
 		logging.debug("JEEDOMCHROMECAST------ Connection " + str(new_status.status))
 		self.online = False
-		if new_status.status == "DISCONNECTED" and self.being_shutdown == False:
+		if new_status.status == "DISCONNECTED" and self.being_shutdown==False:
 			self.disconnect()
 			logging.info("JEEDOMCHROMECAST------ Chromecast has beend disconnected : " + self.friendly_name)
 		if new_status.status == "LOST" :
@@ -109,7 +115,7 @@ class JeedomChromeCast :
 				globals.GCAST_DEVICES[self.uuid] = self
 			self._internal_refresh_status(True)
 			if self.now_playing == True :
-				self.sendNowPlaying()
+				self._internal_trigger_now_playing_update()
 
 	def sendDeviceStatus(self, _force=True):
 		try :
@@ -123,16 +129,16 @@ class JeedomChromeCast :
 		self.sendDeviceStatus(False)
 
 	def disconnect(self):
-		if self.scan_mode == False :
+		self.being_shutdown = True
+		if self.scan_mode==False :
 			self._internal_refresh_status(True)
 			if self.now_playing == True :
-				self.now_playing = False
 				self._internal_send_now_playing()
+				self.now_playing = False
 			if self.uuid in globals.GCAST_DEVICES :
 				del globals.GCAST_DEVICES[self.uuid]
 			logging.debug("JEEDOMCHROMECAST------ Chromecast disconnected : " + self.friendly_name)
 		self.gcast.disconnect()
-		self.being_shutdown = True
 		del self
 
 	def loadPlayer(self, playername, params=None, token=None) :
@@ -163,6 +169,7 @@ class JeedomChromeCast :
 					self.gcast.quit_app()
 				if params and 'wait' in params :
 					time.sleep(params['wait'])
+			self.sendNowPlaying(force=True)
 			return self.customplayer
 		return None
 
@@ -171,6 +178,7 @@ class JeedomChromeCast :
 			if self.gcast.socket_client and self.customplayer.namespace in self.gcast.socket_client._handlers :
 				del self.gcast.socket_client._handlers[self.customplayer.namespace]
 			self.customplayer = None
+			self.sendNowPlaying(force=True)
 
 	def _internal_refresh_status(self,_force = False):
 		uuid = self.uuid
@@ -245,32 +253,34 @@ class JeedomChromeCast :
 		return self._internal_get_status()
 
 
-	def thread_nowlaying(self, name):
-		logging.debug("JEEDOMCHROMECAST------ Starting NowPlaying thread for " + self.uuid)
-		self.now_playing_thread = True
-		delay = 0
-		firstTime = True
-		while self and self.now_playing :
-			if delay >= globals.NOWPLAYING_FREQUENCY or firstTime :
-				self.sendNowPlaying()
-				firstTime = False
-				delay = 0
-			delay = delay + 1
-			time.sleep(1)
-		self.now_playing_thread = False
-		logging.debug("JEEDOMCHROMECAST------ Closing NowPlaying thread for " + self.uuid)
-
-	def sendNowPlaying(self):
+	def _internal_trigger_now_playing_update(self) :
 		try :
-			self.gcast.media_controller.update_status(callback_function_param=self._internal_send_now_playing)
+			self.gcast.media_controller.update_status()
 		except Exception :
-			self._internal_send_now_playing()
 			pass
 
-	def _internal_send_now_playing(self, message=None):
+	def sendNowPlaying(self, force=False):
+		if force==True :
+			self._internal_send_now_playing()
+		elif self.now_playing==True:
+			logging.debug("JEEDOMCHROMECAST------ NOW PLAYGIN " + str(int(time.time())-self.nowplaying_lastupdated))
+			if (int(time.time())-self.nowplaying_lastupdated)>=globals.NOWPLAYING_FREQUENCY :
+				self._internal_trigger_now_playing_update()
+
+	def sendNowPlaying_heartbeat(self):
+		if self.now_playing==True:
+			if (int(datetime.utcnow().timestamp())-self.nowplaying_lastupdated)>=globals.NOWPLAYING_FREQUENCY :
+				logging.debug("JEEDOMCHROMECAST------ NOW PLAYGIN heartbeat " + str(int(datetime.utcnow().timestamp())-self.nowplaying_lastupdated))
+				self._internal_trigger_now_playing_update()
+
+	def _internal_send_now_playing(self):
 		uuid = self.uuid
 		if self.gcast.status and self.online == True :
 			playStatus = self.gcast.media_controller.status
+			if self.gcast.media_controller.status.last_updated:
+				self.nowplaying_lastupdated = int(self.gcast.media_controller.status.last_updated.timestamp())
+			else:
+				self.nowplaying_lastupdated = int(time.time())
 			if len(playStatus.images) > 0 :
 				img = str(playStatus.images[0].url)
 			else:
@@ -291,7 +301,8 @@ class JeedomChromeCast :
 				"album_artist" : playStatus.album_artist,
 				"metadata_type" : playStatus.metadata_type,
 				"album_name" : playStatus.album_name,
-				"current_time" : '{0:.0f}'.format(playStatus.current_time),
+				#"current_time" : '{0:.0f}'.format(playStatus.current_time),
+				"current_time" : '{0:.0f}'.format(playStatus.adjusted_current_time),
 				"artist" : playStatus.artist,
 				'series_title': playStatus.series_title,
 	            'season': playStatus.season,
@@ -484,7 +495,7 @@ def start(cycle=2):
 	jeedom_socket.open()
 	logging.info("GLOBAL------Socket started...")
 	logging.info("GLOBAL------Waiting for messages...")
-	thread.start_new_thread( read_socket, ('socket',))
+	thread.start_new_thread( read_socket, (globals.cycle,))
 	globals.JEEDOM_COM.send_change_immediate({'started' : 1,'source' : globals.daemonname});
 
 	try:
@@ -503,8 +514,13 @@ def start(cycle=2):
 				if globals.LEARN_MODE and not globals.SCAN_PENDING :
 					thread.start_new_thread( scanner, ('learn',))
 
-				if not globals.SCAN_PENDING and (int(time.time()) - globals.SCAN_LAST) > globals.SCAN_FREQUENCY :
+				if not globals.SCAN_PENDING and (current_time - globals.SCAN_LAST) > globals.SCAN_FREQUENCY :
 					thread.start_new_thread( scanner, ('scanner',))
+
+				if (current_time - globals.NOWPLAYING_LAST)>globals.NOWPLAYING_FREQUENCY/2 and not globals.LEARN_MODE:
+					for uuid in globals.GCAST_DEVICES :
+						globals.GCAST_DEVICES[uuid].sendNowPlaying_heartbeat()
+					globals.NOWPLAYING_LAST = current_time
 
 				if globals.LEARN_MODE :
 					time.sleep(0.2)
@@ -519,7 +535,7 @@ def start(cycle=2):
 		shutdown()
 
 
-def read_socket(name):
+def read_socket(cycle):
 	while True :
 		try:
 			global JEEDOM_SOCKET_MESSAGE
@@ -607,8 +623,7 @@ def read_socket(name):
 		except Exception as e:
 			logging.error("SOCKET-READ------Exception on socket : %s" % str(e))
 			logging.debug(traceback.format_exc())
-		time.sleep(0.3)
-
+		time.sleep(cycle)
 
 def scanner(name):
 	try:
@@ -762,12 +777,17 @@ parser.add_argument("--socketport", help="Socket Port", type=str)
 parser.add_argument("--sockethost", help="Socket Host", type=str)
 parser.add_argument("--daemonname", help="Daemon Name", type=str)
 parser.add_argument("--scantimeout", help="GoogleCast scan timeout", type=str)
-parser.add_argument("--cycle", help="Cycle to send event", type=str)
+parser.add_argument("--scanfrequency", help="Frequency for scan", type=str)
+parser.add_argument("--cycle", help="Cycle to send/receive event", type=str)
+parser.add_argument("--cyclemain", help="Cycle for main loop", type=str)
+parser.add_argument("--cyclefactor", help="Factor for event cycles (default=1)", type=str)
 args = parser.parse_args()
 
 
 if args.scantimeout:
 	globals.SCAN_TIMEOUT = int(args.scantimeout)
+if args.scanfrequency:
+	globals.SCAN_FREQUENCY = int(args.scanfrequency)
 if args.loglevel:
 	globals.log_level = args.loglevel
 if args.pidfile:
@@ -778,6 +798,10 @@ if args.apikey:
 	globals.apikey = args.apikey
 if args.cycle:
 	globals.cycle = float(args.cycle)
+if args.cyclemain:
+	globals.cycle_main = float(args.cyclemain)
+if args.cyclefactor:
+	globals.cycle_factor = int(args.cyclefactor)
 if args.socketport:
 	globals.socketport = args.socketport
 if args.sockethost:
@@ -785,21 +809,31 @@ if args.sockethost:
 if args.daemonname:
 	globals.daemonname = args.daemonname
 
+if globals.cycle_factor==0:
+	globals.cycle_factor=1
+globals.NOWPLAYING_FREQUENCY = int(globals.NOWPLAYING_FREQUENCY*globals.cycle_factor)
+globals.SCAN_FREQUENCY = int(globals.SCAN_FREQUENCY*globals.cycle_factor)
+
 globals.socketport = int(globals.socketport)
-globals.cycle = float(globals.cycle)
+globals.cycle = float(globals.cycle*globals.cycle_factor)
+globals.cycle_main = float(globals.cycle_main*globals.cycle_factor)
+
+#globals.cycle_factor = int(globals.cycle_factor)
 
 jeedom_utils.set_log_level(globals.log_level)
 logging.info('------------------------------------------------------')
 logging.info('------------------------------------------------------')
 logging.info('GLOBAL------STARTING googlecast')
 logging.info('GLOBAL------Scan Timeout : '+str(globals.SCAN_TIMEOUT))
+logging.info('GLOBAL------Scan Frequency : '+str(globals.SCAN_FREQUENCY))
 logging.info('GLOBAL------Log level : '+str(globals.log_level))
 logging.info('GLOBAL------Socket port : '+str(globals.socketport))
 logging.info('GLOBAL------Socket host : '+str(globals.sockethost))
 logging.info('GLOBAL------PID file : '+str(globals.pidfile))
 logging.info('GLOBAL------Apikey : '+str(globals.apikey))
 logging.info('GLOBAL------Callback : '+str(globals.callback))
-logging.info('GLOBAL------Cycle : '+str(globals.cycle))
+logging.info('GLOBAL------Event cycle : '+str(globals.cycle))
+logging.info('GLOBAL------Main cycle : '+str(globals.cycle_main))
 logging.info('------------------------------------------------------')
 
 signal.signal(signal.SIGINT, handler)
@@ -814,7 +848,7 @@ try:
 	else :
 		logging.info('GLOBAL------Network communication to jeedom OK.')
 	jeedom_socket = jeedom_socket(port=globals.socketport,address=globals.sockethost)
-	start(2)
+	start(globals.cycle_main)
 
 except Exception as e:
 	logging.error('GLOBAL------Fatal error : '+str(e))

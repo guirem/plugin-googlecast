@@ -1,21 +1,25 @@
 rm -f /tmp/dependancycheck_googlecast
-if [[ $(python3 -V) != Python* ]]; then
+if ! python3 -V 2>&1 | grep -q "Python 3"; then
     echo "nok"
     exit 0
 fi
 
 pip3cmd=$(compgen -ac | grep -E '^pip-?3' | sort -r | head -1)
 if [[ !  -z  $pip3cmd  ]]; then     # pip3 found
-    $(sudo  $pip3cmd list | grep -E "zeroconf|requests|protobuf" | wc -l > /tmp/dependancycheck_googlecast)
-
-    content=$(cat /tmp/dependancycheck_googlecast)
-    if [ "3" == "$content" ];then
-        echo "ok"
-    else
-        echo "nok"
+    $(sudo $pip3cmd list 2>/dev/null | grep -E "zeroconf|requests|protobuf" | wc -l > /tmp/dependancycheck_googlecast)
+    content=$(cat /tmp/dependancycheck_googlecast 2>/dev/null)
+    if [[ -z  $content  ]]; then
+        $content = 0
     fi
-    rm -f /tmp/dependancycheck_googlecast
-    exit 0
+    if [ "$content" -lt 3  ];then
+        echo "nok"
+        rm -f /tmp/dependancycheck_googlecast
+        exit 0
+    fi
 else
     echo "nok"
+    exit 0
 fi
+echo "ok"
+rm -f /tmp/dependancycheck_googlecast
+exit 0

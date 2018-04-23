@@ -22,16 +22,15 @@ NOWPLAYING_DEVICES = {}
 GCAST_DEVICES = {}
 
 NOWPLAYING_TIMEOUT = 15*60  # 15 minutes
-NOWPLAYING_FREQUENCY = 15     # 30 seconds
+NOWPLAYING_FREQUENCY = 15     # 15 seconds
+NOWPLAYING_LAST = 0
 
 LEARN_BEGIN = int(time.time())
 LEARN_MODE = False          # is learn mode ?
 LEARN_TIMEOUT = 60
 
-HEARTBEAT_FREQUENCY = 300   # 5 minutes
+HEARTBEAT_FREQUENCY = 600   # 10 minutes
 LAST_BEAT = int(time.time())
-
-READ_FREQUENCY = 60         # in seconds
 
 SCAN_FREQUENCY = 60         # in seconds
 SCAN_PENDING = False        # is scanner running?
@@ -45,11 +44,14 @@ LOSTDEVICE_RESENDNOTIFDELAY = 60*5        # not used yet
 
 IFACE_DEVICE = 0
 
+cycle_factor = 2
+cycle = 0.5
+cycle_main = 2
+
 log_level = "info"
 pidfile = '/tmp/googlecast.pid'
 apikey = ''
 callback = ''
-cycle = 0.3
 daemonname=''
 socketport=55012
 sockethost='127.0.0.1'

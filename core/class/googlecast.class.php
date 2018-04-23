@@ -587,6 +587,7 @@ class googlecast extends eqLogic {
 		$cmd .= ' --callback ' . network::getNetworkAccess('internal', 'proto:127.0.0.1:port:comp') . '/plugins/googlecast/core/php/googlecast.api.php';
 		$cmd .= ' --apikey ' . jeedom::getApiKey('googlecast');
 		$cmd .= ' --daemonname local';
+		$cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', 'googlecast', '1');
 		log::add('googlecast', 'info', 'Lancement démon googlecast : ' . $cmd);
 		$result = exec($cmd . ' >> ' . log::getPathToLog('googlecast_local') . ' 2>&1 &');
 		$i = 0;

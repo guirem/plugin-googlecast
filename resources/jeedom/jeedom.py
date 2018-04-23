@@ -19,7 +19,7 @@ import logging
 import threading
 import _thread as thread
 import requests
-import datetime
+from datetime import datetime
 import collections
 import os
 from os.path import join
@@ -50,7 +50,7 @@ class jeedom_com():
 				resend_changes = threading.Timer(self.cycle, self.send_changes_async)
 				resend_changes.start()
 				return
-			start_time = datetime.datetime.now()
+			start_time = datetime.now()
 			changes = self.changes
 			self.changes = {}
 			logging.debug('SENDER------Send to jeedom : '+str(changes))
@@ -65,7 +65,7 @@ class jeedom_com():
 				i = i + 1
 			if r.status_code != requests.codes.ok:
 				logging.error('SENDER------Error on send request to jeedom, return code %s' % (str(r.status_code),))
-			dt = datetime.datetime.now() - start_time
+			dt = datetime.now() - start_time
 			ms = (dt.days * 24 * 60 * 60 + dt.seconds) * 1000 + dt.microseconds / 1000.0
 			timer_duration = self.cycle - ms
 			if timer_duration < 0.1:
