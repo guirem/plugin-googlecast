@@ -40,7 +40,7 @@ SCAN_TIMEOUT = 10           # timout of gcast scan
 DISCOVERY_FREQUENCY = 14400         # every 4 hours
 DISCOVERY_LAST = int(time.time())   # when last started
 
-LOSTDEVICE_RESENDNOTIFDELAY = 60*5        # not used yet
+LOSTDEVICE_RESENDNOTIFDELAY = 60*15        # Resent offline msg after 15 minutes
 
 IFACE_DEVICE = 0
 

@@ -12,8 +12,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
+#
+# pylint: disable=C
+# pylint: disable=R
+# pylint: disable=W
+# pylint: disable=E
 
-import subprocess
 import os,re
 import logging
 import sys
@@ -23,21 +27,33 @@ from datetime import datetime
 import signal
 import json
 import traceback
-import select
-
-import globals
-from threading import Timer
 import _thread as thread
 
+import globals
+
+# check imports
 try:
 	import pychromecast.pychromecast as pychromecast
+except ImportError:
+	logging.error("ERROR: Main pychromecast module not loaded !")
+	logging.error(traceback.format_exc())
+	sys.exit(1)
+
+try:
 	import pychromecast.pychromecast.controllers.dashcast as dashcast
-	import pychromecast.pychromecast.controllers.youtube as youtube
 	import pychromecast.pychromecast.controllers.plex as plex
 	import pychromecast.pychromecast.controllers.spotify as Spotify
 except ImportError:
-	print("Error: importing pychromecast module")
-	sys.exit(1)
+    logging.error("ERROR: One or several pychromecast controllers are not loaded !")
+    print(traceback.format_exc())
+    pass
+
+try:
+	import pychromecast.pychromecast.customcontrollers.youtube as youtube
+except ImportError:
+    logging.error("ERROR: Custom controller not loaded !")
+    logging.error(traceback.format_exc())
+    pass
 
 try:
 	from jeedom.jeedom import *
@@ -45,7 +61,9 @@ except ImportError:
 	print("Error: importing module from jeedom folder")
 	sys.exit(1)
 
+# ------------------------
 
+# class JeedomChromeCast
 class JeedomChromeCast :
 	def __init__(self, gcast, options=None, scan_mode=False):
 		self.uuid = str(gcast.device.uuid)
@@ -53,11 +71,10 @@ class JeedomChromeCast :
 		self.gcast = gcast
 		self.previous_status = {"uuid" : self.uuid, "online" : False}
 		self.now_playing = False
-		self.now_playing_thread = False
 		self.online = True
-		self.being_shutdown = False
 		self.scan_mode = scan_mode
 		if scan_mode == False :
+			self.being_shutdown = False
 			self.customplayer = None
 			self.customplayername = ""
 			self.nowplaying_lastupdated = 0
@@ -83,9 +100,10 @@ class JeedomChromeCast :
 		return self.gcast.device
 
 	def startNowPlaying(self):
-		if self.now_playing == False and self.online == True and self.now_playing_thread == False:
+		if self.now_playing == False and self.online == True :
 			logging.debug("JEEDOMCHROMECAST------ Starting monitoring of " + self.uuid)
 			self.now_playing = True
+			self.sendNowPlaying(force=True)
 
 	def stopNowPlaying(self):
 		logging.debug("JEEDOMCHROMECAST------ Stopping monitoring of " + self.uuid)
@@ -129,8 +147,8 @@ class JeedomChromeCast :
 		self.sendDeviceStatus(False)
 
 	def disconnect(self):
-		self.being_shutdown = True
 		if self.scan_mode==False :
+			self.being_shutdown = True
 			self._internal_refresh_status(True)
 			if self.now_playing == True :
 				self._internal_send_now_playing()
@@ -147,28 +165,32 @@ class JeedomChromeCast :
 			if params and 'forcereload' in params :
 				forceReload = True
 			if not self.customplayer or self.customplayername != playername or forceReload==True :
-				if playername == 'web' :
-					player = dashcast.DashCastController()
-					self.gcast.register_handler(player)
-				elif playername == 'youtube' :
-					player = youtube.YouTubeController()
-					self.gcast.register_handler(player)
-				elif playername == 'spotify' :
-					player = spotify.SpotifyController(token)
-					self.gcast.register_handler(player)
-				elif playername == 'plex' :
-					player = plex.PlexController()
-				else :
-					player = self.gcast.media_controller
-				logging.debug("JEEDOMCHROMECAST------ Initiating player " + str(player.namespace))
-				self.customplayer = player
-				self.customplayername = playername
-				if params and 'waitbeforequit' in params :
-					time.sleep(params['waitbeforequit'])
-				if params and 'quitapp' in params :
-					self.gcast.quit_app()
-				if params and 'wait' in params :
-					time.sleep(params['wait'])
+				try:
+					if playername == 'web' :
+						player = dashcast.DashCastController()
+						self.gcast.register_handler(player)
+					elif playername == 'youtube' :
+						player = youtube.YouTubeController()
+						self.gcast.register_handler(player)
+					elif playername == 'spotify' :
+						player = spotify.SpotifyController(token)
+						self.gcast.register_handler(player)
+					elif playername == 'plex' :
+						player = plex.PlexController()
+					else :
+						player = self.gcast.media_controller
+					logging.debug("JEEDOMCHROMECAST------ Initiating player " + str(player.namespace))
+					self.customplayer = player
+					self.customplayername = playername
+					if params and 'waitbeforequit' in params :
+						time.sleep(params['waitbeforequit'])
+					if params and 'quitapp' in params :
+						self.gcast.quit_app()
+					if params and 'wait' in params :
+						time.sleep(params['wait'])
+				except Exception :
+					player = None
+					pass
 			self.sendNowPlaying(force=True)
 			return self.customplayer
 		return None
@@ -263,14 +285,14 @@ class JeedomChromeCast :
 		if force==True :
 			self._internal_send_now_playing()
 		elif self.now_playing==True:
-			logging.debug("JEEDOMCHROMECAST------ NOW PLAYGIN " + str(int(time.time())-self.nowplaying_lastupdated))
+			logging.debug("JEEDOMCHROMECAST------ NOW PLAYING " + str(int(time.time())-self.nowplaying_lastupdated))
 			if (int(time.time())-self.nowplaying_lastupdated)>=globals.NOWPLAYING_FREQUENCY :
 				self._internal_trigger_now_playing_update()
 
 	def sendNowPlaying_heartbeat(self):
 		if self.now_playing==True:
 			if (int(datetime.utcnow().timestamp())-self.nowplaying_lastupdated)>=globals.NOWPLAYING_FREQUENCY :
-				logging.debug("JEEDOMCHROMECAST------ NOW PLAYGIN heartbeat " + str(int(datetime.utcnow().timestamp())-self.nowplaying_lastupdated))
+				logging.debug("JEEDOMCHROMECAST------ NOW PLAYING heartbeat " + str(int(datetime.utcnow().timestamp())-self.nowplaying_lastupdated))
 				self._internal_trigger_now_playing_update()
 
 	def _internal_send_now_playing(self):
@@ -652,7 +674,6 @@ def scanner(name):
 			uuid = cast.uuid
 			current_time = int(time.time())
 
-			# starting event thread
 			if uuid in globals.KNOWN_DEVICES :
 				globals.KNOWN_DEVICES[uuid]['online'] = True
 				globals.KNOWN_DEVICES[uuid]['lastScan'] = current_time
@@ -702,32 +723,30 @@ def scanner(name):
 					globals.KNOWN_DEVICES[known]['online'] = False
 					globals.KNOWN_DEVICES[known]['lastOfflineSent'] = current_time
 					globals.KNOWN_DEVICES[known]['status'] = status = {
-						"uuid" : known,
-						"friendly_name" : "",
-						"is_stand_by" :  False,
-						"app_id" : "",
-						"display_name" : "",
-						"status_text" : "",
-						"idle" : False,
+						"uuid" : known, "friendly_name" : "",
+						"is_stand_by" :  False, "is_active_input" : False,
+						"app_id" : "", "display_name" : "", "status_text" : "",
+						"is_busy" : False,
 					}
 					#globals.JEEDOM_COM.add_changes('devices::'+known, globals.KNOWN_DEVICES[known])
 					globals.JEEDOM_COM.send_change_immediate_device(known, globals.KNOWN_DEVICES[known])
 					globals.KNOWN_DEVICES[known]['lastSent'] = current_time
 					if known in globals.NOWPLAYING_DEVICES:
+						del globals.NOWPLAYING_DEVICES[known]
 						data = {
 							"uuid" : known,
 							"online" : False, "friendly_name" : "",
-							"is_active_input" : False, "is_stand_by" :  False,
+							"is_active_input" : False, "is_stand_by" : False,
 							"app_id" : "",	"display_name" : "", "status_text" : "",
-							"idle" : False,	"title" : "",
-							"album_artist" : "","metadata_type" : "",
-							"album_name" : "",	"current_time" : 0,
-							"artist" : "",	"image" : None,
-							'series_title': "",  'season': "", 'episode': "",
+							"is_busy" : False, "title" : "",
+							"album_artist" : "", "metadata_type" : "",
+							"album_name" : "", "current_time" : 0,
+							"artist" : "", "image" : None,
+							'series_title': "", 'season': "", 'episode': "",
 							"stream_type" : "",	"track" : "",
-							"player_state" : "","supported_media_commands" : 0,
-							"supports_pause" : "",	'duration': 0,
-							'content_type': "",	'idle_reason': ""
+							"player_state" : "", "supported_media_commands" : 0,
+							"supports_pause" : "", "duration": 0,
+							"content_type": "", "idle_reason": ""
 						}
 						globals.JEEDOM_COM.send_change_immediate({'uuid' :  known, 'nowplaying':data});
 

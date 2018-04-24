@@ -22,14 +22,10 @@ import requests
 from datetime import datetime
 import collections
 import os
-from os.path import join
 import socket
 from multiprocessing import Queue
 import socketserver as SocketServer
 from socketserver  import (TCPServer, StreamRequestHandler)
-import signal
-import unicodedata
-
 
 # ------------------------------------------------------------------------------
 

@@ -1,0 +1,6 @@
+[MESSAGES CONTROL]
+disable=unused-argument,
+        missing-docstring,
+        too-many-public-methods,
+        invalid-name
+        
