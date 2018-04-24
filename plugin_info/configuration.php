@@ -30,6 +30,16 @@ if (!isConnect('admin')) {
 	        <input class="configKey form-control" data-l1key="socketport" placeholder="{{55012}}" />
 	    </div>
     </div>
+	<div class="form-group">
+	    <label class="col-lg-4 control-label">{{Fréquence de rafraissement}}</label>
+	    <div class="col-lg-2">
+			<select class="configKey form-control" data-l1key="cyclefactor">
+			    <option value="1">{{Normal (recommandé)}}</option>
+			    <option value="2">{{Basse}}</option>
+			    <option value="3">{{Très basse}}</option>
+			</select>
+	    </div>
+    </div>
 	<legend><i class="fa fa-envelope-o"></i> {{Notifications}}</legend>
 	<div class="form-group">
 	    <label class="col-lg-4 control-label">{{Désactiver notif pour nouveaux GoogleCast}}</label>

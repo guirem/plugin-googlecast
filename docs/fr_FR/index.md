@@ -51,6 +51,7 @@ Après téléchargement du plugin :
 
 Les paramêtres de configuration n'ont généralement pas besoin d'être modifiés
 - Port du socket interne de communication. Ne modifier que si nécessaire (ex: s'il est déjà pris par un autres plugin)
+- Fréquence de rafraîchissement. A ne modifier uniquement si la fréquence normale à un impact important sur les performances globales
 - Désactiver notif pour nouveaux GoogleCast : ce sont des notifications lors de la découverte de nouveaux Google Cast non configurés
 
 Configuration des équipements
