@@ -6,7 +6,7 @@ echo "-- Updating repo..."
 sudo apt-get update
 echo 20 > /tmp/dependancy_googlecast_in_progress
 echo ""
-echo "-- Installation of python3 if not already installed"
+echo "-- Installation of python3 and dependancies"
 sudo apt-get install -y python3 python-dev build-essential
 echo ""
 echo "-- Installed version of Python :"
@@ -14,7 +14,7 @@ python3 -V
 echo 50 > /tmp/dependancy_googlecast_in_progress
 echo ""
 echo "-- Installation of pip for python3 and necessary libraries"
-sudo apt-get install -y python-requests python3-pip
+sudo apt-get install -y python3-dev python-requests python3-pip
 echo 75 > /tmp/dependancy_googlecast_in_progress
 # get pip3 command (different depending of OS such as raspberry)
 pip3cmd=$(compgen -ac | grep -E '^pip-?3' | sort -r | head -1)
@@ -40,7 +40,7 @@ if [[ !  -z  $pip3cmd  ]]; then     # pip3 found
     cat /tmp/dependancy_googlecast
     echo 100 > /tmp/dependancy_googlecast_in_progress
     echo ""
-    echo "-- Everything is successfully installed!"
+    echo "-- Installation of dependencies is done !"
     rm -f /tmp/dependancy_googlecast
 else
     echo ""
