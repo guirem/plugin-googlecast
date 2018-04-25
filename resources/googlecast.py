@@ -76,6 +76,7 @@ class JeedomChromeCast :
         self.scan_mode = scan_mode
         if scan_mode == False :
             self.being_shutdown = False
+            self.is_recovering = False
             self.customplayer = None
             self.customplayername = ""
             self.nowplaying_lastupdated = 0
@@ -100,9 +101,10 @@ class JeedomChromeCast :
     def device(self):
         return self.gcast.device
 
+    @property
     def is_connected(self):
         try :
-            if self.gcast.socket_client or self.gcast.status is None :
+            if self.gcast.socket_client is not None or self.gcast.status is not None or self.online==True or self.is_recovering==True :
                 return True
         except Exception :
             return False
@@ -128,15 +130,20 @@ class JeedomChromeCast :
             self._internal_send_now_playing()
 
     def new_connection_status(self, new_status):
-        logging.debug("JEEDOMCHROMECAST------ Connection " + str(new_status.status))
+        # CONNECTING / CONNECTED / DISCONNECTED / FAILED / LOST
+        logging.debug("JEEDOMCHROMECAST------ Connexion change event " + str(new_status.status))
         self.online = False
         if new_status.status == "DISCONNECTED" and self.being_shutdown==False:
             self.disconnect()
             logging.info("JEEDOMCHROMECAST------ Chromecast has beend disconnected : " + self.friendly_name)
         if new_status.status == "LOST" :
+            self.is_recovering = True
             self._internal_refresh_status(True)
-        elif new_status.status == "CONNECTED" :    # is reborn...
+        if new_status.status == "CONNECTING" or new_status.status == "FAILED" :
+            self.is_recovering = True
+        if new_status.status == "CONNECTED" :    # is reborn...
             self.online = True
+            self.is_recovering = False
             if self.uuid not in globals.GCAST_DEVICES :
                 globals.GCAST_DEVICES[self.uuid] = self
             self._internal_refresh_status(True)
@@ -156,6 +163,7 @@ class JeedomChromeCast :
 
     def disconnect(self):
         if self.scan_mode==False :
+            self.is_recovering = False
             self.being_shutdown = True
             self._internal_refresh_status(True)
             if self.now_playing == True :
@@ -244,8 +252,8 @@ class JeedomChromeCast :
                 "volume_level" : int(self.gcast.status.volume_level*100),
                 "volume_muted" : self.gcast.status.volume_muted,
                 "app_id" : self.gcast.status.app_id,
-                "display_name" : self.gcast.status.display_name,
-                "status_text" : self.gcast.status.status_text,
+                "display_name" : self.gcast.status.display_name if self.gcast.status.display_name is not None else globals.DEFAULT_NODISPLAY,
+                "status_text" : self.gcast.status.status_text if self.gcast.status.status_text!="" else globals.DEFAULT_NOSTATUS,
                 "is_busy" : not self.gcast.is_idle,
             }
             return status
@@ -253,8 +261,8 @@ class JeedomChromeCast :
             return {
                 "uuid" : self.uuid,
                 "friendly_name" : "", "is_stand_by" :  False, "is_active_input" : False,
-                "app_id" : "",    "display_name" : "", "status_text" : "",
-                "status_text" : "", "is_busy" : False,
+                "display_name" : globals.DEFAULT_NODISPLAY, "status_text" : globals.DEFAULT_NOSTATUS,
+                "app_id" : "", "is_busy" : False,
             }
 
 
@@ -333,8 +341,8 @@ class JeedomChromeCast :
                 "volume_level" :  int(self.gcast.status.volume_level*100),     #"{0:.2f}".format(cast.status.volume_level),
                 "volume_muted" : self.gcast.status.volume_muted,
                 "app_id" : self.gcast.status.app_id,
-                "display_name" : self.gcast.status.display_name,
-                "status_text" : self.gcast.status.status_text,
+                "display_name" : self.gcast.status.display_name if self.gcast.status.display_name is not None else globals.DEFAULT_NODISPLAY,
+                "status_text" : self.gcast.status.status_text if self.gcast.status.status_text!="" else globals.DEFAULT_NOSTATUS,
                 "is_busy" : not self.gcast.is_idle,
                 "title" : playStatus.title,
                 "album_artist" : playStatus.album_artist,
@@ -352,9 +360,9 @@ class JeedomChromeCast :
                 "player_state" : playStatus.player_state,
                 "supported_media_commands" : playStatus.supported_media_commands,
                 "supports_pause" : playStatus.supports_pause,
-                'duration': playStatus.duration, #'{0:.0f}'.format(playStatus.duration),
-                'content_type': playStatus.content_type,
-                'idle_reason': playStatus.idle_reason
+                "duration": playStatus.duration, #'{0:.0f}'.format(playStatus.duration),
+                "content_type": playStatus.content_type,
+                "idle_reason": playStatus.idle_reason
             }
             globals.JEEDOM_COM.send_change_immediate({'uuid' :  uuid, 'nowplaying':data});
         else :
@@ -362,16 +370,16 @@ class JeedomChromeCast :
                 "uuid" : uuid,
                 "online" : False, "friendly_name" : "",
                 "is_active_input" : False, "is_stand_by" :  False,
-                "app_id" : "",    "display_name" : "", "status_text" : "",
-                "is_busy" : False,    "title" : "",
+                "app_id" : "", "display_name" : globals.DEFAULT_NODISPLAY, "status_text" : globals.DEFAULT_NOSTATUS,
+                "is_busy" : False, "title" : "",
                 "album_artist" : "","metadata_type" : "",
-                "album_name" : "",    "current_time" : 0,
-                "artist" : "",    "image" : None,
-                'series_title': "",  'season': "", 'episode': "",
-                "stream_type" : "",    "track" : "",
-                "player_state" : "","supported_media_commands" : 0,
-                "supports_pause" : "",    'duration': 0,
-                'content_type': "",    'idle_reason': ""
+                "album_name" : "", "current_time" : 0,
+                "artist" : "", "image" : None,
+                "series_title": "", "season": "", "episode": "",
+                "stream_type" : "", "track" : "",
+                "player_state" : "", "supported_media_commands" : 0,
+                "supports_pause" : "", "duration": 0,
+                'content_type': "", "idle_reason": ""
             }
             globals.JEEDOM_COM.send_change_immediate({'uuid' :  uuid, 'nowplaying':data});
 
@@ -690,7 +698,6 @@ def scanner(name):
             logging.debug("SCANNER------ No need to scan network, all devices are present")
             casts = list(globals.GCAST_DEVICES.values())
 
-        uuid_list = [cast.uuid for cast in casts]
         uuid_newlyadded = []
         for cast in casts :
             uuid = cast.uuid
@@ -729,61 +736,65 @@ def scanner(name):
                     globals.JEEDOM_COM.send_change_immediate({'discovery' : 1, 'uuid' : uuid, 'friendly_name' : cast.friendly_name})
                     globals.DISCOVERY_LAST = current_time
 
-                cast.gcast.disconnect()
-                del cast
-
-        for known in globals.KNOWN_DEVICES :
-            current_time = int(time.time())
-            if known not in uuid_list :
-                if known in globals.GCAST_DEVICES and globals.GCAST_DEVICES[known].is_connected()==False :
-                    logging.debug("SCANNER------No connection to device " + known)
-                    if globals.KNOWN_DEVICES[known]['online']==True :
-                        logging.info("SCANNER------Connection lost to device " + known)
-
-                    globals.GCAST_DEVICES[known].disconnect()
-
-                    globals.KNOWN_DEVICES[known]['lastScan'] = current_time
-                    if ( globals.KNOWN_DEVICES[known]['online']==True or (current_time-globals.KNOWN_DEVICES[known]['lastOfflineSent'])>globals.LOSTDEVICE_RESENDNOTIFDELAY ) :
-                        globals.KNOWN_DEVICES[known]['online'] = False
-                        globals.KNOWN_DEVICES[known]['lastOfflineSent'] = current_time
-                        globals.KNOWN_DEVICES[known]['status'] = status = {
-                            "uuid" : known, "friendly_name" : "",
-                            "is_stand_by" :  False, "is_active_input" : False,
-                            "app_id" : "", "display_name" : "", "status_text" : "",
-                            "is_busy" : False,
-                        }
-                        #globals.JEEDOM_COM.add_changes('devices::'+known, globals.KNOWN_DEVICES[known])
-                        globals.JEEDOM_COM.send_change_immediate_device(known, globals.KNOWN_DEVICES[known])
-                        globals.KNOWN_DEVICES[known]['lastSent'] = current_time
-                        if known in globals.NOWPLAYING_DEVICES:
-                            del globals.NOWPLAYING_DEVICES[known]
-                            data = {
-                                "uuid" : known,
-                                "online" : False, "friendly_name" : "",
-                                "is_active_input" : False, "is_stand_by" : False,
-                                "app_id" : "",    "display_name" : "", "status_text" : "",
-                                "is_busy" : False, "title" : "",
-                                "album_artist" : "", "metadata_type" : "",
-                                "album_name" : "", "current_time" : 0,
-                                "artist" : "", "image" : None,
-                                'series_title': "", 'season': "", 'episode': "",
-                                "stream_type" : "",    "track" : "",
-                                "player_state" : "", "supported_media_commands" : 0,
-                                "supports_pause" : "", "duration": 0,
-                                "content_type": "", "idle_reason": ""
-                            }
-                            globals.JEEDOM_COM.send_change_immediate({'uuid' :  known, 'nowplaying':data});
-
-            else :
-                globals.KNOWN_DEVICES[known]["lastScan"] = current_time
-
         # memory cleaning
         if rawcasts is not None :
             for cast in casts :
                 if cast.uuid not in uuid_newlyadded :
                     cast.disconnect()
         del rawcasts, casts
-        del uuid_newlyadded, uuid_list
+        del uuid_newlyadded
+
+        # loop through all known devices to find those not connected
+        for known in globals.KNOWN_DEVICES :
+            current_time = int(time.time())
+            is_not_available = True
+
+            if known in globals.GCAST_DEVICES :
+                if globals.GCAST_DEVICES[known].is_connected==True :
+                    is_not_available = False
+                else :
+                    # something went wrong so disconnect completely
+                    globals.GCAST_DEVICES[known].disconnect()
+
+            if is_not_available==True :
+                logging.debug("SCANNER------No connection to device " + known)
+                if globals.KNOWN_DEVICES[known]['online']==True :
+                    logging.info("SCANNER------Connection lost to device " + known)
+
+                globals.KNOWN_DEVICES[known]['lastScan'] = current_time
+                if ( globals.KNOWN_DEVICES[known]['online']==True or (current_time-globals.KNOWN_DEVICES[known]['lastOfflineSent'])>globals.LOSTDEVICE_RESENDNOTIFDELAY ) :
+                    globals.KNOWN_DEVICES[known]['online'] = False
+                    globals.KNOWN_DEVICES[known]['lastOfflineSent'] = current_time
+                    globals.KNOWN_DEVICES[known]['status'] = status = {
+                        "uuid" : known, "friendly_name" : "",
+                        "is_stand_by" : False, "is_active_input" : False,
+                        "display_name" : globals.DEFAULT_NODISPLAY, "status_text" : globals.DEFAULT_NOSTATUS,
+                        "app_id" : "", "is_busy" : False,
+                    }
+                    #globals.JEEDOM_COM.add_changes('devices::'+known, globals.KNOWN_DEVICES[known])
+                    globals.JEEDOM_COM.send_change_immediate_device(known, globals.KNOWN_DEVICES[known])
+                    globals.KNOWN_DEVICES[known]['lastSent'] = current_time
+                    if known in globals.NOWPLAYING_DEVICES:
+                        del globals.NOWPLAYING_DEVICES[known]
+                        data = {
+                            "uuid" : known,
+                            "online" : False, "friendly_name" : "",
+                            "is_active_input" : False, "is_stand_by" : False,
+                            "display_name" : globals.DEFAULT_NODISPLAY, "status_text" : globals.DEFAULT_NOSTATUS,
+                            "app_id" : "", "is_busy" : False, "title" : "",
+                            "album_artist" : "", "metadata_type" : "",
+                            "album_name" : "", "current_time" : 0,
+                            "artist" : "", "image" : None,
+                            'series_title': "", 'season': "", 'episode': "",
+                            "stream_type" : "", "track" : "",
+                            "player_state" : "", "supported_media_commands" : 0,
+                            "supports_pause" : "", "duration": 0,
+                            "content_type": "", "idle_reason": ""
+                        }
+                        globals.JEEDOM_COM.send_change_immediate({'uuid' :  known, 'nowplaying':data});
+
+            else :
+                globals.KNOWN_DEVICES[known]["lastScan"] = current_time
 
     except Exception as e:
         logging.error("SCANNER------Exception on scanner : %s" % str(e))
@@ -832,6 +843,7 @@ parser.add_argument("--scanfrequency", help="Frequency for scan", type=str)
 parser.add_argument("--cycle", help="Cycle to send/receive event", type=str)
 parser.add_argument("--cyclemain", help="Cycle for main loop", type=str)
 parser.add_argument("--cyclefactor", help="Factor for event cycles (default=1)", type=str)
+parser.add_argument("--defaultstatus", help="Returned display string", type=str)
 args = parser.parse_args()
 
 
@@ -859,6 +871,8 @@ if args.sockethost:
     globals.sockethost = args.sockethost
 if args.daemonname:
     globals.daemonname = args.daemonname
+if args.defaultstatus:
+    globals.DEFAULT_NOSTATUS = args.defaultstatus
 
 if globals.cycle_factor==0:
     globals.cycle_factor=1
@@ -885,6 +899,7 @@ logging.info('GLOBAL------Apikey : '+str(globals.apikey))
 logging.info('GLOBAL------Callback : '+str(globals.callback))
 logging.info('GLOBAL------Event cycle : '+str(globals.cycle))
 logging.info('GLOBAL------Main cycle : '+str(globals.cycle_main))
+logging.info('GLOBAL------Default status message : '+str(globals.DEFAULT_NOSTATUS))
 logging.info('------------------------------------------------------')
 
 signal.signal(signal.SIGINT, handler)

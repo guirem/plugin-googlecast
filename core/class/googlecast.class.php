@@ -266,6 +266,23 @@ class googlecast extends eqLogic {
 			$cmd->setName(__('Statut', __FILE__));
 			$cmd->setConfiguration('googlecast_cmd', true);
 			$cmd->setDisplay('showNameOndashboard', false);
+            //$cmd->setDisplay('icon', '<i class="icon techno-tv"></i>');
+			$cmd->setOrder($order++);
+		}
+		$cmd->setType('info');
+		$cmd->setSubType('string');
+		$cmd->setEqLogic_id($this->getId());
+		$cmd->setDisplay('generic_type', 'GENERIC');
+		$cmd->save();
+
+		$cmd = $this->getCmd(null, 'display_name');
+		if (!is_object($cmd)) {
+			$cmd = new googlecastCmd();
+			$cmd->setLogicalId('display_name');
+			$cmd->setIsVisible(0);
+			$cmd->setName(__('Staut Name', __FILE__));
+			$cmd->setConfiguration('googlecast_cmd', true);
+			$cmd->setDisplay('showNameOndashboard', false);
 			$cmd->setOrder($order++);
 		}
 		$cmd->setType('info');
@@ -588,6 +605,7 @@ class googlecast extends eqLogic {
 		$cmd .= ' --apikey ' . jeedom::getApiKey('googlecast');
 		$cmd .= ' --daemonname local';
 		$cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', 'googlecast', '1');
+        $cmd .= ' --defaultstatus ' . "'". config::byKey('defaultsatus', 'googlecast', "&nbsp;") ."'";
 		log::add('googlecast', 'info', 'Lancement démon googlecast : ' . $cmd);
 		$result = exec($cmd . ' >> ' . log::getPathToLog('googlecast_local') . ' 2>&1 &');
 		$i = 0;

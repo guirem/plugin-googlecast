@@ -42,7 +42,8 @@ DISCOVERY_LAST = int(time.time())   # when last started
 
 LOSTDEVICE_RESENDNOTIFDELAY = 60*15        # Resent offline msg after 15 minutes
 
-IFACE_DEVICE = 0
+DEFAULT_NOSTATUS = ""
+DEFAULT_NODISPLAY = ""
 
 cycle_factor = 2
 cycle = 0.5
