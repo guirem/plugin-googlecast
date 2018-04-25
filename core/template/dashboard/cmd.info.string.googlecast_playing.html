@@ -98,8 +98,7 @@
 				type: "POST", url: 'plugins/googlecast/core/php/googlecast.ajax.php',
 				data: {	action: "nowplaying", uuid: "#state#" },
 				dataType: 'json', global : false,
-				success: function (data) {},
-				error: function (data) {}
+				timeout: 3000
 			 });
 		};
 	googlecastRefreshNowPlaying_#id#();
