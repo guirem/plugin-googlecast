@@ -134,11 +134,10 @@ Commandes personnalisées
 - subtitles_mime: str - mimetype of subtitles (optional, default='text/vtt').
 - subtitle_id: int - id of subtitle to be loaded (optional, default=1).
 
-ex : value='http://bit.ly/2JzYtfX,video/mp4','video/mp4',title='Video',
-   thumb=None,current_time=0,autoplay=True,
-   stream_type=BUFFERED,metadata=None,
-   subtitles=None,subtitles_lang='fr-FR',
-   subtitles_mime='text/vtt',subtitle_id=1
+ex : value='http://contentlink','video/mp4',title:'Video name',
+   thumb:'http://imagelink',autoplay:True,
+   subtitles:'http://subtitlelink',subtitles_lang:'fr-FR',
+   subtitles_mime:'text/vtt'
 ```
 - *YouTube* afficher une vidéo à artir d'un ID de vidéo (en fin d'url)
 

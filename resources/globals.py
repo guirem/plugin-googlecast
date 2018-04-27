@@ -21,7 +21,7 @@ KNOWN_DEVICES = {}
 NOWPLAYING_DEVICES = {}
 GCAST_DEVICES = {}
 
-NOWPLAYING_TIMEOUT = 15*60  # 15 minutes
+NOWPLAYING_TIMEOUT = 60*6    # 6 minutes
 NOWPLAYING_FREQUENCY = 15     # 15 seconds
 NOWPLAYING_LAST = 0
 
@@ -29,7 +29,7 @@ LEARN_BEGIN = int(time.time())
 LEARN_MODE = False          # is learn mode ?
 LEARN_TIMEOUT = 60
 
-HEARTBEAT_FREQUENCY = 600   # 10 minutes
+HEARTBEAT_FREQUENCY = 900   # 15 minutes
 LAST_BEAT = int(time.time())
 
 SCAN_FREQUENCY = 60         # in seconds
