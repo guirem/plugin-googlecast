@@ -29,6 +29,7 @@ import json
 import traceback
 import _thread as thread
 import socket
+import resource
 
 import globals
 
@@ -462,7 +463,7 @@ def action_handler(message):
                 force_register=False
                 if 'force_register' in message['command'] :
                     force_register = True if message['command']['force_register'] else False
-                wait=0
+                wait=2
                 if 'wait' in message['command'] :
                     wait = message['command']['wait'] if message['command']['wait'].isnumeric() else 1
 
@@ -486,7 +487,7 @@ def action_handler(message):
                         if 'token' not in message['command'] :
                             logging.error("ACTION------ Token missing for Spotify")
                         else :
-                            player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before}, message['command']['token'])
+                            player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait}, message['command']['token'])
                             player.launch_app()
                 elif app == 'backdrop':  # also called backdrop
                     if gcast.device.cast_type == 'cast' :
@@ -497,7 +498,7 @@ def action_handler(message):
                     quit_app_before=False
                     possibleCmd = ['play', 'stop', 'pause']
                     if cmd in possibleCmd :
-                        player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before}, None)
+                        player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait}, None)
                         eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
                 else : # media        # app=media|cmd=play_media|value=http://bit.ly/2JzYtfX,video/mp4,Mon film
                     possibleCmd = ['play', 'stop', 'pause', 'play_media']
@@ -519,26 +520,32 @@ def gcast_prepareAppParam(params):
     if params is None or params == '':
         return ''
     ret = ''
-    s = params.split(",")
+    s = [k for k in re.split("(,|\w*?:'.*?'|'.*?')", params) if k.strip() and k!=',']
     for p in s :
         p = p.strip()
-        s2 = p.split("=")
+        s2 = [k for k in re.split("(:|'.*?'|http:.*)", p) if k.strip() and k!=':']
         prefix = ''
         if len(s2)==2 :
             prefix = s2[0].strip() + '='
             p = s2[1].strip()
-
         if p.isnumeric() :
             ret = ret + ',' + prefix + p
         elif p == 'True' or p == 'False' or p == 'None' :
             ret = ret + ',' + prefix + p
         else :
             if p.startswith( "'" ) and p.endswith("'") :    # if starts already with simple quote
-                ret = ret + ',' + prefix + p
+                withoutQuote = p[1:-1]
+                if withoutQuote.isnumeric() :
+                    ret = ret + ',' + prefix + withoutQuote
+                elif withoutQuote=='True' or withoutQuote=='False' or withoutQuote=='None' :
+                    ret = ret + ',' + prefix + withoutQuote
+                else :
+                    ret = ret + ',' + prefix + p
             else :
                 ret = ret + ',' + prefix + '"'+ p +'"'    # else add quotes
-    logging.debug("PARAMPARSER---- Returned: " + str(ret[1:]))
-    return ret[1:]
+    retval=ret[1:].replace(')', '')
+    logging.debug("PARAMPARSER---- Returned: " + str(retval))
+    return retval
 
 
 def start(cycle=2):
@@ -572,10 +579,7 @@ def start(cycle=2):
                         globals.GCAST_DEVICES[uuid].sendNowPlaying_heartbeat()
                     globals.NOWPLAYING_LAST = current_time
 
-                if globals.LEARN_MODE :
-                    time.sleep(0.5)
-                else :
-                    time.sleep(cycle)
+                time.sleep(cycle)
 
             except Exception as e:
                 logging.error("GLOBAL------Exception on scanner")
@@ -678,6 +682,7 @@ def scanner(name):
     try:
         logging.debug("SCANNER------ Start scanning...")
         globals.SCAN_PENDING = True
+        show_memory_usage()
 
         rawcasts = None
         scanForced = False
@@ -803,6 +808,26 @@ def scanner(name):
     globals.SCAN_LAST = int(time.time())
     globals.SCAN_PENDING = False
 
+memory_last_use=0
+memory_last_time=int(time.time())
+memory_first_time=int(time.time())
+def show_memory_usage():
+    if logging.getLogger().isEnabledFor(logging.DEBUG) :
+        usage = resource.getrusage(resource.RUSAGE_SELF)
+        try:
+            global memory_last_use, memory_last_time, memory_first_time
+            ru_utime = getattr(usage, 'ru_utime')
+            ru_stime = getattr(usage, 'ru_stime')
+            ru_maxrss = getattr(usage, 'ru_maxrss')
+            total=ru_utime+ru_stime
+            curtime=int(time.time())
+            timedif=curtime-memory_last_time
+            timediftotal=curtime-memory_first_time
+            logging.warning(' MEMORY---- Total CPU time used : %.3fs (%.2f%%)  |  Last %i sec : %.3fs (%.2f%%)  | Memory : %s Mo' % (total, total/timediftotal*100, timedif, total-memory_last_use, (total-memory_last_use)/timedif*100, int(round(ru_maxrss/1000))))
+            memory_last_use=total
+            memory_last_time=curtime
+        except:
+            pass
 
 def handler(signum=None, frame=None):
     logging.debug("GLOBAL------Signal %i caught, exiting..." % int(signum))
