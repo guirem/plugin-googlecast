@@ -450,7 +450,7 @@ class googlecast extends eqLogic {
 				$cmd = new googlecastCmd();
 				$cmd->setLogicalId($logid);
 				$cmd->setName(__('YouTube', __FILE__));
-				$cmd->setIsVisible(1);
+				$cmd->setIsVisible(0);
 				$cmd->setOrder(200);
 				$cmd->setOrder($order++);
 			}
@@ -596,7 +596,7 @@ class googlecast extends eqLogic {
 			throw new Exception(__('Veuillez vérifier la configuration', __FILE__));
 		}
 		$googlecast_path = realpath(dirname(__FILE__) . '/../../resources');
-		$cmd = 'sudo /usr/bin/python3 ' . $googlecast_path . '/googlecast.py';
+		$cmd = '/usr/bin/python3 ' . $googlecast_path . '/googlecast.py';
 		#$cmd .= ' --scantimeout 10';
 		$cmd .= ' --loglevel ' . log::convertLogLevel(log::getLogLevel('googlecast'));
 		$cmd .= ' --socketport ' . config::byKey('socketport', 'googlecast');

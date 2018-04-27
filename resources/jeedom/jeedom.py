@@ -23,7 +23,7 @@ from datetime import datetime
 import collections
 import os
 import socket
-from multiprocessing import Queue
+import queue
 import socketserver as SocketServer
 from socketserver  import (TCPServer, StreamRequestHandler)
 
@@ -180,7 +180,7 @@ class jeedom_utils():
 
 # ------------------------------------------------------------------------------
 
-JEEDOM_SOCKET_MESSAGE = Queue()
+JEEDOM_SOCKET_MESSAGE = queue.Queue()
 
 class jeedom_socket_handler(StreamRequestHandler):
     def handle(self):
