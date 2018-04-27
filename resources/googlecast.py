@@ -812,7 +812,7 @@ memory_last_use=0
 memory_last_time=int(time.time())
 memory_first_time=int(time.time())
 def show_memory_usage():
-    if logging.getLogger().isEnabledFor(logging.WARNING) :
+    if logging.getLogger().isEnabledFor(logging.DEBUG) :
         usage = resource.getrusage(resource.RUSAGE_SELF)
         try:
             global memory_last_use, memory_last_time, memory_first_time
