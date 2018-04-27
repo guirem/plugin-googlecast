@@ -34,64 +34,65 @@
 		<img class='picture' src="plugins/googlecast/desktop/images/chromecast2.png"/></div>
 	</center>
 	<script>
-	$('.cmd[data-cmd_id=#id#] .pbcont').hide();
-	colorFont = $('.cmd[data-cmd_id=#id#]').css('color');
-	$('.cmd[data-cmd_id=#id#] .pb').css('background-color', (colorFont.slice(-1)=="#")?'white':colorFont );
+	$('.cmd[data-cmd_uid=#uid#] .pbcont').hide();
+	colorFont = $('.cmd[data-cmd_uid=#uid#]').css('color');
+	$('.cmd[data-cmd_uid=#uid#] .pb').css('background-color', (colorFont.slice(-1)=="#")?'white':colorFont );
 	$('body').on("googlecast::#state#::nowplaying", function (_event,_data) {
 		//console.log(_data['nowplaying']);
 		var playing = _data['nowplaying'];
-
+		var root = $('.cmd[data-cmd_uid=#uid#]');
 		if ( playing['image'] ) {
-			$('.cmd[data-cmd_id=#id#] .picture').attr('src', playing['image']);
+			root.find('.picture').attr('src', playing['image']);
 		}
 		else {
-			//$('.cmd[data-cmd_id=#id#] .picture').attr('src','data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=');
-			$('.cmd[data-cmd_id=#id#] .picture').attr('src','plugins/googlecast/desktop/images/chromecast2.png');
+			root.find('.picture').attr('src','plugins/googlecast/desktop/images/chromecast2.png');
 		}
 		if (playing['online']===true) {
 			if (playing['current_time'] && playing['duration'] && playing['duration']>0) {
 				calcP = Math.round(playing['current_time']/playing['duration']*100);
-				$('.cmd[data-cmd_id=#id#] .pbcont').show();
-				$('.cmd[data-cmd_id=#id#] .pb').css('width', calcP+'%').attr('aria-valuenow', calcP);
+				root.find('.pbcont').show();
+				root.find('.pb').css('width', calcP+'%').attr('aria-valuenow', calcP);
 			}
 			else {
-				$('.cmd[data-cmd_id=#id#] .pbcont').hide();
+				root.find('.pbcont').hide();
 			}
 			if (!playing['player_state'] || playing['player_state']!='UNKNOWN') {
 				if (!playing['series_title']) {
 					if (playing['title'])
-						$('.cmd[data-cmd_id=#id#] .line1').empty().append(playing['title']);
+						root.find('.line1').empty().append(playing['title']);
 					if (playing['artist'])
-						$('.cmd[data-cmd_id=#id#] .line2').empty().append(playing['artist']);
+						root.find('.line2').empty().append(playing['artist']);
 					else
-						$('.cmd[data-cmd_id=#id#] .line2').empty().append('('+playing['player_state']+')');
+						root.find('.line2').empty().append('('+playing['player_state']+')');
 					if (playing['album_name'])
-						$('.cmd[data-cmd_id=#id#] .line1').attr('title', playing['album_name']);
+						root.find('.line1').attr('title', playing['album_name']);
 					if (playing['album_artist'])
-						$('.cmd[data-cmd_id=#id#] .line2').attr('title', playing['album_artist']);
+						root.find('.line2').attr('title', playing['album_artist']);
 				}
 				else {
-					$('.cmd[data-cmd_id=#id#] .line2').empty();
-					$('.cmd[data-cmd_id=#id#] .line1').empty().append(playing['series_title']);
+					root.find('.line2').empty();
+					root.find('.line1').empty().append(playing['series_title']);
 					if (playing['season'] && playing['episode']) {
-						$('.cmd[data-cmd_id=#id#] .line2').empty().append(playing['season'] + ' - ' + playing['episode']);
+						root.find('.line2').empty().append(playing['season'] + ' - ' + playing['episode']);
 					}
 				}
 			}
 			else {
-				$('.cmd[data-cmd_id=#id#] .line1').empty().append(playing['status_text']);
-				$('.cmd[data-cmd_id=#id#] .line2').empty();
+				root.find('.line1').empty().append(playing['status_text']);
+				root.find('.line2').empty();
 			}
 		}
 		else {
-			$('.cmd[data-cmd_id=#id#] .line1').empty().append('Offline');
-			$('.cmd[data-cmd_id=#id#] .line2').empty();
-			$('.cmd[data-cmd_id=#id#] .pbcont').hide();
+			root.find('.line1').empty().append('Offline');
+			root.find('.line2').empty();
+			root.find('.pbcont').hide();
 		}
 	});
-	googlecastRefreshNowPlaying_#id# = function() {
-			if ($('.cmd[data-cmd_id=#id#]').length==0){
-				clearInterval(window['plugin_googlecast_timer_playing_#id#']);
+	googlecastRefreshNowPlaying_#uid# = function() {
+			if ($('.cmd[data-cmd_uid=#uid#]').length==0 || ! $('.cmd[data-cmd_uid=#uid#]').is(':visible')) {
+				clearInterval(window['plugin_googlecast_timer_playing_#uid#']);
+				if (typeof window['plugin_googlecast_timer_playing_#uid#'] !== 'undefined')
+					delete window['plugin_googlecast_timer_playing_#uid#'];
 				return;
 			}
 			$.ajax({
@@ -101,9 +102,9 @@
 				timeout: 3000
 			 });
 		};
-	googlecastRefreshNowPlaying_#id#();
-	if (typeof window['plugin_googlecast_timer_playing_#id#'] !== 'undefined')
-		clearInterval(window['plugin_googlecast_timer_playing_#id#']);
-	window['plugin_googlecast_timer_playing_#id#'] = setInterval(googlecastRefreshNowPlaying_#id#, 1000*60*5);	// 5 minutes
+	googlecastRefreshNowPlaying_#uid#();
+	if (typeof window['plugin_googlecast_timer_playing_#uid#'] !== 'undefined')
+		clearInterval(window['plugin_googlecast_timer_playing_#uid#']);
+	window['plugin_googlecast_timer_playing_#uid#'] = setInterval(googlecastRefreshNowPlaying_#uid#, 1000*60*5);	// 5 minutes
 	</script>
 </div>
