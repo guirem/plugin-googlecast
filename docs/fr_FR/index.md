@@ -52,6 +52,10 @@ Après téléchargement du plugin :
 Les paramêtres de configuration n'ont généralement pas besoin d'être modifiés
 - Port du socket interne de communication. Ne modifier que si nécessaire (ex: s'il est déjà pris par un autres plugin)
 - Fréquence de rafraîchissement. A ne modifier uniquement si la fréquence normale à un impact important sur les performances globales
+- TTS - Utiliser l'adresse Jeedom externe : par défaut utilise l'addresse web Jeedom interne
+- TTS - Langue par défaut : Langue du moteur TTS utilisé par défaut
+- TTS - Moteur par défaut : le moteur TTS utilisé (PicoTTS ou Google Translate)
+- TTS - Nettoyer cache : nettoie le repertoire temporaire de generation des fichiers sons
 - Désactiver notif pour nouveaux GoogleCast : ce sont des notifications lors de la découverte de nouveaux Google Cast non configurés
 
 Configuration des équipements
@@ -61,10 +65,12 @@ La configuration des équipements GoogleCast est accessible à partir du menu *P
 
 ![Configuration](../images/configuration.png "Configuration")
 
-Une fois les équipements alimentés, lancer un scan pour détecter et ajouter automatiquement. Si aucun équipement apparait, bien vérifier que les équipements sont accessibles et alimentés.
+Une fois les équipements branchés, lancer un scan pour les détecter et les ajouter automatiquement. Si aucun équipement apparait, bien vérifier que les équipements sont accessibles et alimentés.
 
 La vue santé permet d'avoir une vue synthétique des équipements et de leurs états.
 
+> **Notes**    
+> Il n'est pas possible d'ajouter manuellement un Google Cast
 
 ### Onglet Commandes
 
@@ -76,6 +82,8 @@ Vous pouvez également ajouter de nouvelles commandes (voir section ci-dessous).
 
 Liste des commandes non visibles par défaut :
 - *Statut Player* : info affichant l'état de lecture Média (ex: PLAYING/PAUSED) ;
+- *Titre* : Titre du média en cours ;
+- *Artist* : Artist du média en cours ;
 - *Custom Cmd* : Ce composant est destiné à être utilisé via un schénario ou pour test ;
 
 Pour les voir sur le dashboard, il faut activer 'Afficher' dans l'onglet des commandes.
@@ -117,13 +125,61 @@ Commandes personnalisées
 
 ### Applications spéciales
 
-- *Backdrom* afficher le fond d'écran ou économiseur d'écran Google Cast (selon les modèles)
-- *Web* afficher une page web sur un google cast. Les paramêtres disponibles sont l'url, forcer, et le délai de recharchement (ex: value='https://google.com',False,0 pour charger Google sans forcer (nécessaire pour certains sites) et sans rechargement)
-- *Media* lire un fichier audio ou vidéo à partir d'une URL
+- *Web* : afficher une page web sur un google cast. Les paramêtres disponibles sont l'url, forcer, et le délai de recharchement (ex: value='https://google.com',False,0 pour charger Google sans forcer (nécessaire pour certains sites) et sans rechargement)
+- *Media* : lire un fichier audio ou vidéo à partir d'une URL
+- *YouTube* : afficher une vidéo à artir d'un ID de vidéo (en fin d'url) => Ne fonctionne pas pour le moment
+- *Backdrom* : afficher le fond d'écran ou économiseur d'écran Google Cast (selon les modèles)
 
+> **Notes**   
+> - Voir les boutons créés par défaut pour un exemple d'utilisation    
+> - Youtube est non fontionnel pour le moment
+
+
+### Commandes avancées
+
+#### Syntaxe des commandes brutes
+Elles doivent être séparés par *|*
+```
+- app : name of application (web/backdrop/youtube/media)
+- cmd : name of command (dépend of application)
+    * tts : text to speach, use value to pass text
+    * refresh
+    * reboot
+    * volume_up
+    * volume_down
+    * volume_set : use value (0-100)
+    * mute_on
+    * muto_off
+    * quit_app
+    * start_app : use value to pass app id
+    * play
+    * stop
+    * rewind
+    * skip
+    * seek : use value (seconds)
+    * pause
+    For application dependant commands
+        * web : load_url
+        * media : play_media
+        * youtube : play_video/add_to_queue/update_screen_id/clear_playlist
+        * backdrop : no command
+- value : chain of parameters seperated by ','
+- vol : ajuster le volume (valeur entre 1 et 100) - optionel
+- sleep : add a break after end of command (in seconds)
+
+ex web : app=web|cmd=load_url|vol=90|value='http://pictoplasma.sound-creatures.com',True,10
+ex TTS : cmd=tts|vol=100|value=Mon text a dire
+```
+
+> **Notes**     
+> les chaines de caractères pour les commandes sont limitées dans Jeedom à 128 caractères. Utiliser les scénarios (voir plus bas pour passer outre cette limitation)
+
+#### Paramêtres possibles pour *play_video* en mode *media* :
 ```
 - url: str - url of the media.
 - content_type: str - mime type. Example: 'video/mp4' (optional).
+   Possible values: 'audio/aac', 'audio/mpeg', 'audio/ogg', 'audio/wav', 'image/bmp',
+   'image/gif', 'image/jpeg', 'image/png', 'image/webp','video/mp4', 'video/webm'.
 - title: str - title of the media (optional).
 - thumb: str - thumbnail image url (optional, default=None).
 - current_time: float - seconds from the beginning of the media to start playback (optional, default=0).
@@ -132,32 +188,44 @@ Commandes personnalisées
 - subtitles: str - url of subtitle file to be shown on chromecast (optional, default=None).
 - subtitles_lang: str - language for subtitles (optional, default='en-US').
 - subtitles_mime: str - mimetype of subtitles (optional, default='text/vtt').
+   Possible values: 'application/xml+ttml', 'text/vtt'.
 - subtitle_id: int - id of subtitle to be loaded (optional, default=1).
 
-ex : value='http://contentlink','video/mp4',title:'Video name',
+ex short : app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name'
+
+ex long : app=media|cmd=play_video|value='http://contentlink','video/mp4',title:'Video name',
    thumb:'http://imagelink',autoplay:True,
    subtitles:'http://subtitlelink',subtitles_lang:'fr-FR',
    subtitles_mime:'text/vtt'
 ```
-- *YouTube* afficher une vidéo à artir d'un ID de vidéo (en fin d'url)
+
+#### Paramêtres possibles pour *load_url* en mode *web* :
+```
+- url: str - website url.
+- force: bool - force mode (necessary for some website).
+- reload: int - reload time in seconds.
+
+ex : app=web|cmd=load_url|value='http://pictoplasma.sound-creatures.com',True,10
+```
 
 > **Notes**   
-> Voir les boutons créés par défaut pour un exemple d'utilisation
+> Les url et chaines de caractères sont entourés de guillements simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
 
-
-### Commandes avancées
-
-Syntaxe des commandes brutes (séparés par des *|*)
+#### Paramêtres possibles pour cmd *tts* :
 ```
-- app : name of application (web/backdrop/youtube/media)
-- cmd : name of command (dépend of application)
-    * web : load_url
-    * youtube : play_video/add_to_queue/update_screen_id/clear_playlist
-    * backdrop : no command
-    * media : play_media/play/stop/pause
-- value : chain of paramteres seperated by ','
+- lang: str - fr-FR/en-US or any compatible language (optional)
+- engine: str - picotts/gtts. (optional)
+- quit: 0/1 - quit app after tts action.
 
-app=web|cmd=load_url|value='http://pictoplasma.sound-creatures.com',True,10
+ex : cmd=tts|value=Mon text|lang=en-US|engine=gtts|quit=1
+```
+
+#### Séquence de commandes
+Il est possible de lancer plusieurs commandes à la suite en séparant par *$$*
+
+```
+cmd=tts|sleep=2|value=Je lance ma vidéo$$app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name'
+app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name',current_time:148|sleep=10$$cmd=quit_app
 ```
 
 ### Utilisation dans un scénario

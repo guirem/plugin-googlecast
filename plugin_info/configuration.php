@@ -23,7 +23,7 @@ if (!isConnect('admin')) {
 ?>
 <form class="form-horizontal">
     <fieldset>
-    <legend><i class="icon loisir-darth"></i> {{Démon}}</legend>
+    <legend><i class="icon loisir-darth"></i>&nbsp; {{Démon}}</legend>
     <div class="form-group">
 	    <label class="col-lg-4 control-label">{{Port socket interne (modification dangereuse)}}</label>
 	    <div class="col-lg-2">
@@ -40,35 +40,66 @@ if (!isConnect('admin')) {
 			</select>
 	    </div>
     </div>
-	<legend><i class="fa fa-envelope-o"></i> {{Notifications}}</legend>
+    <legend><i class="fa fa-volume-up"></i>&nbsp; {{TTS}}</legend>
+	<div class="form-group">
+	    <label class="col-lg-4 control-label">{{Utiliser l'adresse Jeedom externe}}</label>
+	    <div class="col-lg-2">
+	        <input  type="checkbox" class="configKey" data-l1key="tts_externalweb"/>
+	    </div>
+    </div>
+    <div class="form-group">
+	    <label class="col-lg-4 control-label">{{Langue par défaut}}</label>
+	    <div class="col-lg-2">
+            <select class="configKey form-control" data-l1key="tts_language">
+                <option value="fr-FR">{{Français}}</option>
+                <option value="en-US">{{Anglais}}</option>
+            </select>
+	    </div>
+    </div>
+	<div class="form-group">
+	    <label class="col-lg-4 control-label">{{Moteur par défaut}}</label>
+	    <div class="col-lg-2">
+            <select class="configKey form-control" data-l1key="tts_engine">
+                <option value="picotts">{{PicoTTS (local)}}</option>
+                <option value="gtts">{{Google Translate API (web)}}</option>
+            </select>
+	    </div>
+    </div>
+    <div class="form-group">
+	    <label class="col-lg-4 control-label"></label>
+	    <div class="col-lg-2">
+            <a class="btn btn-success cleanTTScache">{{Nettoyer cache}}</a>
+	    </div>
+    </div>
+    <legend><i class="fa fa-envelope-o"></i>&nbsp; {{Notifications}}</legend>
 	<div class="form-group">
 	    <label class="col-lg-4 control-label">{{Désactiver notif pour nouveaux GoogleCast}}</label>
 	    <div class="col-lg-2">
 	        <input  type="checkbox" class="configKey" data-l1key="disableNotification"/>
 	    </div>
     </div>
+
 </fieldset>
 </form>
 <script>
- $('.changeLogLive').on('click', function () {
-	 $.ajax({// fonction permettant de faire de l'ajax
-            type: "POST", // methode de transmission des données au fichier php
-            url: "plugins/googlecast/core/php/googlecast.ajax.php", // url du fichier php
-            data: {
-                action: "changeLogLive",
-				level : $(this).attr('data-log')
-            },
-            dataType: 'json',
-            error: function (request, status, error) {
-                handleAjaxError(request, status, error);
-            },
-            success: function (data) { // si l'appel a bien fonctionné
-                if (data.state != 'ok') {
-                    $('#div_alert').showAlert({message: data.result, level: 'danger'});
-                    return;
-                }
-                $('#div_alert').showAlert({message: '{{Réussie}}', level: 'success'});
-            }
-        });
+$('.cleanTTScache').on('click', function () {
+    $.ajax({// fonction permettant de faire de l'ajax
+           type: "POST", // methode de transmission des données au fichier php
+           url: "plugins/googlecast/core/php/googlecast.ajax.php", // url du fichier php
+           data: {
+               action: "cleanTTScache"
+           },
+           dataType: 'json',
+           error: function (request, status, error) {
+               handleAjaxError(request, status, error);
+           },
+           success: function (data) { // si l'appel a bien fonctionné
+               if (data.state != 'ok') {
+                   $('#div_alert').showAlert({message: data.result, level: 'danger'});
+                   return;
+               }
+               $('#div_alert').showAlert({message: '{{Réussie}}', level: 'success'});
+           }
+       });
 });
 </script>

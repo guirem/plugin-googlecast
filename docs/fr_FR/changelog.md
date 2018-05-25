@@ -4,6 +4,14 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
+## Version du 25 mai 2018
+
+- Ajout de commandes 'info' : title, artist, player_state
+- Ajout de l'option 'vol' pour chaque commande afin de modifier le volume (voir doc)
+- Ajout du TextToSpeach (TTS) avec moteur Google Translate et PicoTTS (voir doc)
+- Possibilité de lancer une séquence de commande (voir doc)
+- Correction de bugs et maj doc
+
 ## Version du 25 avril 2018
 
 - Fix installation des dépendances pour certain systèmes
