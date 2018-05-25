@@ -84,6 +84,17 @@ if ( isset($result['nowplaying']) ) {
 	}
 }
 
+if ( isset($result['callback']) ) {
+	if ( isset($result['uuid']) ) {
+        if ( isset($result['source']) && $result['source'].startsWith('plugin') && class_exists('gcastplayer') ) {
+            gcastplayer::manageCallback($result);
+        }
+        else {
+            googlecast::manageCallback($result);
+        }
+	}
+}
+
 if (isset($result['devices'])) {
 
 	foreach ($result['devices'] as $key => $data) {

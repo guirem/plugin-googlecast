@@ -54,6 +54,12 @@ function googlecast_install() {
 	if ( config::byKey('cyclefactor', 'googlecast') == '' ) {
 		config::save('cyclefactor','1', 'googlecast');
 	}
+    if ( config::byKey('tts_language', 'googlecast') == '' ) {
+		config::save('tts_language','fr-FR', 'googlecast');
+	}
+    if ( config::byKey('tts_engine', 'googlecast') == '' ) {
+		config::save('tts_engine','gtts', 'googlecast');
+	}
 
 	linkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
 

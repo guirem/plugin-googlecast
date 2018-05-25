@@ -163,9 +163,13 @@ class jeedom_utils():
         if level=='debug' :
             logging.getLogger("pychromecast").setLevel(logging.ERROR)
             logging.getLogger("urllib3").setLevel(logging.ERROR)
+            logging.getLogger("pydub").setLevel(logging.ERROR)
+            logging.getLogger("gtts").setLevel(logging.ERROR)
         else :
             logging.getLogger("pychromecast").setLevel(logging.CRITICAL)
             logging.getLogger("urllib3").setLevel(logging.CRITICAL)
+            logging.getLogger("pydub").setLevel(logging.CRITICAL)
+            logging.getLogger("gtts").setLevel(logging.CRITICAL)
 
         logging.basicConfig(level=jeedom_utils.convert_log_level(level),format=FORMAT, datefmt="%Y-%m-%d %H:%M:%S")
 

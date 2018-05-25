@@ -15,6 +15,10 @@ echo 50 > /tmp/dependancy_googlecast_in_progress
 echo ""
 echo "-- Installation of pip for python3 and necessary libraries"
 sudo apt-get install -y python3-dev python-requests python3-pip
+echo 70 > /tmp/dependancy_googlecast_in_progress
+echo ""
+echo "-- Installation of TTS libraries"
+sudo apt-get install -y libttspico-utils
 echo 75 > /tmp/dependancy_googlecast_in_progress
 # get pip3 command (different depending of OS such as raspberry)
 pip3cmd=$(compgen -ac | grep -E '^pip-?3' | sort -r | head -1)
@@ -37,6 +41,11 @@ if [[ !  -z  $pip3cmd  ]]; then     # pip3 found
     echo ""
     echo "-- Installation of python library 'zeroconf' with command $pip3cmd"
     $(sudo $pip3cmd install zeroconf>=0.17.7 > /tmp/dependancy_googlecast)
+    cat /tmp/dependancy_googlecast
+    echo 95 > /tmp/dependancy_googlecast_in_progress
+    echo ""
+    echo "-- Installation of python library 'click, bs4 and six' for TTS with command $pip3cmd"
+    $(sudo $pip3cmd install click bs4 six > /tmp/dependancy_googlecast)
     cat /tmp/dependancy_googlecast
     echo 100 > /tmp/dependancy_googlecast_in_progress
     echo ""

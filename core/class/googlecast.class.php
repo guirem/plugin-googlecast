@@ -17,7 +17,8 @@
  */
 
 /* * ***************************Includes********************************* */
-
+error_reporting(E_ALL);
+ini_set('display_errors', 'On');
 class googlecast extends eqLogic {
 	/*     * *************************Attributs****************************** */
 
@@ -42,6 +43,9 @@ class googlecast extends eqLogic {
 		if ( $this->getIsEnable() == false ) {
 			$this->disallowDevice();
 		}
+        if ( class_exists('gcastplayer') ) {
+            //gcastplayer::changeEnableState($this->getLogicalId(), null, $this->getIsEnable());
+        }
 
 		// manage logo
 		$found = False;
@@ -77,6 +81,10 @@ class googlecast extends eqLogic {
 
 	public function preRemove() {
 		$this->disallowDevice();
+
+        if ( class_exists('gcastplayer') ) {
+            //gcastplayer::changeEnableState($this->getLogicalId(), null, false);
+        }
 	}
 
 
@@ -298,7 +306,36 @@ class googlecast extends eqLogic {
 			$cmd->setIsVisible(0);
 			$cmd->setName(__('Statut Player', __FILE__));
 			$cmd->setConfiguration('googlecast_cmd', true);
-			$cmd->setDisplay('showNameOndashboard', false);
+			$cmd->setOrder($order++);
+		}
+		$cmd->setType('info');
+		$cmd->setSubType('string');
+		$cmd->setEqLogic_id($this->getId());
+		$cmd->setDisplay('generic_type', 'GENERIC');
+		$cmd->save();
+
+        $cmd = $this->getCmd(null, 'title');
+		if (!is_object($cmd)) {
+			$cmd = new googlecastCmd();
+			$cmd->setLogicalId('title');
+			$cmd->setIsVisible(0);
+			$cmd->setName(__('Titre', __FILE__));
+			$cmd->setConfiguration('googlecast_cmd', true);
+			$cmd->setOrder($order++);
+		}
+		$cmd->setType('info');
+		$cmd->setSubType('string');
+		$cmd->setEqLogic_id($this->getId());
+		$cmd->setDisplay('generic_type', 'GENERIC');
+		$cmd->save();
+
+        $cmd = $this->getCmd(null, 'artist');
+		if (!is_object($cmd)) {
+			$cmd = new googlecastCmd();
+			$cmd->setLogicalId('artist');
+			$cmd->setIsVisible(0);
+			$cmd->setName(__('Artiste', __FILE__));
+			$cmd->setConfiguration('googlecast_cmd', true);
 			$cmd->setOrder($order++);
 		}
 		$cmd->setType('info');
@@ -428,7 +465,7 @@ class googlecast extends eqLogic {
 		$cmd->save();
 
 		if ($this->getConfiguration('firstTimeCreation', True)) {
-
+            $order = 200;
 			$logid = "app=backdrop";
 			$cmd = $this->getCmd(null, $logid);
 			if (!is_object($cmd)) {
@@ -436,7 +473,6 @@ class googlecast extends eqLogic {
 				$cmd->setLogicalId($logid);
 				$cmd->setName(__('Backdrop', __FILE__));
 				$cmd->setIsVisible(1);
-				$cmd->setOrder(200);
 				$cmd->setOrder($order++);
 			}
 			$cmd->setType('action');
@@ -451,7 +487,6 @@ class googlecast extends eqLogic {
 				$cmd->setLogicalId($logid);
 				$cmd->setName(__('YouTube', __FILE__));
 				$cmd->setIsVisible(0);
-				$cmd->setOrder(200);
 				$cmd->setOrder($order++);
 			}
 			$cmd->setType('action');
@@ -466,7 +501,6 @@ class googlecast extends eqLogic {
 				$cmd->setLogicalId($logid);
 				$cmd->setName(__('Media', __FILE__));
 				$cmd->setIsVisible(1);
-				$cmd->setOrder(201);
 				$cmd->setOrder($order++);
 			}
 			$cmd->setType('action');
@@ -481,7 +515,23 @@ class googlecast extends eqLogic {
 				$cmd->setLogicalId($logid);
 				$cmd->setName(__('Web', __FILE__));
 				$cmd->setIsVisible(1);
-				$cmd->setOrder(202);
+				$cmd->setOrder($order++);
+			}
+			$cmd->setType('action');
+			$cmd->setSubType('other');
+			$cmd->setEqLogic_id($this->getId());
+			$cmd->save();
+
+			$this->setConfiguration('firstTimeCreation', False);
+			$this->save();
+
+            $logid = "cmd=tts|value=bienvenue sur google cast";
+			$cmd = $this->getCmd(null, $logid);
+			if (!is_object($cmd)) {
+				$cmd = new googlecastCmd();
+				$cmd->setLogicalId($logid);
+				$cmd->setName(__('TTS', __FILE__));
+				$cmd->setIsVisible(1);
 				$cmd->setOrder($order++);
 			}
 			$cmd->setType('action');
@@ -531,14 +581,8 @@ class googlecast extends eqLogic {
 		$eqLogic->setConfiguration('model_name', $_def['def']['model_name']);
 		$eqLogic->setConfiguration('manufacturer', $_def['def']['manufacturer']);
 		$eqLogic->setConfiguration('cast_type', $_def['def']['cast_type']);
-		$eqLogic->setConfiguration('cancontrol',1);
-		$eqLogic->setConfiguration('needsrefresh',0);
-		$eqLogic->setConfiguration('specificwidgets',0);
-		#$eqLogic->setConfiguration('iconModel', 'niu/niu_' . strtolower($_def['color']));
-
+        $eqLogic->setConfiguration('uri', $_def['def']['uri']);
 		$eqLogic->save();
-
-
 
 		event::add('jeedom::alert', array(
 			'level' => 'warning',
@@ -547,6 +591,18 @@ class googlecast extends eqLogic {
 		));
 		return $eqLogic;
 	}
+
+    public function getChromecastIP() {
+        $uri = $eqLogic->getConfiguration('uri', '');
+        $exploded = explode(":", $uri);
+        if (is_array($exploded)) {
+            $ip = $exploded[0];
+        }
+        else {
+            $ip = $uri;
+        }
+        return $ip;
+    }
 
 	/*     * **********************Getteur Setteur*************************** */
 
@@ -603,6 +659,14 @@ class googlecast extends eqLogic {
 		$cmd .= ' --sockethost 127.0.0.1';
 		$cmd .= ' --callback ' . network::getNetworkAccess('internal', 'proto:127.0.0.1:port:comp') . '/plugins/googlecast/core/php/googlecast.api.php';
 		$cmd .= ' --apikey ' . jeedom::getApiKey('googlecast');
+        if (config::byKey('tts_externalweb', 'googlecast')==1) {
+            $cmd .= ' --ttsweb ' . network::getNetworkAccess('external');
+        }
+        else {
+            $cmd .= ' --ttsweb ' . network::getNetworkAccess('internal');
+        }
+        $cmd .= ' --ttslang ' . config::byKey('tts_language', 'googlecast', 'fr-FR');
+		$cmd .= ' --ttsengine ' . config::byKey('tts_engine', 'googlecast', 'picotts');
 		$cmd .= ' --daemonname local';
 		$cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', 'googlecast', '1');
         $cmd .= ' --defaultstatus ' . "'". config::byKey('defaultsatus', 'googlecast', "&nbsp;") ."'";
@@ -634,10 +698,9 @@ class googlecast extends eqLogic {
 		socket_close($socket);
 	}
 
-	public static function changeLogLive($_level) {
-		$value = array('apikey' => jeedom::getApiKey('googlecast'), 'cmd' => $_level);
-		$value = json_encode($value);
-		self::socket_connection($value,True);
+    public static function cleanTTScache() {
+        $value = json_encode(array('apikey' => jeedom::getApiKey('googlecast'), 'cmd' => 'cleanttscache'));
+		self::socket_connection($value);
 	}
 
 	public static function deamon_stop() {
@@ -655,10 +718,10 @@ class googlecast extends eqLogic {
 		if ($_mode == 1) {
 			if ($_state == 1) {
 				$value = json_encode(array('apikey' => jeedom::getApiKey('googlecast'), 'cmd' => 'learnin'));
-				self::socket_connection($value,True);
+				self::socket_connection($value);
 			} else {
 				$value = json_encode(array('apikey' => jeedom::getApiKey('googlecast'), 'cmd' => 'learnout'));
-				self::socket_connection($value,True);
+				self::socket_connection($value);
 			}
 		}
 	}
@@ -685,10 +748,15 @@ class googlecast extends eqLogic {
 		}
 	}
 
+    public static function manageCallback($data) {
+        // TODO
+        log::add('googlecast','debug','Received callcak command for ' . $data['uuid']);
+    }
+
 	public static function registerNowPlayging($uuid) {
 		$value = array('apikey' => jeedom::getApiKey('googlecast'), 'cmd' => 'nowplaying', 'uuid' => $uuid);
 		$value = json_encode($value);
-		self::socket_connection($value,True);
+		self::socket_connection($value);
 	}
 
 
@@ -704,7 +772,7 @@ class googlecast extends eqLogic {
 				)
 			);
 			$value = json_encode($value);
-			self::socket_connection($value,True);
+			self::socket_connection($value);
 		}
 	}
 
@@ -713,7 +781,7 @@ class googlecast extends eqLogic {
 			return;
 		}
 		$value = json_encode(array('apikey' => jeedom::getApiKey('googlecast'), 'cmd' => 'remove', 'device' => array('uuid' => $this->getLogicalId())));
-		self::socket_connection($value,True);
+		self::socket_connection($value);
 	}
 
 
@@ -721,7 +789,7 @@ class googlecast extends eqLogic {
 		$value = array('apikey' => jeedom::getApiKey('googlecast'),
 				'cmd' => 'refreshall');
 		$value = json_encode($value);
-		self::socket_connection($value,True);
+		self::socket_connection($value);
 	}
 
 	public function refreshStatusByUUID($uuid) {
@@ -729,28 +797,76 @@ class googlecast extends eqLogic {
 				'cmd' => 'refresh',
 				'uuid' => $uuid);
 		$value = json_encode($value);
-		self::socket_connection($value,True);
+		self::socket_connection($value);
 	}
 
-	private function helperSendSimpleCmd($command_name) {
-        $data = array(
-            'cmd' => $command_name
-        );
-		$this->helperSendCustomCmd($data);
-        return true;
-    }
-
-    public function helperSendCustomCmd($_commands) {
-        $commands = $_commands;
-        $data = array('apikey' => jeedom::getApiKey('googlecast'),
+	private function helperSendSimpleCmd($command_name, $value=null, $_callback=null, $_source='googlecast', $_app='media', $_appid='CC1AD845') {
+        $fulldata = array(
+            'apikey' => jeedom::getApiKey('googlecast'),
             'cmd' => 'action',
             'device' => array(
                 'uuid' => $this->getLogicalId(),
-                'command' => $commands
-            )
+                'source' => $_source,
+                'callback' => $_callback,
+            ),
+            'command' => array(
+                'cmd' => $command_name,
+                'value' => ($value!==null ? $value : ''),
+                'app' => $_app,
+                'appid' => $_appid,
+            ),
         );
-        $json = json_encode($data);
-		self::socket_connection($json,True);
+
+		self::socket_connection( json_encode($fulldata) );
+    }
+
+    public function helperSendCustomCmd($_commands, $_callback=null, $_source='googlecast', $_app='media', $_appid='CC1AD845') {
+        $datalist = array();
+        $commandlist = $_commands;
+        if ( !is_array($_commands) ) {
+            $commandlist = array($_commands);
+        }
+        foreach ($commandlist as $commandstring) {
+            $data = array();
+            $splitcmd = explode('|', $commandstring);
+            $splitcount = count($splitcmd);
+    		foreach ($splitcmd as $value) {
+    			$value = explode('=', $value);
+                // ex: cmd=set_volume|value=10
+    			if (count($value) == 2) {
+                    $data[trim($value[0])] = trim($value[1]);
+    			}
+                // ex: cmd=play  (no value=X and single param)
+    			elseif (count($value) == 1 && $splitcount==1) {
+    				$data['cmd'] = trim($value[0]);
+    				$data['value'] = 0;
+    			}
+                // ex: cmd=set_volume|value=10|refresh (refresh is set to 1)
+                elseif (count($value) == 1 && $splitcount>1) {
+    				$data[trim($value[0])] = 1;
+    			}
+    		}
+            if ( !isset($data['app']) ) {
+                $data['app'] = $_app;
+            }
+            if ( !isset($data['appid']) ) {
+                $data['appid'] = $_appid;
+            }
+            array_push($datalist, $data);
+        }
+
+        $fulldata = array(
+            'apikey' => jeedom::getApiKey('googlecast'),
+            'cmd' => 'action',
+            'device' => array(
+                'uuid' => $this->getLogicalId(),
+                'source' => $_source,
+                'callback' => $_callback,
+            ),
+            'command' => $datalist,
+        );
+
+		self::socket_connection( json_encode($fulldata) );
         return true;
 	}
 
@@ -767,62 +883,72 @@ class googlecastcmd extends cmd {
 		if ($this->getType() != 'action') {
 			return;
 		}
+
 		$eqLogic = $this->getEqLogic();
 		$listCmd = $this->getLogicalId();
 		# special case of custom command
 		if ($this->getLogicalId() == "customcmd") {
 			$listCmd = trim($_options['message']);
 		}
-		$values = explode('|', $listCmd);
-		foreach ($values as $value) {
-			$value = explode('=', $value);
-			if (count($value) == 2) {
-				switch ($this->getSubType()) {
-					case 'slider':
-						$data[trim($value[0])] = trim(str_replace('#slider#', $_options['slider'], $value[1]));
-						break;
-					case 'color':
-						$data[trim($value[0])] = str_replace('#','',trim(str_replace('#color#', $_options['color'], $value[1])));
-						break;
-					case 'select':
-						$data[trim($value[0])] = trim(str_replace('#listValue#', $_options['select'], $value[1]));
-						break;
-					case 'message':
-						$data[trim($value[0])] = trim(str_replace('#message#', $_options['message'], $value[1]));
-						$data[trim($value[0])] = trim(str_replace('#title#', $_options['title'], $data[trim($value[0])]));
-						break;
-					default:
-						$data[trim($value[0])] = trim($value[1]);
-				}
-			}
-			elseif (count($value) == 1) {
-				$data['cmd'] = trim($value[0]);
-				switch ($this->getSubType()) {
-					case 'slider':
-						$data['value'] = $_options['slider'];
-						break;
-					case 'select':
-						$data['value'] = trim($_options['select']);
-						break;
-					case 'message':
-						$data['value'] = trim($_options['message']);
-						break;
-				}
-			}
-		}
-		$data['device'] = array(
-				'uuid' => $eqLogic->getLogicalId(),
-				'delay' => $eqLogic->getConfiguration('delay',0),
-				'needsrefresh' => $eqLogic->getConfiguration('needsrefresh',0),
-				'name' => $eqLogic->getConfiguration('name','0'),
-		);
-		if (count($data) == 0) {
-			return;
-		}
-		$value = json_encode(array('apikey' => jeedom::getApiKey('googlecast'), 'cmd' => 'action', 'device' => array('uuid' => $eqLogic->getLogicalId()), 'command' => $data));
-		log::add('googlecast','debug',"Envoi d'une commande depuis Jeedom");
-		googlecast::socket_connection($value);
 
+        $datalist=array();
+        $cmdgroups = explode('$$', $listCmd);
+        foreach ($cmdgroups as $listCmd) {
+            $data = array();
+    		$values = explode('|', $listCmd);
+    		foreach ($values as $value) {
+    			$value = explode('=', $value);
+    			if (count($value) == 2) {
+    				switch ($this->getSubType()) {
+    					case 'slider':
+    						$data[trim($value[0])] = trim(str_replace('#slider#', $_options['slider'], $value[1]));
+    						break;
+    					case 'color':
+    						$data[trim($value[0])] = str_replace('#','',trim(str_replace('#color#', $_options['color'], $value[1])));
+    						break;
+    					case 'select':
+    						$data[trim($value[0])] = trim(str_replace('#listValue#', $_options['select'], $value[1]));
+    						break;
+    					case 'message':
+    						$data[trim($value[0])] = trim(str_replace('#message#', $_options['message'], $value[1]));
+    						$data[trim($value[0])] = trim(str_replace('#title#', $_options['title'], $data[trim($value[0])]));
+    						break;
+    					default:
+    						$data[trim($value[0])] = trim($value[1]);
+    				}
+    			}
+    			elseif (count($value) == 1) {
+    				$data['cmd'] = trim($value[0]);
+    				switch ($this->getSubType()) {
+    					case 'slider':
+    						$data['value'] = $_options['slider'];
+    						break;
+    					case 'select':
+    						$data['value'] = trim($_options['select']);
+    						break;
+    					case 'message':
+    						$data['value'] = trim($_options['message']);
+    						break;
+    				}
+    			}
+    		}
+    		if (count($data) == 0) {
+    			return;
+    		}
+            array_push($datalist, $data);
+        }
+
+        $fulldata = array(
+            'apikey' => jeedom::getApiKey('googlecast'),
+            'cmd' => 'action',
+            'device' => array(
+                'uuid' => $eqLogic->getLogicalId(),
+                'source' => 'googlecast',
+            ),
+            'command' => $datalist,
+        );
+		log::add('googlecast','debug',"Envoi d'une commande depuis Jeedom");
+		googlecast::socket_connection( json_encode($fulldata) );
 	}
 
 	/*     * **********************Getteur Setteur*************************** */

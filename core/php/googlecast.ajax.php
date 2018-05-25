@@ -27,8 +27,8 @@ try {
         ajax::success();
     }
 
-    if (init('action') == 'changeLogLive') {
-		ajax::success(googlecast::changeLogLive(init('level')));
+    if (init('action') == 'cleanTTScache') {
+		ajax::success(googlecast::cleanTTScache());
 	}
 
     if (init('action') == 'nowplaying') {
