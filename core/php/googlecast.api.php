@@ -123,6 +123,17 @@ if (isset($result['devices'])) {
 					$cmd->event($flattenResults[$logicalId]);
 				}
 			}
+
+            if ( isset($flattenResults['friendly_name']) && $flattenResults['friendly_name'] != $googlecast->getConfiguration('friendly_name') ) {
+                $googlecast->setConfiguration('friendly_name', $flattenResults['friendly_name']);
+                $googlecast->lightSave();
+            }
+            if ( isset($flattenResults['uri']) && $flattenResults['uri'] != $googlecast->getConfiguration('uri') ) {
+                $googlecast->setConfiguration('uri', $flattenResults['uri']);
+                $googlecast->setConfiguration('ip', $googlecast->getChromecastIPfromURI());
+                $googlecast->lightSave();
+            }
+
 		}
 	}
 }
