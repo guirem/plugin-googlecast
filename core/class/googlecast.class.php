@@ -17,13 +17,14 @@
  */
 
 /* * ***************************Includes********************************* */
-error_reporting(E_ALL);
-ini_set('display_errors', 'On');
+//error_reporting(E_ALL);
+//ini_set('display_errors', 'On');
 class googlecast extends eqLogic {
 	/*     * *************************Attributs****************************** */
 
 	private $_collectDate = '';
 	public static $_widgetPossibility = array('custom' => true);
+    private $_lightsave = false;
 
 	const GCAST_MODELS = array(
 		'chromecast audio' => 'model_chromecast_audio.png',
@@ -33,8 +34,6 @@ class googlecast extends eqLogic {
 		'google cast group' => 'model_googlehome.png',
 		'tv' => 'model_tv.png',
 	);
-
-    private $_lightsave = false;
 
 	/*     * ***********************Methode static*************************** */
 
@@ -712,10 +711,15 @@ class googlecast extends eqLogic {
 
 
 	public static function socket_connection($_value) {
-		$socket = socket_create(AF_INET, SOCK_STREAM, 0);
-		socket_connect($socket, '127.0.0.1', config::byKey('socketport', 'googlecast'));
-		socket_write($socket, $_value, strlen($_value));
-		socket_close($socket);
+        try {
+    		$socket = socket_create(AF_INET, SOCK_STREAM, 0);
+    		socket_connect($socket, '127.0.0.1', config::byKey('socketport', 'googlecast'));
+    		socket_write($socket, $_value, strlen($_value));
+    		socket_close($socket);
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
 	}
 
     public static function cleanTTScache() {
