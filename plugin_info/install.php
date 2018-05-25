@@ -54,6 +54,9 @@ function googlecast_install() {
 	if ( config::byKey('cyclefactor', 'googlecast') == '' ) {
 		config::save('cyclefactor','1', 'googlecast');
 	}
+	if ( config::byKey('tts_externalweb', 'googlecast') == '' ) {
+		config::save('tts_externalweb','0', 'googlecast');
+	}
     if ( config::byKey('tts_language', 'googlecast') == '' ) {
 		config::save('tts_language','fr-FR', 'googlecast');
 	}

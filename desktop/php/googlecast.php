@@ -166,9 +166,9 @@ foreach (jeedom::getConfiguration('eqLogic:category') as $key => $value) {
         </div>
       </div>
 	  <div class="form-group">
-        <label class="col-lg-3 control-label">{{URI}}</label>
+        <label class="col-lg-3 control-label">{{IP}}</label>
         <div class="col-lg-4">
-          <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="uri" readonly/>
+          <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="ip" readonly/>
         </div>
       </div>
 	  <div class="form-group">

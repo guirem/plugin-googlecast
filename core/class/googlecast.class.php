@@ -34,6 +34,8 @@ class googlecast extends eqLogic {
 		'tv' => 'model_tv.png',
 	);
 
+    private $_lightsave = false;
+
 	/*     * ***********************Methode static*************************** */
 
 
@@ -87,8 +89,16 @@ class googlecast extends eqLogic {
         }
 	}
 
+    public function lightSave() {
+        $this->_lightsave = true;
+        $this->save();
+        $this->_lightsave = false;
+    }
 
 	public function postSave() {
+        if ($this->_lightsave == true) {
+            return true;
+        }
 		$order = 1;
 
 		$cmd = $this->getCmd(null, 'refresh');
@@ -486,7 +496,7 @@ class googlecast extends eqLogic {
 				$cmd = new googlecastCmd();
 				$cmd->setLogicalId($logid);
 				$cmd->setName(__('YouTube', __FILE__));
-				$cmd->setIsVisible(0);
+				$cmd->setIsVisible(1);
 				$cmd->setOrder($order++);
 			}
 			$cmd->setType('action');
@@ -582,6 +592,7 @@ class googlecast extends eqLogic {
 		$eqLogic->setConfiguration('manufacturer', $_def['def']['manufacturer']);
 		$eqLogic->setConfiguration('cast_type', $_def['def']['cast_type']);
         $eqLogic->setConfiguration('uri', $_def['def']['uri']);
+        $eqLogic->setConfiguration('ip', $eqLogic->getChromecastIPfromURI());
 		$eqLogic->save();
 
 		event::add('jeedom::alert', array(
@@ -592,16 +603,25 @@ class googlecast extends eqLogic {
 		return $eqLogic;
 	}
 
-    public function getChromecastIP() {
-        $uri = $eqLogic->getConfiguration('uri', '');
-        $exploded = explode(":", $uri);
-        if (is_array($exploded)) {
+    public function getChromecastIPfromURI() {
+        $uri = $this->getConfiguration('uri', '');
+
+        if (strpos($uri, '[') === 0) {     // ipv6
+            $exploded = explode("]:", $uri);
+            $ip = substr($exploded[0], 1);
+            if (strrpos($ip, ']') + strlen(']') === strlen($ip)) {
+                $ip = substr($ip, -1);
+            }
+        }
+        else {                          // ipv4
+            $exploded = explode(":", $uri);
             $ip = $exploded[0];
         }
-        else {
-            $ip = $uri;
-        }
         return $ip;
+    }
+
+    public function getChromecastIP() {
+        return $this->getConfiguration('ip', '');
     }
 
 	/*     * **********************Getteur Setteur*************************** */

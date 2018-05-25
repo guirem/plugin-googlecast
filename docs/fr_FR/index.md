@@ -15,6 +15,7 @@ Plugin pour commander les équipements compatibles Google Cast.
 - Lecture de fichier audio et vidéo via url
 - Retour d'état sur les principales Fonctionnalités
 - Affichage de la lecture en cours
+- Text To Speach (TTS)
 
 
 ![Logo plugin](../images/chromecast.png "Chromecast")
@@ -32,7 +33,7 @@ B&O Play, Grundig, Polk Audio, Bang & Olufsen, Onkyo, Pioneer...)
 
 **Autres liens**
 - Wikipedia <a target="_blank" href="https://en.wikipedia.org/wiki/Google_Cast">GoogleCast</a>
-- <a target="_blank" href="https://en.wikipedia.org/wiki/List_of_apps_with_Google_Cast_support">Applications</a> pouvant diffuser sur un équipement GoogleCast :
+- <a target="_blank" href="https://en.wikipedia.org/wiki/List_of_apps_with_Google_Cast_support">Applications</a> pouvant diffuser sur un équipement GoogleCast
 
 
 Dashboard
@@ -262,6 +263,10 @@ FAQ
 #### Les dépendances ne s'installent pas
 
 - Vérifier dans les logs la provenance de l'erreur. Le plugin nécessite l'installation de python3 et pip3.
+
+#### Diffuser l'interface web de Jeedom sur ou Google Cast
+
+C'est possible via le mode web. Pour gérer l'authentification automatiquement, utiliser le plugin 'autologin' (voir doc du plugin).
 
 Changelog
 =============================

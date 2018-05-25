@@ -266,7 +266,7 @@ class JeedomChromeCast :
             uuid = self.uuid
             playStatus = self.gcast.media_controller.status
             status = {
-                "uuid" : uuid,
+                "uuid" : uuid, "uri" : self.gcast.uri, "friendly_name" : self.gcast.device.friendly_name,
                 "friendly_name" : self.gcast.device.friendly_name,
                 "is_active_input" : True if self.gcast.status.is_active_input else False,
                 "is_stand_by" :  True if self.gcast.status.is_stand_by else False,
@@ -276,11 +276,11 @@ class JeedomChromeCast :
                 "display_name" : self.gcast.status.display_name if self.gcast.status.display_name is not None else globals.DEFAULT_NODISPLAY,
                 "status_text" : self.gcast.status.status_text if self.gcast.status.status_text!="" else globals.DEFAULT_NOSTATUS,
                 "is_busy" : not self.gcast.is_idle,
-                "title" : playStatus.title,
-                "artist" : playStatus.artist,
-                'series_title': playStatus.series_title,
-                "stream_type" : playStatus.stream_type,
-                "player_state" : playStatus.player_state,
+                "title" : "" if playStatus is None else playStatus.title,
+                "artist" : "" if playStatus is None else playStatus.artist,
+                'series_title': "" if playStatus is None else playStatus.series_title,
+                "stream_type" : "" if playStatus is None else playStatus.stream_type,
+                "player_state" : "" if playStatus is None else playStatus.player_state,
             }
             return status
         else :
@@ -308,6 +308,8 @@ class JeedomChromeCast :
         if prev_status['is_stand_by'] != new_status['is_stand_by'] :
             return True
         if prev_status['app_id'] != new_status['app_id'] :
+            return True
+        if prev_status['player_state'] != new_status['player_state'] :
             return True
         return False
 
@@ -661,6 +663,7 @@ def action_handler(message):
                 time.sleep(sleep)
 
             if needSendStatus :
+                time.sleep(0.1)
                 globals.GCAST_DEVICES[uuid].sendDeviceStatus()
 
         if hascallback :
@@ -990,7 +993,7 @@ def scanner(name):
                     globals.KNOWN_DEVICES[known]['online'] = False
                     globals.KNOWN_DEVICES[known]['lastOfflineSent'] = current_time
                     globals.KNOWN_DEVICES[known]['status'] = status = {
-                        "uuid" : known, "friendly_name" : "",
+                        "uuid" : known,
                         "is_stand_by" : False, "is_active_input" : False,
                         "display_name" : globals.DEFAULT_NODISPLAY, "status_text" : globals.DEFAULT_NOSTATUS,
                         "app_id" : "", "is_busy" : False,
