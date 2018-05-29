@@ -15,7 +15,8 @@ Plugin pour commander les équipements compatibles Google Cast.
 - Lecture de fichier audio et vidéo via url
 - Retour d'état sur les principales Fonctionnalités
 - Affichage de la lecture en cours
-- Text To Speach (TTS)
+- Text To Speech (TTS)
+- Récupération/modification de la configuration
 
 
 ![Logo plugin](../images/chromecast.png "Chromecast")
@@ -54,10 +55,19 @@ Les paramêtres de configuration n'ont généralement pas besoin d'être modifi�
 - Port du socket interne de communication. Ne modifier que si nécessaire (ex: s'il est déjà pris par un autres plugin)
 - Fréquence de rafraîchissement. A ne modifier uniquement si la fréquence normale à un impact important sur les performances globales
 - TTS - Utiliser l'adresse Jeedom externe : par défaut utilise l'addresse web Jeedom interne
-- TTS - Langue par défaut : Langue du moteur TTS utilisé par défaut
+- TTS - Langue par défaut : langue du moteur TTS utilisé par défaut
 - TTS - Moteur par défaut : le moteur TTS utilisé (PicoTTS ou Google Translate)
+- TTS - Vitesse de parole : rapidité de prononciation du texte
+- TTS - Ne pas utiliser le cache : désactive l'utilisation du cache Jeedom (déconnseillé)
 - TTS - Nettoyer cache : nettoie le repertoire temporaire de generation des fichiers sons
 - Désactiver notif pour nouveaux GoogleCast : ce sont des notifications lors de la découverte de nouveaux Google Cast non configurés
+
+> **Notes**  
+> Pour TTS (Text To Speech)
+> - PicoTTS ne nécessite pas de connexion internet, l'API Google Translate nécessite un accès web et le rendu est meilleur.
+> - Un mécanisme de cache permet de ne générer le rendu sonore que s'il n'existe pas déjà en memoire. La cache est vidé au redémarrage de Jeedom.
+
+![Configuration Plugin](../images/configuration_plugin.png "Configuration Plugin")
 
 Configuration des équipements
 =============================
@@ -68,9 +78,9 @@ La configuration des équipements GoogleCast est accessible à partir du menu *P
 
 Une fois les équipements branchés, lancer un scan pour les détecter et les ajouter automatiquement. Si aucun équipement apparait, bien vérifier que les équipements sont accessibles et alimentés.
 
-La vue santé permet d'avoir une vue synthétique des équipements et de leurs états.
+La vue 'Santé'' permet d'avoir une vue synthétique des équipements et de leurs états.
 
-> **Notes**    
+> **Note**    
 > Il n'est pas possible d'ajouter manuellement un Google Cast
 
 ### Onglet Commandes
@@ -85,13 +95,11 @@ Liste des commandes non visibles par défaut :
 - *Statut Player* : info affichant l'état de lecture Média (ex: PLAYING/PAUSED) ;
 - *Titre* : Titre du média en cours ;
 - *Artist* : Artist du média en cours ;
-- *Custom Cmd* : Ce composant est destiné à être utilisé via un schénario ou pour test ;
+- *Custom Cmd* : Ce composant est destiné à être utilisé via un schénario ou pour test (voir section [Utilisation dans un scénario](#utilisation-dans-un-scénario));
+- *Pincode* : pincode pour association rapide (exemple de configuration avancée) 
 
 Pour les voir sur le dashboard, il faut activer 'Afficher' dans l'onglet des commandes.
 
-> **Notes**
->
-> - La commande de volume se fait sur des valeurs entre 0 et 98 et non pas sur des valeurs en db.
 
 ### Afficheur Lecture en cours (widget)
 
@@ -143,7 +151,7 @@ Elles doivent être séparés par *|*
 ```
 - app : name of application (web/backdrop/youtube/media)
 - cmd : name of command (dépend of application)
-    * tts : text to speach, use value to pass text
+    * tts : text to speech, use value to pass text
     * refresh
     * reboot
     * volume_up
@@ -165,8 +173,8 @@ Elles doivent être séparés par *|*
         * youtube : play_video/add_to_queue/update_screen_id/clear_playlist
         * backdrop : no command
 - value : chain of parameters seperated by ','
-- vol : ajuster le volume (valeur entre 1 et 100) - optionel
-- sleep : add a break after end of command (in seconds)
+- vol (optional, entre 1 et 100) : ajuster le volume pour la commande
+- sleep (optional) : add a break after end of command (in seconds)
 
 ex web : app=web|cmd=load_url|vol=90|value='http://pictoplasma.sound-creatures.com',True,10
 ex TTS : cmd=tts|vol=100|value=Mon text a dire
@@ -200,33 +208,87 @@ ex long : app=media|cmd=play_video|value='http://contentlink','video/mp4',title:
    subtitles_mime:'text/vtt'
 ```
 
+> **Notes**   
+> - Les url et chaines de caractères sont entourés de guillements simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
+> - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
+
 #### Paramêtres possibles pour *load_url* en mode *web* :
 ```
 - url: str - website url.
-- force: bool - force mode (necessary for some website).
-- reload: int - reload time in seconds.
+- force: bool - force mode. To be used if default is not working. (optional, default False).
+- reload: int - reload time in seconds. 0 = no reload. (optional, default 0)
 
-ex : app=web|cmd=load_url|value='http://pictoplasma.sound-creatures.com',True,10
+ex 1 : app=web|cmd=load_url|value='http://pictoplasma.sound-creatures.com',True,10
+ex 2 : app=web|cmd=load_url|value='http://mywebsite/index.php?apikey%3Dmyapikey'
 ```
 
 > **Notes**   
-> Les url et chaines de caractères sont entourés de guillements simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
+> - Les url et chaines de caractères sont entourés de guillements simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
+> - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
 
 #### Paramêtres possibles pour cmd *tts* :
 ```
 - lang: str - fr-FR/en-US or any compatible language (optional)
 - engine: str - picotts/gtts. (optional)
 - quit: 0/1 - quit app after tts action.
+- forcetts: 1 - do not use cache (useful for testing).
+- speed: float (default=1.2) - speed of speech (eg: 0.5, 2).
 
-ex : cmd=tts|value=Mon text|lang=en-US|engine=gtts|quit=1
+ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
+ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
 ```
 
 #### Séquence de commandes
 Il est possible de lancer plusieurs commandes à la suite en séparant par *$$*
 
 ```
-cmd=tts|sleep=2|value=Je lance ma vidéo$$app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name'
-app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name',current_time:148|sleep=10$$cmd=quit_app
+ex 1 : cmd=tts|sleep=2|value=Je lance ma vidéo$$app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name'
+ex 2 : app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name',current_time:148|sleep=10$$cmd=quit_app
+```
+
+#### Configuration avancé des équipements
+
+##### Récupérer une configuration
+Certaines configurations peuvent être récupérées dans une commande de type info (*cmd=getconfig*).
+
+Ces commandes de ce type sont rafraichies toutes les 15 minutes ou manuellement via appel de la commande 'refreshconfig' (non visible par défaut)
+
+Une liste est disponible en se connectant sur l'équipement :
+http://IP:8008/setup/eureka_info?options=detail
+
+Pour plus d'info voir  https://rithvikvibhu.github.io/GHLocalApi/
+
+###### Paramêtres possibles pour cmd *getconfig* :
+```
+- value: str - uri base after 'setup/' based on API doc (default is 'eureka_info'). If starts with 'post:', a POST type request will be issued.
+- data: str - json path to be returned seperated by '/'. To get several data, seperate by ','.
+- sep: str - seperator if several data is set (default = ',').
+- format: json/string - output format (default = 'string').
+- error: 1 - seperator if several data is set (default = ',').
+- reterror: str - value to be returned if connection fails. Default will not change previous state.
+
+Exemples:
+- Récupération le Pin code d'une Google Chromecast :
+cmd=getconfig|data=opencast_pin_code
+- Google Home : Récupération de l'état de la première alarme :
+cmd=getconfig|value=assistant/alarms|data=alarm/0/status
+```
+
+##### Modifier une configuration
+Certaines configurations peuvent être modifiées dans une commande de type action (*cmd=setconfig*).
+
+Voir l'api Google sur ce lien pour ce qui est modifiable : https://rithvikvibhu.github.io/GHLocalApi/
+
+###### Paramêtres possibles pour cmd *setconfig* :
+```
+- value: str - uri base after 'setup/' based on API doc.
+- data: str - json data.
+
+Exemples:
+- Disable notification on Google home
+cmd=setconfig|value=assistant/notifications|data={'notifications_enabled': false}
+- Google Home : Volume au plus bas pour alarme :
+cmd=setconfig|value=assistant/alarms/volume|data={'volume': 1}
 ```
 
 ### Utilisation dans un scénario
@@ -264,7 +326,13 @@ FAQ
 
 - Vérifier dans les logs la provenance de l'erreur. Le plugin nécessite l'installation de python3 et pip3.
 
-#### Diffuser l'interface web de Jeedom sur ou Google Cast
+#### Le Text To Speech (TTS) ne fonctionne pas
+
+- Essayer avec les paramêtres suivants : 'Utiliser l'adresse Jeedom externe' ou 'Ne pas utiliser le cache'
+- Si jeedom n'a pas d'accès web, utiliser le moteur picoTTS
+- Vérifier dans les logs la nature de l'erreur
+
+#### Diffuser Jeedom sans authentification sur un Google Cast
 
 C'est possible via le mode web. Pour gérer l'authentification automatiquement, utiliser le plugin 'autologin' (voir doc du plugin).
 

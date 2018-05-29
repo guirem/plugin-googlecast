@@ -40,7 +40,7 @@ if (!isConnect('admin')) {
 			</select>
 	    </div>
     </div>
-    <legend><i class="fa fa-volume-up"></i>&nbsp; {{TTS}}</legend>
+    <legend><i class="fa fa-volume-up"></i>&nbsp; {{TTS - Text To Speech}}</legend>
 	<div class="form-group">
 	    <label class="col-lg-4 control-label">{{Utiliser l'adresse Jeedom externe}}</label>
 	    <div class="col-lg-2">
@@ -63,6 +63,25 @@ if (!isConnect('admin')) {
                 <option value="picotts">{{PicoTTS (local)}}</option>
                 <option value="gtts">{{Google Translate API (web)}}</option>
             </select>
+	    </div>
+    </div>
+	<div class="form-group">
+	    <label class="col-lg-4 control-label">{{Vitesse de parole}}</label>
+	    <div class="col-lg-2">
+            <select class="configKey form-control" data-l1key="tts_speed">
+                <option value="0.8">{{Très lent}}</option>
+				<option value="1">{{Lent}}</option>
+				<option value="1.2">{{Normal}}</option>
+                <option value="1.4">{{Rapide}}</option>
+				<option value="1.6">{{Très rapide}}</option>
+				<option value="1.8">{{Encore plus rapide}}</option>
+            </select>
+	    </div>
+    </div>
+    <div class="form-group">
+	    <label class="col-lg-4 control-label">{{Ne pas utiliser le cache (déconseillé)}}</label>
+	    <div class="col-lg-2">
+	        <input  type="checkbox" class="configKey" data-l1key="tts_disablecache"/>
 	    </div>
     </div>
     <div class="form-group">

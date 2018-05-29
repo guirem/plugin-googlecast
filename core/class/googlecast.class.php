@@ -37,6 +37,12 @@ class googlecast extends eqLogic {
 
 	/*     * ***********************Methode static*************************** */
 
+    public static function cron15() {
+            foreach (googlecast::byType('googlecast') as $eqLogic) {
+    			$eqLogic->refreshChromecastConfig();
+    			usleep(500);
+    		}
+    	}
 
 	/*     * *********************Methode d'instance************************* */
 
@@ -106,6 +112,19 @@ class googlecast extends eqLogic {
 			$cmd->setLogicalId('refresh');
 			$cmd->setName(__('Rafraîchir', __FILE__));
 			$cmd->setIsVisible(1);
+			$cmd->setConfiguration('googlecast_cmd', true);
+		}
+		$cmd->setType('action');
+		$cmd->setSubType('other');
+		$cmd->setEqLogic_id($this->getId());
+		$cmd->save();
+
+        $cmd = $this->getCmd(null, 'refreshconfig');
+		if (!is_object($cmd)) {
+			$cmd = new googlecastCmd();
+			$cmd->setLogicalId('refreshconfig');
+			$cmd->setName(__('Rafraîchir Config', __FILE__));
+			$cmd->setIsVisible(0);
 			$cmd->setConfiguration('googlecast_cmd', true);
 		}
 		$cmd->setType('action');
@@ -531,9 +550,6 @@ class googlecast extends eqLogic {
 			$cmd->setEqLogic_id($this->getId());
 			$cmd->save();
 
-			$this->setConfiguration('firstTimeCreation', False);
-			$this->save();
-
             $logid = "cmd=tts|value=bienvenue sur google cast";
 			$cmd = $this->getCmd(null, $logid);
 			if (!is_object($cmd)) {
@@ -548,15 +564,27 @@ class googlecast extends eqLogic {
 			$cmd->setEqLogic_id($this->getId());
 			$cmd->save();
 
-			$this->setConfiguration('firstTimeCreation', False);
-			$this->save();
-		}
+            $cmd = $this->getCmd(null, 'cmd=getconfig|data=opencast_pin_code');
+    		if (!is_object($cmd)) {
+    			$cmd = new googlecastCmd();
+    			$cmd->setLogicalId('cmd=getconfig|data=opencast_pin_code');
+    			$cmd->setName(__('Pincode', __FILE__));
+    			$cmd->setIsVisible(0);
+    			$cmd->setOrder($order++);
+    		}
+    		$cmd->setType('info');
+    		$cmd->setSubType('string');
+    		$cmd->setEqLogic_id($this->getId());
 
+            $this->setConfiguration('firstTimeCreation', False);
+    		$cmd->save();
+		}
 
 		$this->checkAndUpdateCmd('nowplaying', $this->getLogicalId());
 
 		if ( $this->getIsEnable() ) {
 			$this->allowDevice();
+            $this->refreshChromecastConfig();
 		}
 	}
 
@@ -623,6 +651,18 @@ class googlecast extends eqLogic {
         return $this->getConfiguration('ip', '');
     }
 
+	public function getChromecastURI() {
+		return $this->getConfiguration('uri', '');
+	}
+
+    public function refreshChromecastConfig() {
+        $cmd = $this->getCmd(null, 'refreshconfig');
+		if (is_object($cmd)) {
+            return $cmd->execute();
+        }
+        return false;
+	}
+
 	/*     * **********************Getteur Setteur*************************** */
 
 	public static function deamon_info() {
@@ -686,6 +726,13 @@ class googlecast extends eqLogic {
         }
         $cmd .= ' --ttslang ' . config::byKey('tts_language', 'googlecast', 'fr-FR');
 		$cmd .= ' --ttsengine ' . config::byKey('tts_engine', 'googlecast', 'picotts');
+        $cmd .= ' --ttsspeed ' . config::byKey('tts_speed', 'googlecast', '1.2');
+        if (config::byKey('tts_disablecache', 'googlecast')==1) {
+            $cmd .= ' --ttscache 0';
+        }
+        else {
+            $cmd .= ' --ttscache 1';
+        }
 		$cmd .= ' --daemonname local';
 		$cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', 'googlecast', '1');
         $cmd .= ' --defaultstatus ' . "'". config::byKey('defaultsatus', 'googlecast', "&nbsp;") ."'";
@@ -790,7 +837,6 @@ class googlecast extends eqLogic {
 		if ($this->getLogicalId() != '') {
 			$value['device'] = array(
 				'uuid' => $this->getLogicalId(),
-				'name' => $this->getConfiguration('friendly_name','Unknown'),
 				'options' => array (
 					'ignore_CEC' => $this->getConfiguration('ignore_CEC','0')
 				)
@@ -894,6 +940,201 @@ class googlecast extends eqLogic {
         return true;
 	}
 
+    public function helperSendConfigInfoCmd($_commands, $setType=false, $format="json", $sep=',', $showError=false, $_callback=null) {
+        if ($setType==false) {
+            $ret = $this->getInfoHttp($_commands, $showError, $format, $sep);
+        }
+        else {
+            $ret = $this->setInfoHttp($_commands, $showError);
+        }
+        return $ret;
+	}
+
+    public function getInfoHttp($cmdLogicalId, $showError=false, $errorRet=false, $format='string', $sep=',') {
+        $uri = $this->getChromecastIP();
+        $cmd = $this->getCmd(null, $cmdLogicalId);
+        $returnData = false;
+		if (!is_object($cmd)) {
+            $returnData = true;
+        }
+        $listCmd = $cmdLogicalId;
+
+        $datalist=array();
+        $cmdgroups = explode('$$', $listCmd);
+        foreach ($cmdgroups as $listCmd) {
+            $data = array();
+            $values = explode('|', $listCmd);
+            foreach ($values as $value) {
+                $value = explode('=', $value);
+                if (count($value) == 2) {
+                    $data[trim($value[0])] = trim($value[1]);
+                }
+            }
+            if (count($data) == 0) {
+                return;
+            }
+            array_push($datalist, $data);
+        }
+
+        foreach ($datalist as $data) {
+            if (isset($data['cmd']) && $data['cmd'] == 'getconfig') {
+                if (isset($data['error']) && ($data['error']==1 or $data['error']=='true') ) {
+                    $showError = true;
+                }
+                if (isset($data['reterror'])) {
+                    $errorRet = $data['reterror'];
+                }
+                $isPost = false;
+                if (isset($data['value'])) {
+                    $uri = $data['value'];
+                    if (strpos($uri, 'post:') === 0) {
+                       $isPost = true;
+                       $uri = str_replace('post:', '', $uri);
+                    }
+                    $url = 'http://' . $uri . ':8008/setup/' . $uri. '?options=detail';
+                }
+                else {
+                    $url = 'http://' . $uri . ':8008/setup/eureka_info?options=detail';
+                }
+                $request_http = new com_http($url);
+                if ($isPost) {
+                    $request_http->setHeader(array('Connection: close', 'content-type: application/json'));
+                    $request_http->setPost('');
+                }
+                try {
+                    $httpret = $request_http->exec($_timeout=1, $_maxRetry=1);
+                    $arrayret = json_decode($httpret, true);
+                } catch (Exception $e) {
+                    if ( $showError==true) {
+                        log::add('googlecast','error',__('Configuration non accessible', __FILE__));
+                    }
+                    if ($returnData==false && $errorRet!=false) {
+                        $cmd->event($errorRet);
+                        return false;
+                    }
+                    else {
+                        return $errorRet;
+                    }
+
+                }
+                if (isset($data['data'])) {
+                    $dataItemList = explode (',',$data['data']);
+                    $retArray = array();
+                    foreach ($dataItemList as $dataItem) {
+                        $pathList = explode ('/',$dataItem);
+                        array_push($retArray, $this->recursePath($arrayret, $pathList));
+                    }
+                    if ( (isset($data['format'])?$data['format']:$format)=='json' ) {
+                        $ret = json_encode($retArray);
+                    }
+                    else {
+                        $ret = '';
+                        foreach ($retArray as $retElem) {
+                            $ret .= $sep . trim($retElem);
+                        }
+                        $ret = substr($ret, 1);
+                    }
+                    //log::add('googlecast','debug',"Ret : " . $ret);
+                    if ($returnData==false) {
+                        $cmd->event($ret);
+                        return true;
+                    }
+                    else {
+                        return $ret;
+                    }
+                }
+                else {
+                    $ret = json_encode($arrayret);
+                }
+                if ($returnData==false) {
+                    $cmd->event($ret);
+                    return true;
+                }
+                else {
+                    return $ret;
+                }
+            }
+        }
+    }
+
+    private function recursePath($array, $pathList) {
+        $pathItem = array_shift($pathList);
+        if ( is_null($pathItem) ) {
+            if (is_array($array)) {
+                return json_encode($array);
+            }
+            else {
+                return $array;
+            }
+        }
+        if ( is_numeric($pathItem) && isset($array[intval($pathItem)]) ) {
+            return $this->recursePath($array[intval($pathItem)], $pathList);
+        }
+        elseif (array_key_exists($pathItem, $array)) {
+            return $this->recursePath($array[$pathItem], $pathList);
+        }
+        elseif ( isset($array[0]) && count($array)==1 ) {
+            return $this->recursePath($array[0], $pathList);
+        }
+        return "unkown";
+    }
+
+
+    public function setInfoHttp($cmdLogicalId, $showError=false) {
+        $uri = $this->getChromecastIP();
+        $cmd = $this->getCmd(null, $cmdLogicalId);
+        $returnData = false;
+        if (!is_object($cmd)) {
+            $returnData = true;
+        }
+        $listCmd = $cmdLogicalId;
+
+        $datalist=array();
+        $cmdgroups = explode('$$', $listCmd);
+        foreach ($cmdgroups as $listCmd) {
+            $data = array();
+            $values = explode('|', $listCmd);
+            foreach ($values as $value) {
+                $value = explode('=', $value);
+                if (count($value) == 2) {
+                    $data[trim($value[0])] = trim($value[1]);
+                }
+            }
+            if (count($data) == 0) {
+                return;
+            }
+            array_push($datalist, $data);
+        }
+
+        foreach ($datalist as $data) {
+            if (isset($data['cmd']) && $data['cmd'] == 'setconfig') {
+                if (isset($data['error']) && ($data['error']==1 or $data['error']=='true') ) {
+                    $showError = true;
+                }
+                if (isset($data['value'])) {
+                    $url = 'http://' . $uri . ':8008/setup/' . $data['value']. '?options=detail';
+                }
+                else {
+                    $url = 'http://' . $uri . ':8008/setup/' . 'eureka_info' . '?options=detail';
+                }
+                $request_http = new com_http($url);
+                if (isset($data['data'])) {
+                    $request_http->setHeader(array('Connection: close', 'content-type: application/json'));
+                    $request_http->setPost($data['data']);
+                }
+                try {
+                    $httpret = $request_http->exec();
+                } catch (Exception $e) {
+                    if ($showError==true) {
+                        log::add('googlecast','error',__('Configuration non accessible', __FILE__));
+                    }
+                    return false;
+                }
+                return true;
+            }
+        }
+    }
+
 }
 
 class googlecastcmd extends cmd {
@@ -904,16 +1145,41 @@ class googlecastcmd extends cmd {
 	/*     * *********************Methode d'instance************************* */
 
 	public function execute($_options = null) {
-		if ($this->getType() != 'action') {
-			return;
-		}
+        $listCmd = $this->getLogicalId();
+        $eqLogic = $this->getEqLogic();
 
-		$eqLogic = $this->getEqLogic();
-		$listCmd = $this->getLogicalId();
-		# special case of custom command
-		if ($this->getLogicalId() == "customcmd") {
+        # special case of custom command
+		if ($listCmd == "customcmd") {
 			$listCmd = trim($_options['message']);
 		}
+
+		if ($this->getType() != 'action') {
+            if (stristr($listCmd, 'cmd=getconfig')!=false) {
+                $eqLogic->getInfoHttp($listCmd);
+                log::add('googlecast','debug',"Envoi d'une commande GoogleCast WEB depuis Jeedom");
+            }
+            else {
+                return;
+            }
+		}
+
+        if ($listCmd == "refreshconfig" || $listCmd == "refresh") {
+            $retf = true;
+            foreach ($eqLogic->getCmd('info') as $cmd) {
+				$logicalId = $cmd->getLogicalId();
+                if (stristr($logicalId, 'cmd=getconfig')!=false) {
+                    $retf = $retf && $eqLogic->getInfoHttp($logicalId);
+                }
+			}
+            log::add('googlecast','debug',"Envoi d'une commande GoogleCast WEB depuis Jeedom");
+            if ($listCmd == "refreshconfig") {
+                return;
+            }
+        }
+        if (stristr($listCmd, 'cmd=setconfig')!=false) {
+            log::add('googlecast','debug',"Envoi d'une commande GoogleCast WEB depuis Jeedom");
+            return;
+        }
 
         $datalist=array();
         $cmdgroups = explode('$$', $listCmd);
@@ -973,7 +1239,9 @@ class googlecastcmd extends cmd {
         );
 		log::add('googlecast','debug',"Envoi d'une commande depuis Jeedom");
 		googlecast::socket_connection( json_encode($fulldata) );
+
 	}
+
 
 	/*     * **********************Getteur Setteur*************************** */
 }
