@@ -4,6 +4,12 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
+## Version du 29 mai 2018
+
+- Ajout de gestion de rapidité de parole pour TTS
+- Récupération/modification de la configuration des équipements (ex: alarme/timer Google Home)
+- Correction de bugs et maj doc
+
 ## Version du 25 mai 2018
 
 - Ajout de commandes 'info' : title, artist, player_state
