@@ -55,6 +55,7 @@ cycle_main = 2
 tts_language = 'fr-FR'
 tts_engine = 'picotts'
 tts_cacheenabled = True
+tts_speed = 1.2
 tts_cachefolderweb = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tmp'))
 tts_cachefoldertmp = os.path.join('/tmp/jeedom/', 'googlecast_tts')
 

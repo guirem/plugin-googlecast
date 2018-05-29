@@ -286,7 +286,7 @@ class JeedomChromeCast :
         else :
             return {
                 "uuid" : self.uuid,
-                "friendly_name" : "", "is_stand_by" :  False, "is_active_input" : False,
+                "is_stand_by" :  False, "is_active_input" : False,
                 "display_name" : globals.DEFAULT_NODISPLAY, "status_text" : globals.DEFAULT_NOSTATUS,
                 "app_id" : "", "is_busy" : False,
                 "title" : "", "artist" : "", 'series_title': "", "stream_type" : "", "player_state" : "",
@@ -538,6 +538,7 @@ def action_handler(message):
                 try:
                     if cmd == 'refresh':
                         logging.debug("ACTION------Refresh action")
+                        time.sleep(1)
                         fallbackMode=False
                     elif cmd == 'reboot':
                         logging.debug("ACTION------Reboot action")
@@ -584,10 +585,16 @@ def action_handler(message):
                         engine = globals.tts_engine
                         if 'engine' in command :
                             engine = command['engine']
+                        speed = globals.tts_speed
+                        if 'speed' in command :
+                            speed = float(command['speed'])
+                        forcetts = False
+                        if 'forcetts' in command :
+                            forcetts = True
                         need_duration=False
                         if vol is not None or quit==True :
                             need_duration=True
-                        url,duration,mp3filename=get_tts_data(value, lang, engine, need_duration)
+                        url,duration,mp3filename=get_tts_data(value, lang, engine, speed, forcetts, need_duration)
                         curvol = jcast.getCurrentVolume()
                         if vol is not None :
                             gcast.set_volume(vol/100)
@@ -605,11 +612,6 @@ def action_handler(message):
                             vol = None
                         if quit:
                             gcast.quit_app()
-                        if globals.tts_cacheenabled==False :
-                            try:
-                                os.remove(mp3filename)
-                            except OSError:
-                                pass
                         fallbackMode=False
                 except Exception as e:
                     logging.error("ACTION------Error while playing action " +cmd+ " on low level commands : %s" % str(e))
@@ -681,7 +683,13 @@ def manage_callback(uuid, callback_type):
     # todo things for callback before returning value
     return True
 
-def get_tts_data(text, language, engine, calcduration):
+def get_tts_data(text, language, engine, speed, forcetts, calcduration):
+    if globals.tts_cacheenabled==False :
+        try :
+            if os.path.exists(globals.tts_cachefoldertmp) :
+                shutil.rmtree(globals.tts_cachefoldertmp)
+        except :
+            pass
     cachepath=globals.tts_cachefolderweb
     # manage cache in ram memory
     symlinkpath=globals.tts_cachefoldertmp
@@ -697,15 +705,24 @@ def get_tts_data(text, language, engine, calcduration):
     try:
         file = hashlib.md5(text.encode('utf-8')).hexdigest()
         filenamemp3=os.path.join(cachepath,file+'.mp3')
-        if not os.path.isfile(filenamemp3):
+        if not os.path.isfile(filenamemp3) or forcetts==True :
+            logging.debug("CMD-TTS------Generating file")
             if engine == 'picotts':
+                speed = float(speed) - 0.2
                 filename=os.path.join(cachepath,file+'.wav')
                 os.system('pico2wave -l '+language+' -w '+filename+ ' "' +ttstext+ '"')
-                speach = AudioSegment.from_wav(filename)
+                speech = AudioSegment.from_wav(filename)
                 start_silence = AudioSegment.silent(duration=300)
-                speach = start_silence + speach
-                speach.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
-                duration_seconds = speach.duration_seconds
+                speech = start_silence + speech
+                speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                duration_seconds = speech.duration_seconds
+                if speed!=1:
+                    try:
+                        os.system('sox '+filenamemp3+' '+filenamemp3+ 'tmp.mp3 tempo ' +str(speed))
+                        os.remove(filenamemp3)
+                        os.rename(filenamemp3+'tmp.mp3', filenamemp3);
+                    except OSError:
+                        pass
                 try:
                     os.remove(filename)
                 except OSError:
@@ -714,21 +731,31 @@ def get_tts_data(text, language, engine, calcduration):
                 language=language.split('-')[0]
                 tts = gTTS(text=ttstext, lang=language)
                 tts.save(filenamemp3)
-                speach = AudioSegment.from_mp3(filenamemp3)
+                if speed!=1:
+                    try:
+                        os.system('sox '+filenamemp3+' '+filenamemp3+ 'tmp.mp3 tempo ' +str(speed))
+                        os.remove(filenamemp3)
+                        os.rename(filenamemp3+'tmp.mp3', filenamemp3);
+                    except OSError:
+                        pass
+                speech = AudioSegment.from_mp3(filenamemp3)
                 start_silence = AudioSegment.silent(duration=300)
-                speach = start_silence + speach
-                speach.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
-                duration_seconds = speach.duration_seconds
+                speech = start_silence + speech
+                speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                duration_seconds = speech.duration_seconds
+
         else:
+            logging.debug("CMD-TTS------Using from cache")
             if calcduration == True:
-                speach = AudioSegment.from_mp3(filenamemp3)
-                duration_seconds = speach.duration_seconds
+                speech = AudioSegment.from_mp3(filenamemp3)
+                duration_seconds = speech.duration_seconds
             else:
                 duration_seconds=0
-        logging.debug("TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+")")
+        logging.debug("TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+",speed:"+str(speed)+")")
         urltoplay=globals.JEEDOM_WEB+'/plugins/googlecast/tmp/'+file+'.mp3'
     except Exception as e:
         logging.error("CMD-TTS------Exception while generating tts file : %s" % str(e))
+        logging.debug(traceback.format_exc())
     return urltoplay, duration_seconds, filenamemp3
 
 def gcast_prepareAppParam(params):
@@ -822,7 +849,7 @@ def read_socket(cycle):
                         if uuid not in globals.KNOWN_DEVICES :
                             globals.KNOWN_DEVICES[uuid] = {
                                 'uuid': uuid, 'status': {},
-                                'friendly_name': message['device']['name'],
+                                #'friendly_name': message['device']['name'],
                                 'lastOnline':0, 'online':False,
                                 'lastSent': 0, 'lastOfflineSent': 0,
                                 'options' : message['device']['options']
@@ -1087,6 +1114,7 @@ parser.add_argument("--ttsweb", help="Jeedom Web server (for TTS)", type=str)
 parser.add_argument("--ttslang", help="Default TTS language", type=str)
 parser.add_argument("--ttsengine", help="Default TTS engine", type=str)
 parser.add_argument("--ttscache", help="Use cache", type=str)
+parser.add_argument("--ttsspeed", help="TTS speech speed", type=str)
 parser.add_argument("--socketport", help="Socket Port", type=str)
 parser.add_argument("--sockethost", help="Socket Host", type=str)
 parser.add_argument("--daemonname", help="Daemon Name", type=str)
@@ -1117,6 +1145,8 @@ if args.ttslang:
     globals.tts_language = args.ttslang
 if args.ttsengine:
     globals.tts_engine = args.ttsengine
+if args.ttsspeed:
+    globals.tts_speed = args.ttsspeed
 if args.ttscache:
     globals.tts_cacheenabled = False if int(args.ttscache)==0 else True
 if args.cycle:
@@ -1159,6 +1189,8 @@ logging.info('GLOBAL------Apikey : '+str(globals.apikey))
 logging.info('GLOBAL------TTS Jeedom server : '+str(globals.JEEDOM_WEB))
 logging.info('GLOBAL------TTS default language : '+str(globals.tts_language))
 logging.info('GLOBAL------TTS default engine : '+str(globals.tts_engine))
+logging.info('GLOBAL------TTS default speech speed : '+str(globals.tts_speed))
+logging.info('GLOBAL------Cache status : '+str(globals.tts_cacheenabled))
 logging.info('GLOBAL------Callback : '+str(globals.callback))
 logging.info('GLOBAL------Event cycle : '+str(globals.cycle))
 logging.info('GLOBAL------Main cycle : '+str(globals.cycle_main))

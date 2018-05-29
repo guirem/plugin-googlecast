@@ -18,7 +18,7 @@ sudo apt-get install -y python3-dev python-requests python3-pip
 echo 70 > /tmp/dependancy_googlecast_in_progress
 echo ""
 echo "-- Installation of TTS libraries"
-sudo apt-get install -y libttspico-utils
+sudo apt-get install -y libttspico-utils sox
 echo 75 > /tmp/dependancy_googlecast_in_progress
 # get pip3 command (different depending of OS such as raspberry)
 pip3cmd=$(compgen -ac | grep -E '^pip-?3' | sort -r | head -1)

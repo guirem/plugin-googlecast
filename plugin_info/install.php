@@ -63,6 +63,12 @@ function googlecast_install() {
     if ( config::byKey('tts_engine', 'googlecast') == '' ) {
 		config::save('tts_engine','gtts', 'googlecast');
 	}
+	if ( config::byKey('tts_speed', 'googlecast') == '' ) {
+		config::save('tts_speed','1.2', 'googlecast');
+	}
+    if ( config::byKey('tts_disablecache', 'googlecast') == '' ) {
+		config::save('tts_disablecache','0', 'googlecast');
+	}
 
 	linkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
 
