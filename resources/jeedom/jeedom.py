@@ -133,7 +133,7 @@ class jeedom_com():
                 logging.error('SENDER------Callback error: %s %s. Please check your network configuration page'% (response.status.code, response.status.message,))
                 return False
         except Exception as e:
-            logging.error('SENDER------Callback result as a unknown error: %s. Please check your network configuration page'% (e.message,))
+            logging.error('SENDER------Callback result as a unknown error: %s. Please check your network configuration page. '% str(e))
             return False
         return True
 

@@ -575,16 +575,19 @@ class googlecast extends eqLogic {
     		$cmd->setType('info');
     		$cmd->setSubType('string');
     		$cmd->setEqLogic_id($this->getId());
+            $cmd->save();
 
             $this->setConfiguration('firstTimeCreation', False);
-    		$cmd->save();
+    		$this->save();
 		}
 
 		$this->checkAndUpdateCmd('nowplaying', $this->getLogicalId());
 
 		if ( $this->getIsEnable() ) {
 			$this->allowDevice();
-            $this->refreshChromecastConfig();
+            try {
+                $this->refreshChromecastConfig();
+            } catch (Exception $e) {}
 		}
 	}
 
@@ -986,12 +989,12 @@ class googlecast extends eqLogic {
                 }
                 $isPost = false;
                 if (isset($data['value'])) {
-                    $uri = $data['value'];
-                    if (strpos($uri, 'post:') === 0) {
+                    $uripath = $data['value'];
+                    if (strpos($uripath, 'post:') === 0) {
                        $isPost = true;
-                       $uri = str_replace('post:', '', $uri);
+                       $uripath = str_replace('post:', '', $uripath);
                     }
-                    $url = 'http://' . $uri . ':8008/setup/' . $uri. '?options=detail';
+                    $url = 'http://' . $uri . ':8008/setup/' . $uripath. '?options=detail';
                 }
                 else {
                     $url = 'http://' . $uri . ':8008/setup/eureka_info?options=detail';
@@ -1008,56 +1011,88 @@ class googlecast extends eqLogic {
                     if ( $showError==true) {
                         log::add('googlecast','error',__('Configuration non accessible', __FILE__));
                     }
-                    if ($returnData==false && $errorRet!=false) {
-                        $cmd->event($errorRet);
-                        return false;
+                    if ($returnData==false) {
+                        if ($errorRet==false) {
+                            $ret = $cmd->execCmd();
+                            $cmd->event($ret);
+                            return $ret;
+                        }
+                        else {
+                            $cmd->event($errorRet);
+                        }
                     }
-                    else {
-                        return $errorRet;
-                    }
-
+                    return $errorRet;
                 }
+
                 if (isset($data['data'])) {
+
                     $dataItemList = explode (',',$data['data']);
                     $retArray = array();
                     foreach ($dataItemList as $dataItem) {
                         $pathList = explode ('/',$dataItem);
-                        array_push($retArray, $this->recursePath($arrayret, $pathList));
+                        array_push($retArray, $this->recursePath($arrayret, $pathList, $errorRet));
                     }
-                    if ( (isset($data['format'])?$data['format']:$format)=='json' ) {
+                    //log::add('googlecast','debug',"Reta : " . print_r($retArray,true));
+					if (isset($data['format'])) {
+						$format = $data['format'];
+					}
+                    if ( $format=='json' ) {
                         $ret = json_encode($retArray);
                     }
-                    else {
+                    elseif ( $format=='string' ) {
                         $ret = '';
                         foreach ($retArray as $retElem) {
                             $ret .= $sep . trim($retElem);
                         }
                         $ret = substr($ret, 1);
                     }
-                    //log::add('googlecast','debug',"Ret : " . $ret);
+					else {
+                        $ret = '';
+                        foreach ($retArray as $retElem) {
+                            $ret .=  $sep . $this->formatString($retElem, $format, $errorRet);
+                        }
+                        $ret = substr($ret, 1);
+                    }
+                    log::add('googlecast','debug',"Result : " . $ret);
+
                     if ($returnData==false) {
                         $cmd->event($ret);
-                        return true;
                     }
-                    else {
-                        return $ret;
-                    }
+                    return $ret;
                 }
                 else {
                     $ret = json_encode($arrayret);
                 }
                 if ($returnData==false) {
                     $cmd->event($ret);
-                    return true;
                 }
-                else {
-                    return $ret;
-                }
+                return $ret;
             }
         }
     }
 
-    private function recursePath($array, $pathList) {
+	private function formatString($array, $format, $errorRet) {
+        if (!is_array($array) && ($array=='unknown' or $array==$errorRet)) {
+            return $array;
+        }
+        $array = json_decode($array, true);
+        $flattenArray = $this->array_flatten($array);
+        $ret = vsprintf($format, $flattenArray);
+        return $ret;
+    }
+
+    private function array_flatten($array) {
+        $return = array();
+        foreach ($array as $key => $value) {
+            if (is_array($value))
+                $return = array_merge($return, $this->array_flatten($value));
+            else
+                $return[$key] = $value;
+        }
+        return $return;
+    }
+
+    private function recursePath($array, $pathList, $errorRet) {
         $pathItem = array_shift($pathList);
         if ( is_null($pathItem) ) {
             if (is_array($array)) {
@@ -1068,15 +1103,15 @@ class googlecast extends eqLogic {
             }
         }
         if ( is_numeric($pathItem) && isset($array[intval($pathItem)]) ) {
-            return $this->recursePath($array[intval($pathItem)], $pathList);
+            return $this->recursePath($array[intval($pathItem)], $pathList, $errorRet);
         }
         elseif (array_key_exists($pathItem, $array)) {
-            return $this->recursePath($array[$pathItem], $pathList);
+            return $this->recursePath($array[$pathItem], $pathList, $errorRet);
         }
         elseif ( isset($array[0]) && count($array)==1 ) {
-            return $this->recursePath($array[0], $pathList);
+            return $this->recursePath($array[0], $pathList, $errorRet);
         }
-        return "unkown";
+        return ($errorRet!=false?$errorRet:'unknown');
     }
 
 
@@ -1156,7 +1191,7 @@ class googlecastcmd extends cmd {
 		if ($this->getType() != 'action') {
             if (stristr($listCmd, 'cmd=getconfig')!=false) {
                 $eqLogic->getInfoHttp($listCmd);
-                log::add('googlecast','debug',"Envoi d'une commande GoogleCast WEB depuis Jeedom");
+                log::add('googlecast','debug',"Envoi d'une commande GoogleCast API http depuis Jeedom");
             }
             else {
                 return;
@@ -1171,13 +1206,13 @@ class googlecastcmd extends cmd {
                     $retf = $retf && $eqLogic->getInfoHttp($logicalId);
                 }
 			}
-            log::add('googlecast','debug',"Envoi d'une commande GoogleCast WEB depuis Jeedom");
+            log::add('googlecast','debug',"Envoi d'une commande GoogleCast API http depuis Jeedom");
             if ($listCmd == "refreshconfig") {
                 return;
             }
         }
         if (stristr($listCmd, 'cmd=setconfig')!=false) {
-            log::add('googlecast','debug',"Envoi d'une commande GoogleCast WEB depuis Jeedom");
+            log::add('googlecast','debug',"Envoi d'une commande GoogleCast API http depuis Jeedom");
             return;
         }
 
