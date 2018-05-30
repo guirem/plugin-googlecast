@@ -96,7 +96,7 @@ Liste des commandes non visibles par défaut :
 - *Titre* : Titre du média en cours ;
 - *Artist* : Artist du média en cours ;
 - *Custom Cmd* : Ce composant est destiné à être utilisé via un schénario ou pour test (voir section [Utilisation dans un scénario](#utilisation-dans-un-scénario));
-- *Pincode* : pincode pour association rapide (exemple de configuration avancée) 
+- *Pincode* : pincode pour association rapide (exemple de configuration avancée)
 
 Pour les voir sur le dashboard, il faut activer 'Afficher' dans l'onglet des commandes.
 
@@ -268,7 +268,7 @@ Pour plus d'info voir  https://rithvikvibhu.github.io/GHLocalApi/
 - reterror: str - value to be returned if connection fails. Default will not change previous state.
 
 Exemples:
-- Récupération le Pin code d'une Google Chromecast :
+- Récupération du pincode d'une Google Chromecast :
 cmd=getconfig|data=opencast_pin_code
 - Google Home : Récupération de l'état de la première alarme :
 cmd=getconfig|value=assistant/alarms|data=alarm/0/status
