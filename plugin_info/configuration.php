@@ -31,6 +31,12 @@ if (!isConnect('admin')) {
 	    </div>
     </div>
 	<div class="form-group">
+	    <label class="col-lg-4 control-label">{{Configuration spéciale (eg: Docker, VM)}}</label>
+	    <div class="col-lg-2">
+	        <input  type="checkbox" class="configKey" data-l1key="fixdocker"/>
+	    </div>
+    </div>
+	<div class="form-group">
 	    <label class="col-lg-4 control-label">{{Fréquence de rafraissement}}</label>
 	    <div class="col-lg-2">
 			<select class="configKey form-control" data-l1key="cyclefactor">
