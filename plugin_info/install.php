@@ -51,6 +51,9 @@ function googlecast_install() {
 	if ( config::byKey('socketport', 'googlecast') == '' ) {
 		config::save('socketport','55012', 'googlecast');
 	}
+	if ( config::byKey('fixdocker', 'googlecast') == '' ) {
+		config::save('fixdocker','0', 'googlecast');
+	}
 	if ( config::byKey('cyclefactor', 'googlecast') == '' ) {
 		config::save('cyclefactor','1', 'googlecast');
 	}

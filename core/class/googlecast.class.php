@@ -719,7 +719,8 @@ class googlecast extends eqLogic {
 		$cmd .= ' --loglevel ' . log::convertLogLevel(log::getLogLevel('googlecast'));
 		$cmd .= ' --socketport ' . config::byKey('socketport', 'googlecast');
 		$cmd .= ' --sockethost 127.0.0.1';
-		$cmd .= ' --callback ' . network::getNetworkAccess('internal', 'proto:127.0.0.1:port:comp') . '/plugins/googlecast/core/php/googlecast.api.php';
+        $jeedomurl = (config::byKey('fixdocker', 'googlecast')==0 ? network::getNetworkAccess('internal', 'proto:127.0.0.1:port:comp') : network::getNetworkAccess('internal'));
+		$cmd .= ' --callback ' . $jeedomurl . '/plugins/googlecast/core/php/googlecast.api.php';
 		$cmd .= ' --apikey ' . jeedom::getApiKey('googlecast');
         if (config::byKey('tts_externalweb', 'googlecast')==1) {
             $cmd .= ' --ttsweb ' . network::getNetworkAccess('external');

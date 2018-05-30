@@ -53,6 +53,7 @@ Après téléchargement du plugin :
 
 Les paramêtres de configuration n'ont généralement pas besoin d'être modifiés
 - Port du socket interne de communication. Ne modifier que si nécessaire (ex: s'il est déjà pris par un autres plugin)
+- Configuration spéciale (eg: Docker, VM). Ne modifier que si ça ne fonctionne pas sans l'option.
 - Fréquence de rafraîchissement. A ne modifier uniquement si la fréquence normale à un impact important sur les performances globales
 - TTS - Utiliser l'adresse Jeedom externe : par défaut utilise l'addresse web Jeedom interne
 - TTS - Langue par défaut : langue du moteur TTS utilisé par défaut
@@ -263,15 +264,17 @@ Pour plus d'info voir  https://rithvikvibhu.github.io/GHLocalApi/
 - value: str - uri base after 'setup/' based on API doc (default is 'eureka_info'). If starts with 'post:', a POST type request will be issued.
 - data: str - json path to be returned seperated by '/'. To get several data, seperate by ','.
 - sep: str - seperator if several data is set (default = ',').
-- format: json/string - output format (default = 'string').
+- format: json/string/custom - output format (default = 'string'). 'custom' follows 'sprintf' php function format (ex: %d, %s).
 - error: 1 - seperator if several data is set (default = ',').
 - reterror: str - value to be returned if connection fails. Default will not change previous state.
 
 Exemples:
 - Récupération du pincode d'une Google Chromecast :
 cmd=getconfig|data=opencast_pin_code
-- Google Home : Récupération de l'état de la première alarme :
-cmd=getconfig|value=assistant/alarms|data=alarm/0/status
+- Google Home : Récupération de l'état de la première alarme (-1 en cas de problème ou non existant):
+cmd=getconfig|value=assistant/alarms|data=alarm/0/status|reterror=-1
+- Google Home : Récupération la date et heure de la première alarme au format JJ-MM-AAAA HH:MM:
+cmd=getconfig|value=assistant/alarms|data=alarm/0|format=%02d-%02d-%04d %02d:%02d|reterror=0000-00-00 00:00
 ```
 
 ##### Modifier une configuration
@@ -293,6 +296,7 @@ cmd=setconfig|value=assistant/alarms/volume|data={'volume': 1}
 
 ### Utilisation dans un scénario
 
+#### Avec commande dédiée *Custom Cmd*
 La commande nommée *Custom Cmd* permet de lancer une commande brute à partir d'un scénario.
 
 Par exemple pour lancer Google sur un Google Cast à partir d'un scénrio, ajouter la commande avec la valeur souhaitée dans le champs 'message'.
@@ -302,6 +306,21 @@ app=web|cmd=load_url|value='https://google.com',True,10
 
 ![Scenario](../images/scenario.png "Scenario")
 
+#### Avec bloc code php
+Exemple avec récupération d'info de config en utilisant un bloc code php.
+
+Récupérer le jour de l'alarme pour un Google Home :
+```
+$googlecast = googlecast::byLogicalId('d2fd3db1-bd0f-fe4c-d8dd-XXXXXXXXX', 'googlecast');
+if (!is_object($googlecast)) {
+  	$scenario->setData("_alarm_jour", "00000000");
+}
+else {
+  $ret =  $googlecast->getInfoHttp('cmd=getconfig|value=assistant/alarms|data=alarm/0', false, '00000000', '%04d%02d%02d');
+  $scenario->setData("_alarm",$ret);
+}
+// variable _alarm contient JJMMAAAA (00000000 en cas de problème)
+```
 
 FAQ
 =============================
