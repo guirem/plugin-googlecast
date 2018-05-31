@@ -19,6 +19,9 @@
 /* * ***************************Includes********************************* */
 //error_reporting(E_ALL);
 //ini_set('display_errors', 'On');
+
+require_once dirname(__FILE__) . "/googlecast_utils.inc.php";
+
 class googlecast extends eqLogic {
 	/*     * *************************Attributs****************************** */
 
@@ -38,11 +41,11 @@ class googlecast extends eqLogic {
 	/*     * ***********************Methode static*************************** */
 
     public static function cron15() {
-            foreach (googlecast::byType('googlecast') as $eqLogic) {
-    			$eqLogic->refreshChromecastConfig();
-    			usleep(500);
-    		}
+        foreach (googlecast::byType('googlecast') as $eqLogic) {
+    		$eqLogic->refreshChromecastConfig();
+    		usleep(500);
     	}
+    }
 
 	/*     * *********************Methode d'instance************************* */
 
@@ -50,9 +53,12 @@ class googlecast extends eqLogic {
 		if ( $this->getIsEnable() == false ) {
 			$this->disallowDevice();
 		}
-        if ( class_exists('gcastplayer') ) {
-            //gcastplayer::changeEnableState($this->getLogicalId(), null, $this->getIsEnable());
-        }
+        try {
+            if ( class_exists('gcastplayer') ) {
+                gcastplayer::changeEnableState($this->getLogicalId(), null, $this->getIsEnable());
+            }
+        } catch (Exception $e) {}
+
 
 		// manage logo
 		$found = False;
@@ -84,14 +90,24 @@ class googlecast extends eqLogic {
 		}
 		$this->setConfiguration('logoDevice', $imgLogo);
 
+        if ($modelName=='google home mini' || $modelName=='google home') {
+            $this->setConfiguration('has_googleassistant', '1');
+        }
+        else {
+            $this->setConfiguration('has_googleassistant', '0');
+        }
+
+
 	}
 
 	public function preRemove() {
 		$this->disallowDevice();
 
-        if ( class_exists('gcastplayer') ) {
-            //gcastplayer::changeEnableState($this->getLogicalId(), null, false);
-        }
+        try {
+            if ( class_exists('gcastplayer') ) {
+                gcastplayer::changeEnableState($this->getLogicalId(), null, false);
+            }
+        } catch (Exception $e) {}
 	}
 
     public function lightSave() {
@@ -492,6 +508,7 @@ class googlecast extends eqLogic {
 		$cmd->setEqLogic_id($this->getId());
 		$cmd->save();
 
+
 		if ($this->getConfiguration('firstTimeCreation', True)) {
             $order = 200;
 			$logid = "app=backdrop";
@@ -580,6 +597,10 @@ class googlecast extends eqLogic {
             $this->setConfiguration('firstTimeCreation', False);
     		$this->save();
 		}
+
+        if (intval($this->getConfiguration('has_googleassistant', '0')) == 1) {
+            $order = googlecast_utils::getCmdDefinition($this, 'googlehome', 210);
+        }
 
 		$this->checkAndUpdateCmd('nowplaying', $this->getLogicalId());
 
@@ -944,19 +965,28 @@ class googlecast extends eqLogic {
         return true;
 	}
 
-    public function helperSendConfigInfoCmd($_commands, $setType=false, $format="json", $sep=',', $showError=false, $_callback=null) {
+    public function helperSendConfigInfoCmd($_commands, $_destLogicalId, $setType=false, $_callback=null, $showError=false) {
         if ($setType==false) {
-            $ret = $this->getInfoHttp($_commands, $showError, $format, $sep);
+            $ret = $this->getInfoHttp($_commands, $showError, false, 'json', ',', null, $_destLogicalId);
         }
         else {
-            $ret = $this->setInfoHttp($_commands, $showError);
+            $ret = $this->setInfoHttp($_commands, $showError, $_destLogicalId);
         }
         return $ret;
 	}
 
-    public function getInfoHttp($cmdLogicalId, $showError=false, $errorRet=false, $format='string', $sep=',') {
+    public function getInfoHttpSimple($cmdLogicalId, $destLogicalId=null) {
+        $cmdLogicalIdTranslate = googlecast_utils::getCmdTranslation($cmdLogicalId);
+        if (is_null($destLogicalId)) {
+            $destLogicalId = ($cmdLogicalIdTranslate!=$cmdLogicalId ? $cmdLogicalId : null);
+        }
+        return $this->getInfoHttp($cmdLogicalIdTranslate, false, false, 'string', ',', null, $destLogicalId);
+    }
+
+    public function getInfoHttp($cmdLogicalId, $showError=false, $errorRet=false, $format='string', $sep=',', $fnc=null, $destLogicalId=null) {
+        log::add('googlecast','debug',"getInfoHttp : " . $cmdLogicalId);
         $uri = $this->getChromecastIP();
-        $cmd = $this->getCmd(null, $cmdLogicalId);
+        $cmd = $this->getCmd(null, (!is_null($destLogicalId)?$destLogicalId:$cmdLogicalId));
         $returnData = false;
 		if (!is_object($cmd)) {
             $returnData = true;
@@ -988,6 +1018,9 @@ class googlecast extends eqLogic {
                 if (isset($data['reterror'])) {
                     $errorRet = $data['reterror'];
                 }
+                if (isset($data['fnc'])) {
+                    $fnc = $data['fnc'];
+                }
                 $isPost = false;
                 if (isset($data['value'])) {
                     $uripath = $data['value'];
@@ -1015,10 +1048,13 @@ class googlecast extends eqLogic {
                     if ($returnData==false) {
                         if ($errorRet==false) {
                             $ret = $cmd->execCmd();
+                            log::add('googlecast','debug',"getInfoHttp : Result error (no default) : " . $ret);
                             $cmd->event($ret);
                             return $ret;
                         }
                         else {
+                            $errorRet = googlecast_utils::getFncResult($errorRet, $fnc);
+                            log::add('googlecast','debug',"getInfoHttp : Result error (with default) : " . $errorRet);
                             $cmd->event($errorRet);
                         }
                     }
@@ -1033,7 +1069,6 @@ class googlecast extends eqLogic {
                         $pathList = explode ('/',$dataItem);
                         array_push($retArray, $this->recursePath($arrayret, $pathList, $errorRet));
                     }
-                    //log::add('googlecast','debug',"Reta : " . print_r($retArray,true));
 					if (isset($data['format'])) {
 						$format = $data['format'];
 					}
@@ -1054,7 +1089,8 @@ class googlecast extends eqLogic {
                         }
                         $ret = substr($ret, 1);
                     }
-                    log::add('googlecast','debug',"Result : " . $ret);
+                    $ret = googlecast_utils::getFncResult($ret, $fnc);
+                    log::add('googlecast','debug',"getInfoHttp : Result success : " . $ret);
 
                     if ($returnData==false) {
                         $cmd->event($ret);
@@ -1103,6 +1139,9 @@ class googlecast extends eqLogic {
                 return $array;
             }
         }
+        if ( is_null($array) ) {
+            return $errorRet;
+        }
         if ( is_numeric($pathItem) && isset($array[intval($pathItem)]) ) {
             return $this->recursePath($array[intval($pathItem)], $pathList, $errorRet);
         }
@@ -1115,13 +1154,20 @@ class googlecast extends eqLogic {
         return ($errorRet!=false?$errorRet:'unknown');
     }
 
+    public function setInfoHttpSimple($cmdLogicalId, $destLogicalId=null) {
+        $cmdLogicalId = googlecast_utils::getCmdTranslation($cmdLogicalId);
+        $this->setInfoHttp($cmdLogicalId, false, $destLogicalId);
+    }
 
-    public function setInfoHttp($cmdLogicalId, $showError=false) {
+    public function setInfoHttp($cmdLogicalId, $showError=false, $destLogicalId=null) {
         $uri = $this->getChromecastIP();
-        $cmd = $this->getCmd(null, $cmdLogicalId);
-        $returnData = false;
-        if (!is_object($cmd)) {
-            $returnData = true;
+        $hasCmd = false;
+        if (!is_null($destLogicalId)) {
+            $cmd = $this->getCmd(null, $destLogicalId);
+            $hasCmd = false;
+            if (is_object($cmd)) {
+                $hasCmd = true;
+            }
         }
         $listCmd = $cmdLogicalId;
 
@@ -1148,23 +1194,25 @@ class googlecast extends eqLogic {
                     $showError = true;
                 }
                 if (isset($data['value'])) {
-                    $url = 'http://' . $uri . ':8008/setup/' . $data['value']. '?options=detail';
+                    $url = 'http://' . $uri . ':8008/setup/' . $data['value'];
                 }
                 else {
-                    $url = 'http://' . $uri . ':8008/setup/' . 'eureka_info' . '?options=detail';
+                    $url = 'http://' . $uri . ':8008/setup/' . 'set_eureka_info';
                 }
                 $request_http = new com_http($url);
-                if (isset($data['data'])) {
-                    $request_http->setHeader(array('Connection: close', 'content-type: application/json'));
-                    $request_http->setPost($data['data']);
-                }
+                $request_http->setHeader(array('content-type: application/json'));
+                $request_http->setPost( (isset($data['data']) ? $data['data'] : '') );
                 try {
                     $httpret = $request_http->exec();
+                    log::add('googlecast','debug','setInfoHttp : Result : ' . $httpret);
                 } catch (Exception $e) {
                     if ($showError==true) {
                         log::add('googlecast','error',__('Configuration non accessible', __FILE__));
                     }
                     return false;
+                }
+                if ($hasCmd==true) {
+                    $ret = $cmd->execCmd();
                 }
                 return true;
             }
@@ -1181,7 +1229,7 @@ class googlecastcmd extends cmd {
 	/*     * *********************Methode d'instance************************* */
 
 	public function execute($_options = null) {
-        $listCmd = $this->getLogicalId();
+        $listCmd = googlecast_utils::getCmdTranslation($this->getLogicalId());
         $eqLogic = $this->getEqLogic();
 
         # special case of custom command
@@ -1191,7 +1239,7 @@ class googlecastcmd extends cmd {
 
 		if ($this->getType() != 'action') {
             if (stristr($listCmd, 'cmd=getconfig')!=false) {
-                $eqLogic->getInfoHttp($listCmd);
+                $eqLogic->getInfoHttpSimple($listCmd, $this->getLogicalId());
                 log::add('googlecast','debug',"Envoi d'une commande GoogleCast API http depuis Jeedom");
             }
             else {
@@ -1200,20 +1248,19 @@ class googlecastcmd extends cmd {
 		}
 
         if ($listCmd == "refreshconfig" || $listCmd == "refresh") {
-            $retf = true;
             foreach ($eqLogic->getCmd('info') as $cmd) {
-				$logicalId = $cmd->getLogicalId();
+				$logicalId = googlecast_utils::getCmdTranslation($cmd->getLogicalId());
                 if (stristr($logicalId, 'cmd=getconfig')!=false) {
-                    $retf = $retf && $eqLogic->getInfoHttp($logicalId);
+                    $eqLogic->getInfoHttpSimple($logicalId, $cmd->getLogicalId());
                 }
 			}
-            log::add('googlecast','debug',"Envoi d'une commande GoogleCast API http depuis Jeedom");
             if ($listCmd == "refreshconfig") {
                 return;
             }
         }
         if (stristr($listCmd, 'cmd=setconfig')!=false) {
-            log::add('googlecast','debug',"Envoi d'une commande GoogleCast API http depuis Jeedom");
+            log::add('googlecast','debug',"Envoi d'une commande GoogleCast API http depuis Jeedom (set)");
+            $eqLogic->setInfoHttpSimple($listCmd, null);
             return;
         }
 

@@ -16,7 +16,7 @@ Plugin pour commander les équipements compatibles Google Cast.
 - Retour d'état sur les principales Fonctionnalités
 - Affichage de la lecture en cours
 - Text To Speech (TTS)
-- Récupération/modification de la configuration
+- Récupération/modification de configuration d'équipement
 
 
 ![Logo plugin](../images/chromecast.png "Chromecast")
@@ -274,7 +274,13 @@ cmd=getconfig|data=opencast_pin_code
 - Google Home : Récupération de l'état de la première alarme (-1 en cas de problème ou non existant):
 cmd=getconfig|value=assistant/alarms|data=alarm/0/status|reterror=-1
 - Google Home : Récupération la date et heure de la première alarme au format JJ-MM-AAAA HH:MM:
-cmd=getconfig|value=assistant/alarms|data=alarm/0|format=%02d-%02d-%04d %02d:%02d|reterror=0000-00-00 00:00
+cmd=getconfig|value=assistant/alarms|data=alarm/0|format=%02d-%02d-%04d %02d:%02d|reterror=00-00-0000 00:00
+- Changer le nom du Google cast
+cmd=setconfig|data={"name":"Mon nouveau nom"}
+- Google Home : Désactiver le mode nuit
+cmd=setconfig|value=assistant/set_night_mode_params|data={"enabled": false}
+- Google Home : Changer luminosité du mode nuit
+cmd=setconfig|value=assistant/set_night_mode_params|data={"led_brightness": 0.2}
 ```
 
 ##### Modifier une configuration
@@ -294,6 +300,25 @@ cmd=setconfig|value=assistant/notifications|data={'notifications_enabled': false
 cmd=setconfig|value=assistant/alarms/volume|data={'volume': 1}
 ```
 
+##### Commande configuration pré-définies
+
+Les commandes suivantes peuvent être utilisé dans une commande ou scénario (via getInfoHttpSimple) :
+
+- [info] *gh_get_alarm_date_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme.
+- [info] *gh_get_alarm_datenice_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme.
+- [info] *gh_get_alarm_timestamp_#* (#=numéro, commence par 0) : retourne le timestamp de la prochaine alarme.
+- [info] *gh_get_alarm_status_#* (#=numéro, commence par 0) : statut de l'alarme (1 = configuré,  2 = sonne).
+- [info] *gh_get_timer_timesec_#* (#=numéro, commence par 0) : retourne le nombre de secondes avant déclenchement du timer.
+- [info] *gh_get_timer_time_#* (#=numéro, commence par 0) : retourne la date de déclenchement du timer.
+- [info] *gh_get_timer_duration_#* (#=numéro, commence par 0) : retourne la durée originale configurée du timer.
+- [info] *gh_get_timer_status_#* (#=numéro, commence par 0) : statut du timer (1 = configuré,  3 = sonne).
+- [info] *gh_get_donotdisturb* : retourne l'état de la fonction 'Do Not Disturb'
+- [cmd] *gh_set_donotdisturb_on* : active la fonction 'Do Not Disturb'
+- [cmd] *gh_set_donotdisturb_off* : désactive la fonction 'Do Not Disturb'
+- [cmd] *gh_set_donotdisturb_#* (#=true/false) : active/désavtive la fonction 'Do Not Disturb'
+- [cmd] *gh_set_alarms_volume_#* (# = entre 0 et 1 (eg: 0.4)) : configure le valume des alarmes et timers.
+- *conf_pincode* : retourne le code pin d'association
+
 ### Utilisation dans un scénario
 
 #### Avec commande dédiée *Custom Cmd*
@@ -307,6 +332,7 @@ app=web|cmd=load_url|value='https://google.com',True,10
 ![Scenario](../images/scenario.png "Scenario")
 
 #### Avec bloc code php
+
 Exemple avec récupération d'info de config en utilisant un bloc code php.
 
 Récupérer le jour de l'alarme pour un Google Home :
@@ -316,7 +342,23 @@ if (!is_object($googlecast)) {
   	$scenario->setData("_alarm_jour", "00000000");
 }
 else {
-  $ret =  $googlecast->getInfoHttp('cmd=getconfig|value=assistant/alarms|data=alarm/0', false, '00000000', '%04d%02d%02d');
+  // via commande longue
+  $ret =  $googlecast->getInfoHttpSimple('cmd=getconfig|value=assistant/alarms|data=alarm/0|format=%02d%02d%04d|reterror=00000000');
+  // via commande courte pré-configurée
+  // $ret =  $googlecast->getInfoHttpSimple('gh_get_alarm_date_0');
+  $scenario->setData("_alarm",$ret);
+}
+// variable _alarm contient JJMMAAAA (00000000 en cas de problème)
+```
+
+Récupérer le jour de l'alarme pour un Google Home :
+```
+$googlecast = googlecast::byLogicalId('d2fd3db1-bd0f-fe4c-d8dd-XXXXXXXXX', 'googlecast');
+if (!is_object($googlecast)) {
+  	$scenario->setData("_alarm_jour", "00000000");
+}
+else {
+  $ret =  $googlecast->getInfoHttpSimple('cmd=getconfig|value=assistant/alarms|data=alarm/0|format=%02d%02d%04d|reterror=00000000');
   $scenario->setData("_alarm",$ret);
 }
 // variable _alarm contient JJMMAAAA (00000000 en cas de problème)
