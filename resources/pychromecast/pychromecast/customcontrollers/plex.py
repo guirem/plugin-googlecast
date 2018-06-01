@@ -93,7 +93,7 @@ class PlexController(BaseController):
     def get_last_message(self):
         return self.last_message
 
-    def play_media(self, params, callback_function=None, **kwargs):
+    def play_media(self, Contentid, Contenttype, Serverid, Serveruri, Transienttoken, Username, Queueid, Serverversion="1.10.1.4602", Offset=0, callback_function=None):
         """
         Launch the Plex chromecast app and initiate playback
 
@@ -111,6 +111,16 @@ class PlexController(BaseController):
         :callable|None callback_function:
         :param kwargs: additional arguments
         """
+        params = {'Contentid' : Contentid,
+                  'Contenttype' : Contenttype,
+                  'Serverid' : Serverid,
+                  'Serveruri' : Serveruri,
+                  'Transienttoken' : Transienttoken,
+                  'Username' : Username,
+                  'Queueid' : Queueid,
+                  'Serverversion' : Serverversion,
+                  'Offset' : Offset,
+                }
         self.namespace = "urn:x-cast:plex"
 
         def app_launched_callback():
@@ -134,8 +144,8 @@ class PlexController(BaseController):
         else:
             verified = False
 
-        if 'Version' in params:
-            server_version = params['Version']
+        if 'Serverversion' in params:
+            server_version = params['Serverversion']
         else:
             server_version = "1.10.1.4602"
 

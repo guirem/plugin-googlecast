@@ -48,18 +48,26 @@ except ImportError:
 
 try:
     import pychromecast.pychromecast.controllers.dashcast as dashcast
-    #import pychromecast.pychromecast.controllers.plex as plex
     import pychromecast.pychromecast.controllers.spotify as Spotify
+    import pychromecast.pychromecast.controllers.youtube as youtube
 except ImportError:
     logging.error("ERROR: One or several pychromecast controllers are not loaded !")
     print(traceback.format_exc())
     pass
 
 try:
-    import pychromecast.pychromecast.customcontrollers.youtube as youtube
-    import pychromecast.pychromecast.customcontrollers.plex as plex
+    #import pychromecast.pychromecast.customcontrollers.youtube as youtube
+    import pychromecast.pychromecast.customcontrollers.plex2 as plex
 except ImportError:
     logging.error("ERROR: Custom controller not loaded !")
+    logging.error(traceback.format_exc())
+    pass
+
+try:
+    from plexapi.myplex import MyPlexAccount
+    from plexapi.server import PlexServer
+except ImportError:
+    logging.error("ERROR: Plex API not loaded !")
     logging.error(traceback.format_exc())
     pass
 
@@ -215,8 +223,9 @@ class JeedomChromeCast :
                         self.gcast.register_handler(player)
                         time.sleep(2)
                     elif playername == 'plex' :
-                        player = plex.PlexController(self.gcast)
-                        player.register_status_listener(self)
+                        #player = plex.PlexController(self.gcast)
+                        #player.register_status_listener(self)
+                        player = plex.PlexController()
                         self.gcast.register_handler(player)
                         time.sleep(2)
                     else :
@@ -230,7 +239,9 @@ class JeedomChromeCast :
                         self.gcast.quit_app()
                     if params and 'wait' in params :
                         time.sleep(params['wait'])
-                except Exception :
+                except Exception as e:
+                    logging.error("JEEDOMCHROMECAST------ Error while initiating player " +playername+ " on low level commands : %s" % str(e))
+                    logging.debug(traceback.format_exc())
                     player = None
                     pass
             #else:
@@ -496,7 +507,8 @@ def action_handler(message):
                         player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before}, None)
                         eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
                 elif app == 'youtube':  # app=youtube|cmd=play_video|value=fra4QBLF3GU
-                    possibleCmd = ['play_video', 'start_new_session', 'add_to_queue', 'update_screen_id', 'clear_playlist', 'play', 'stop', 'pause']
+                    #possibleCmd = ['play_video', 'start_new_session', 'add_to_queue', 'update_screen_id', 'clear_playlist', 'play', 'stop', 'pause']
+                    possibleCmd = ['play_video', 'add_to_queue', 'play_next', 'remove_video']
                     if cmd in possibleCmd :
                         fallbackMode=False
                         if gcast.device.cast_type == 'cast' :
@@ -524,8 +536,61 @@ def action_handler(message):
                     possibleCmd = ['play_media','play', 'stop', 'pause', 'next', 'previous']
                     if cmd in possibleCmd :
                         fallbackMode=False
+
                         player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait}, None)
-                        eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
+
+                            #pxr.namespace = 'urn:x-cast:com.google.cast.sse'
+
+                        if cmd == 'play_media' :
+                            serverurl = None
+                            if 'server' in command :
+                                serverurl = command['server']
+                            username = None
+                            password = None
+                            if 'user' in command and 'pass' in command :
+                                username = command['user']
+                                password = command['pass']
+                            token = None
+                            if 'token' in command :
+                                token = command['token']
+                            type = 'video'
+                            if 'type' in command :
+                                type = command['type']
+                            offset = 0
+                            if 'offset' in command :
+                                offset = command['offset']
+                            shuffle = 0
+                            if 'shuffle' in command :
+                                shuffle = int(command['shuffle'])
+                            repeat = 0
+                            if 'repeat' in command :
+                                repeat = int(command['repeat'])
+
+                            keepGoing = True
+                            if serverurl is None :
+                                logging.error("ACTION------ Missing server paramater for plex")
+                                keepGoing = False
+                            if token is None and (username is None or password is None) :
+                                logging.error("ACTION------ Missing token or user/pass paramaters for plex")
+                                keepGoing = False
+
+                            if keepGoing==True :
+                                if username is not None and password is not None and token is None :
+                                    account = MyPlexAccount(username, password)
+                                    for res in account.resources() :
+                                        logging.debug("PLEX------ Resource available : " +str(res.name))
+                                    plexServer = account.resource(serverurl).connect()
+                                    logging.debug("PLEX------ Token for reuse : " +str(account._token))
+                                else :
+                                    plexServer = PlexServer(serverurl, token)
+
+                                plexmedia = plexServer.search(value, limit=1)
+                                if len(plexmedia)>0 :
+                                    player.play_media(plexmedia[0], plexServer, {'offset':offset, 'type':type, 'shuffle':shuffle, 'repeat':repeat} )
+                                else :
+                                    logging.debug("PLEX------No media found for query " + value)
+                        else :
+                            eval( 'player.' + cmd + '()' )
 
                 if fallbackMode==False :
                     logging.debug("ACTION------Playing action " + cmd + ' for application ' + app)

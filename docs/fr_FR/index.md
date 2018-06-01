@@ -302,22 +302,31 @@ cmd=setconfig|value=assistant/alarms/volume|data={'volume': 1}
 
 ##### Commande configuration pré-définies
 
-Les commandes suivantes peuvent être utilisé dans une commande ou scénario (via getInfoHttpSimple) :
+Les commandes suivantes peuvent être utilisé dans une commande 'info' ou scénario (via fonction *getInfoHttpSimple()*) :
 
-- [info] *gh_get_alarm_date_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme.
-- [info] *gh_get_alarm_datenice_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme.
-- [info] *gh_get_alarm_timestamp_#* (#=numéro, commence par 0) : retourne le timestamp de la prochaine alarme.
-- [info] *gh_get_alarm_status_#* (#=numéro, commence par 0) : statut de l'alarme (1 = configuré,  2 = sonne).
-- [info] *gh_get_timer_timesec_#* (#=numéro, commence par 0) : retourne le nombre de secondes avant déclenchement du timer.
-- [info] *gh_get_timer_time_#* (#=numéro, commence par 0) : retourne la date de déclenchement du timer.
-- [info] *gh_get_timer_duration_#* (#=numéro, commence par 0) : retourne la durée originale configurée du timer.
-- [info] *gh_get_timer_status_#* (#=numéro, commence par 0) : statut du timer (1 = configuré,  3 = sonne).
-- [info] *gh_get_donotdisturb* : retourne l'état de la fonction 'Do Not Disturb'
-- [cmd] *gh_set_donotdisturb_on* : active la fonction 'Do Not Disturb'
-- [cmd] *gh_set_donotdisturb_off* : désactive la fonction 'Do Not Disturb'
-- [cmd] *gh_set_donotdisturb_#* (#=true/false) : active/désavtive la fonction 'Do Not Disturb'
-- [cmd] *gh_set_alarms_volume_#* (# = entre 0 et 1 (eg: 0.4)) : configure le valume des alarmes et timers.
-- *conf_pincode* : retourne le code pin d'association
+- *gh_get_alarm_date_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme.
+- *gh_get_alarm_datenice_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme.
+- *gh_get_alarm_timestamp_#* (#=numéro, commence par 0) : retourne le timestamp de la prochaine alarme.
+- *gh_get_alarm_status_#* (#=numéro, commence par 0) : statut de l'alarme (1 = configuré,  2 = sonne).
+- *gh_get_timer_timesec_#* (#=numéro, commence par 0) : retourne le nombre de secondes avant déclenchement du timer.
+- *gh_get_timer_time_#* (#=numéro, commence par 0) : retourne la date de déclenchement du timer.
+- *gh_get_timer_duration_#* (#=numéro, commence par 0) : retourne la durée originale configurée du timer.
+- *gh_get_timer_status_#* (#=numéro, commence par 0) : statut du timer (1 = configuré,  3 = sonne).
+- *gh_get_donotdisturb* : retourne l'état de la fonction 'Do Not Disturb'.
+- *gh_get_alarms_volume* : récupère le volume des alarmes et timers.
+- *conf_pincode* : retourne le code pin d'association.
+- *conf_getbonded_bluetooth* : retourne tous les équipements bluetooth enregistrés.
+- *conf_getconnected_wifi* : retourne le nom du réseau wifi configuré.
+
+Les commandes suivantes peuvent être utilisé dans une commande 'action' ou scénario (via fonction *setInfoHttpSimple()* ou commande *Custom Cmd*) :
+
+- *gh_set_donotdisturb_on* : active la fonction 'Do Not Disturb'.
+- *gh_set_donotdisturb_off* : désactive la fonction 'Do Not Disturb'.
+- *gh_set_donotdisturb_#* (#=true/false) : active/désavtive la fonction 'Do Not Disturb'
+- *gh_set_alarms_volume_#* (# = entre 0 et 1 (eg: 0.4)) : configure le volume des alarmes et timers.
+- *bt_connectdefault* : connecte l'équipement bluetooth configuré par défaut.
+- *bt_connect_X* (#=adresse mac au format xx:xx:xx:xx:xx:xx) : connecte l'équipement bluetooth donné en paramêtre.
+- *bt_disconnectdefault* : déconnecte l'équipement bluetooth configuré par défaut.
 
 ### Utilisation dans un scénario
 

@@ -62,8 +62,27 @@ class googlecast_utils {
             $param = str_replace("gh_set_alarms_volume_", "", $logicalId);
             $ret = 'cmd=setconfig|value=assistant/alarms/volume|data={"volume": '.$param.'}';
         }
+        elseif ( $logicalId=='gh_get_alarms_volume' ) {
+            $ret = 'cmd=getconfig|value=post:assistant/alarms/volume';
+        }
         elseif ( $logicalId=='conf_pincode' ) {
             $ret = 'cmd=getconfig|data=opencast_pin_code';
+        }
+        elseif ( $logicalId=='conf_getbonded_bluetooth' ) {
+            $ret = 'cmd=getconfig|value=bluetooth/get_bonded';
+        }
+        elseif ( $logicalId=='conf_getconnected_wifi' ) {
+            $ret = 'cmd=getconfig|value=configured_networks|data=0/ssid';
+        }
+        elseif ( $logicalId=='bt_connectdefault' ) {
+            $ret = 'cmd=setconfig|value=bluetooth/connect|data={"connect":true}';
+        }
+        elseif ( strpos($logicalId, 'bt_connect_X') === 0 ) {
+            $param = str_replace("bt_connect_X", "", $logicalId);
+            $ret = 'cmd=setconfig|value=bluetooth/connect|data={"mac_address": "'.$param.'","profile": 2,"connect":true}';
+        }
+        elseif ( $logicalId=='bt_disconnectdefault' ) {
+            $ret = 'cmd=setconfig|value=bluetooth/connect|data={"connect":false}';
         }
         return $ret;
     }
