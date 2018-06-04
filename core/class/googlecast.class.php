@@ -758,6 +758,7 @@ class googlecast extends eqLogic {
         else {
             $cmd .= ' --ttscache 1';
         }
+		$cmd .= ' --ttsgapikey ' . config::byKey('tts_gapikey', 'googlecast', '');
 		$cmd .= ' --daemonname local';
 		$cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', 'googlecast', '1');
         $cmd .= ' --defaultstatus ' . "'". config::byKey('defaultsatus', 'googlecast', "&nbsp;") ."'";
@@ -1304,6 +1305,10 @@ class googlecastcmd extends cmd {
     						break;
     				}
     			}
+                if (isset($data['value'])) {
+
+                    $data['value'] = mb_convert_encoding($data['value'], "UTF-8", mb_detect_encoding($data['value'], "UTF-8, ISO-8859-1, ISO-8859-15", true));
+                }
     		}
     		if (count($data) == 0) {
     			return;

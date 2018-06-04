@@ -672,7 +672,7 @@ def action_handler(message):
                         player.block_until_active(timeout=1);
                         jcast.disable_notif = False
                         if vol is not None :
-                            time.sleep(duration+0.2)
+                            time.sleep(duration+0.3+0.5)
                             gcast.set_volume(curvol/100)
                             vol = None
                         if quit:
@@ -758,7 +758,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration):
     cachepath=globals.tts_cachefolderweb
     # manage cache in ram memory
     symlinkpath=globals.tts_cachefoldertmp
-    ttstext = (u''+text).encode('ascii').decode('utf-8')
+    ttstext = text
     try:
         os.stat(symlinkpath)
     except:
@@ -808,6 +808,32 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration):
                 speech = start_silence + speech
                 speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
                 duration_seconds = speech.duration_seconds
+            elif engine == 'gttsapi':
+                speed = float(speed) - 0.5
+                ttsurl = globals.tts_gapi_url + 'v1/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&text='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5'
+                r = requests.get(ttsurl)
+                if r.status_code == requests.codes.ok :
+                    open(filenamemp3 , 'wb').write(r.content)
+                    speech = AudioSegment.from_mp3(filenamemp3)
+                    start_silence = AudioSegment.silent(duration=300)
+                    speech = start_silence + speech
+                    speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                    duration_seconds = speech.duration_seconds
+                else :
+                    logging.debug("TTS------Google API : Cannot connect to API")
+            elif engine == 'gttsapidev':
+                speed = float(speed) - 0.7
+                ttsurl = globals.tts_gapi_url + 'v2/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&text='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5'
+                r = requests.get(ttsurl)
+                if r.status_code == requests.codes.ok :
+                    open(filenamemp3 , 'wb').write(r.content)
+                    speech = AudioSegment.from_mp3(filenamemp3)
+                    start_silence = AudioSegment.silent(duration=300)
+                    speech = start_silence + speech
+                    speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                    duration_seconds = speech.duration_seconds
+                else :
+                    logging.debug("TTS------Google API : Cannot connect to API")
 
         else:
             logging.debug("CMD-TTS------Using from cache")
@@ -816,7 +842,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration):
                 duration_seconds = speech.duration_seconds
             else:
                 duration_seconds=0
-        logging.debug("TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+",speed:"+str(speed)+")")
+        logging.debug("TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+",speed:"+"{0:.2f}".format(speed)+")")
         urltoplay=globals.JEEDOM_WEB+'/plugins/googlecast/tmp/'+file+'.mp3'
     except Exception as e:
         logging.error("CMD-TTS------Exception while generating tts file : %s" % str(e))
@@ -1180,6 +1206,7 @@ parser.add_argument("--ttslang", help="Default TTS language", type=str)
 parser.add_argument("--ttsengine", help="Default TTS engine", type=str)
 parser.add_argument("--ttscache", help="Use cache", type=str)
 parser.add_argument("--ttsspeed", help="TTS speech speed", type=str)
+parser.add_argument("--ttsgapikey", help="TTS Google API Key", type=str)
 parser.add_argument("--socketport", help="Socket Port", type=str)
 parser.add_argument("--sockethost", help="Socket Host", type=str)
 parser.add_argument("--daemonname", help="Daemon Name", type=str)
@@ -1214,6 +1241,8 @@ if args.ttsspeed:
     globals.tts_speed = args.ttsspeed
 if args.ttscache:
     globals.tts_cacheenabled = False if int(args.ttscache)==0 else True
+if args.ttsgapikey:
+    globals.tts_gapi_key = args.ttsgapikey
 if args.cycle:
     globals.cycle = float(args.cycle)
 if args.cyclemain:
@@ -1255,6 +1284,7 @@ logging.info('GLOBAL------TTS Jeedom server : '+str(globals.JEEDOM_WEB))
 logging.info('GLOBAL------TTS default language : '+str(globals.tts_language))
 logging.info('GLOBAL------TTS default engine : '+str(globals.tts_engine))
 logging.info('GLOBAL------TTS default speech speed : '+str(globals.tts_speed))
+logging.info('GLOBAL------TTS Google API Key (optional) : '+str(globals.tts_gapi_key))
 logging.info('GLOBAL------Cache status : '+str(globals.tts_cacheenabled))
 logging.info('GLOBAL------Callback : '+str(globals.callback))
 logging.info('GLOBAL------Event cycle : '+str(globals.cycle))
