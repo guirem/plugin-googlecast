@@ -102,7 +102,7 @@ function createHtaccess() {
 
 	if (!file_exists($htaccess)) {
         $content = "Options +FollowSymLinks\n";
-        file_put_contents($htaccess, $current);
+        file_put_contents($htaccess, $content);
 	}
 }
 
