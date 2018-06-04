@@ -835,6 +835,8 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration):
                 else :
                     logging.debug("TTS------Google API : Cannot connect to API")
 
+            logging.debug("TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+",speed:"+"{0:.2f}".format(speed)+")")
+
         else:
             logging.debug("CMD-TTS------Using from cache")
             if calcduration == True:
@@ -842,7 +844,8 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration):
                 duration_seconds = speech.duration_seconds
             else:
                 duration_seconds=0
-        logging.debug("TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+",speed:"+"{0:.2f}".format(speed)+")")
+            logging.debug("TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+")")
+
         urltoplay=globals.JEEDOM_WEB+'/plugins/googlecast/tmp/'+file+'.mp3'
     except Exception as e:
         logging.error("CMD-TTS------Exception while generating tts file : %s" % str(e))
