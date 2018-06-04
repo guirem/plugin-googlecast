@@ -57,7 +57,7 @@ Les paramêtres de configuration n'ont généralement pas besoin d'être modifi�
 - Fréquence de rafraîchissement. A ne modifier uniquement si la fréquence normale à un impact important sur les performances globales
 - TTS - Utiliser l'adresse Jeedom externe : par défaut utilise l'addresse web Jeedom interne
 - TTS - Langue par défaut : langue du moteur TTS utilisé par défaut
-- TTS - Moteur par défaut : le moteur TTS utilisé (PicoTTS ou Google Translate)
+- TTS - Moteur par défaut : le moteur TTS utilisé (PicoTTS, Google Translate, Google Speach API,  Google Speach API dev)
 - TTS - Vitesse de parole : rapidité de prononciation du texte
 - TTS - Ne pas utiliser le cache : désactive l'utilisation du cache Jeedom (déconnseillé)
 - TTS - Nettoyer cache : nettoie le repertoire temporaire de generation des fichiers sons
@@ -67,6 +67,7 @@ Les paramêtres de configuration n'ont généralement pas besoin d'être modifi�
 > Pour TTS (Text To Speech)
 > - PicoTTS ne nécessite pas de connexion internet, l'API Google Translate nécessite un accès web et le rendu est meilleur.
 > - Un mécanisme de cache permet de ne générer le rendu sonore que s'il n'existe pas déjà en memoire. La cache est vidé au redémarrage de Jeedom.
+> - Pour Google Speech API, une clé est nécessaire (voir FAQ)
 
 ![Configuration Plugin](../images/configuration_plugin.png "Configuration Plugin")
 
@@ -171,10 +172,11 @@ Elles doivent être séparés par *|*
     For application dependant commands
         * web : load_url
         * media : play_media
-        * youtube : play_video/add_to_queue/update_screen_id/clear_playlist
+        * youtube : play_video/add_to_queue/remove_video/play_next
         * backdrop : no command
-- value : chain of parameters seperated by ','
-- vol (optional, entre 1 et 100) : ajuster le volume pour la commande
+        * plex : play_media/play/stop/pause
+- value : chain of parameters seperated by ',' (depending of command)
+- vol (optional, entre 1 et 100) : adjust volume for the command.
 - sleep (optional) : add a break after end of command (in seconds)
 
 ex web : app=web|cmd=load_url|vol=90|value='http://pictoplasma.sound-creatures.com',True,10
@@ -184,7 +186,7 @@ ex TTS : cmd=tts|vol=100|value=Mon text a dire
 > **Notes**     
 > les chaines de caractères pour les commandes sont limitées dans Jeedom à 128 caractères. Utiliser les scénarios (voir plus bas pour passer outre cette limitation)
 
-#### Paramêtres possibles pour *play_video* en mode *media* :
+#### Paramêtres possibles pour *play_media* en mode *media* :
 ```
 - url: str - url of the media.
 - content_type: str - mime type. Example: 'video/mp4' (optional).
@@ -201,9 +203,9 @@ ex TTS : cmd=tts|vol=100|value=Mon text a dire
    Possible values: 'application/xml+ttml', 'text/vtt'.
 - subtitle_id: int - id of subtitle to be loaded (optional, default=1).
 
-ex short : app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name'
+ex short : app=media|cmd=play_media|value='http://contentlink','video/mp4','Video name'
 
-ex long : app=media|cmd=play_video|value='http://contentlink','video/mp4',title:'Video name',
+ex long : app=media|cmd=play_media|value='http://contentlink','video/mp4',title:'Video name',
    thumb:'http://imagelink',autoplay:True,
    subtitles:'http://subtitlelink',subtitles_lang:'fr-FR',
    subtitles_mime:'text/vtt'
@@ -226,6 +228,29 @@ ex 2 : app=web|cmd=load_url|value='http://mywebsite/index.php?apikey%3Dmyapikey'
 > **Notes**   
 > - Les url et chaines de caractères sont entourés de guillements simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
 > - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
+
+#### Paramêtres possibles pour *play_media* en mode *plex* :
+```
+- value: str - search query. It will play the first element returned.
+- type: str - type of content. Example: 'video/audio' (optional, default=video).
+- server: str - URL if token is provided, friendly name of Plex server if user & pass provided.
+- user: str - account login possibly as an email account (optional if token provided).
+- pass: str - account password (optional if token provided).
+- token: str - token if any (optional if user & pass provided).
+- shuffle: 0/1 - shuffle playlist if several media (optional, default=0).
+- repeat: 0/1 - repeat media (optional, default=0).
+- offset: int - media offset (optional, default=0).
+
+ex using user & pass :   
+   app=plex|cmd=play_media|user=XXXXXX|pass=XXXXXXXXXXX|server=MyPlexServer|value=Playlist Jeedom|shuffle=1|type=audio
+ex using token :   
+   app=plex|cmd=play_media|token=XXXXXXXXX|server=http://IP:32400|value=Playlist Jeedom
+```
+
+> **Notes**   
+> - When using user & pass, internet access is required
+> - Token value is displayed in logs (debug) when user & pass has been used the first time
+> - you can simulate result of search query (value) in main search field of Plex web UI
 
 #### Paramêtres possibles pour cmd *tts* :
 ```
@@ -360,19 +385,6 @@ else {
 // variable _alarm contient JJMMAAAA (00000000 en cas de problème)
 ```
 
-Récupérer le jour de l'alarme pour un Google Home :
-```
-$googlecast = googlecast::byLogicalId('d2fd3db1-bd0f-fe4c-d8dd-XXXXXXXXX', 'googlecast');
-if (!is_object($googlecast)) {
-  	$scenario->setData("_alarm_jour", "00000000");
-}
-else {
-  $ret =  $googlecast->getInfoHttpSimple('cmd=getconfig|value=assistant/alarms|data=alarm/0|format=%02d%02d%04d|reterror=00000000');
-  $scenario->setData("_alarm",$ret);
-}
-// variable _alarm contient JJMMAAAA (00000000 en cas de problème)
-```
-
 FAQ
 =============================
 
@@ -405,6 +417,10 @@ FAQ
 #### Diffuser Jeedom sans authentification sur un Google Cast
 
 C'est possible via le mode web. Pour gérer l'authentification automatiquement, utiliser le plugin 'autologin' (voir doc du plugin).
+
+#### Récupérer une clé API pour Google Speech API
+
+Les étapes pour obtenir cette clé se trouve sur ce lien : http://domotique-home.fr/comment-obtenir-google-speech-api-et-integrer-dans-sarah/
 
 Changelog
 =============================

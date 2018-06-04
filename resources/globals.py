@@ -58,6 +58,8 @@ tts_cacheenabled = True
 tts_speed = 1.2
 tts_cachefolderweb = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tmp'))
 tts_cachefoldertmp = os.path.join('/tmp/jeedom/', 'googlecast_tts')
+tts_gapi_url = 'https://www.google.com/speech-api/'
+tts_gapi_key = 'XXXXXXXXXXXXXXXXXXXXX'
 
 log_level = "info"
 pidfile = '/tmp/googlecast.pid'

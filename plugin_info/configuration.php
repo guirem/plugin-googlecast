@@ -64,11 +64,19 @@ if (!isConnect('admin')) {
     </div>
 	<div class="form-group">
 	    <label class="col-lg-4 control-label">{{Moteur par défaut}}</label>
-	    <div class="col-lg-2">
-            <select class="configKey form-control" data-l1key="tts_engine">
+	    <div class="col-lg-4">
+            <select class="configKey form-control ttsengineform" data-l1key="tts_engine">
                 <option value="picotts">{{PicoTTS (local)}}</option>
-                <option value="gtts">{{Google Translate API (web)}}</option>
+                <option value="gtts">{{Google Translate API (internet requis)}}</option>
+				<option value="gttsapi">{{Google Speech API (clé api & internet requis)}}</option>
+				<option value="gttsapidev">{{Google Speech API - dev (clé api & internet requis)}}</option>
             </select>
+	    </div>
+    </div>
+	<div class="form-group ttsgapikeyform">
+	    <label class="col-lg-4 control-label">{{Key Google Speech API}}</label>
+	    <div class="col-lg-4">
+	        <input  type="text" class="configKey form-control" data-l1key="tts_gapikey" placeholder="Voir doc"/>
 	    </div>
     </div>
 	<div class="form-group">
@@ -107,6 +115,23 @@ if (!isConnect('admin')) {
 </fieldset>
 </form>
 <script>
+
+function manage_gttskey() {
+    console.log('in');
+    var val = $('.ttsengineform').val();
+    if (val=='gttsapi' || val=='gttsapidev') {
+        $('.ttsgapikeyform').show();
+    }
+    else {
+        $('.ttsgapikeyform').hide();
+    }
+}
+
+$( document ).ready(function() {
+    manage_gttskey();
+});
+$('.ttsengineform').on('change', manage_gttskey);
+
 $('.cleanTTScache').on('click', function () {
     $.ajax({// fonction permettant de faire de l'ajax
            type: "POST", // methode de transmission des données au fichier php
