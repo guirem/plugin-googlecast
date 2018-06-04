@@ -4,6 +4,12 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
+## Version du 04 juin 2018
+
+- Ajout du moteur Google Speech API (clé nécessaire)
+- Ajout gestion PLEX
+- Correction de bugs et maj doc
+
 ## Version du 29 mai 2018
 
 - Ajout de gestion de rapidité de parole pour TTS

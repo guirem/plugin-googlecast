@@ -37,6 +37,8 @@ function googlecast_update() {
 	$core_version = get_plugin_version();
 	config::save('plugin_version', $core_version, 'googlecast');
 
+    createHtaccess();
+
 	foreach (googlecast::byType('googlecast') as $googlecast) {
 		try {
 			$googlecast->save();
@@ -75,6 +77,8 @@ function googlecast_install() {
 
 	linkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
 
+    createHtaccess();
+
 	message::removeAll('googlecast');
     message::add('googlecast', 'Installation du plugin Google Cast terminé (version ' . $core_version . ').', null, null);
 }
@@ -90,6 +94,15 @@ function linkTemplate($templateFilename) {
 
 	if (!file_exists($pathDest)) {
 		shell_exec('ln -s '.$pathSrc. ' '. $pathDest);
+	}
+}
+
+function createHtaccess() {
+	$htaccess = dirname(__FILE__) . '/../.htaccess';
+
+	if (!file_exists($htaccess)) {
+        $content = "Options +FollowSymLinks\n";
+        file_put_contents($htaccess, $current);
 	}
 }
 
