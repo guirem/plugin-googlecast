@@ -72,6 +72,14 @@ except ImportError:
     pass
 
 try:
+    import spotipy.spotify_token as stoken
+    import spotipy
+except ImportError:
+    logging.error("ERROR: Spotify API not loaded !")
+    logging.error(traceback.format_exc())
+    pass
+
+try:
     from jeedom.jeedom import *
 except ImportError:
     print("Error: importing module from jeedom folder")
@@ -204,7 +212,7 @@ class JeedomChromeCast :
         del self.gcast
         del self
 
-    def loadPlayer(self, playername, params=None, token=None) :
+    def loadPlayer(self, playername, params=None) :
         if self.gcast.socket_client :
             forceReload = False
             if params and 'forcereload' in params :
@@ -219,7 +227,7 @@ class JeedomChromeCast :
                         self.gcast.register_handler(player)
                         time.sleep(5)
                     elif playername == 'spotify' :
-                        player = spotify.SpotifyController(token)
+                        player = spotify.SpotifyController()
                         self.gcast.register_handler(player)
                         time.sleep(2)
                     elif playername == 'plex' :
@@ -463,7 +471,7 @@ def action_handler(message):
             if 'vol' in command :
                 try:
                     vol = int(command['vol'])
-                    if not (0 <= vol <= 100):
+                    if not (0 <= vol <= 100) or command['vol'] == '':
                         vol = None
                 except:
                     vol = None
@@ -497,49 +505,81 @@ def action_handler(message):
                     possibleCmd = ['play_media']
                     if cmd in possibleCmd :
                         fallbackMode=False
-                        player = jcast.loadPlayer('media', { 'quitapp' : quit_app_before}, None)
+                        player = jcast.loadPlayer('media', { 'quitapp' : quit_app_before})
                         eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
+
                 elif app == 'web':    # app=web|cmd=load_url|value=https://news.google.com,True,5
                     force_register=True
                     possibleCmd = ['load_url']
                     if cmd in possibleCmd :
                         fallbackMode=False
-                        player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before}, None)
+                        player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before})
                         eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
+
                 elif app == 'youtube':  # app=youtube|cmd=play_video|value=fra4QBLF3GU
                     #possibleCmd = ['play_video', 'start_new_session', 'add_to_queue', 'update_screen_id', 'clear_playlist', 'play', 'stop', 'pause']
                     possibleCmd = ['play_video', 'add_to_queue', 'play_next', 'remove_video']
                     if cmd in possibleCmd :
                         fallbackMode=False
                         if gcast.device.cast_type == 'cast' :
-                            player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait}, None)
+                            player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait})
                             eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
                         else :
                             logging.error("ACTION------ YouTube not availble on Chromecast Audio")
-                elif app == 'spotify':  # app=spotify|cmd=launch_app|token=XXXXXX
-                    possibleCmd = ['launch_app']
-                    if cmd in possibleCmd :
+
+                elif app == 'spotify':  # app=spotify|cmd=launch_app|user=XXXXXX|pass=YYYY|value
+                    possibleCmd = ['play_media']
+                    if cmd == 'play_media' :
                         fallbackMode=False
-                        if 'token' not in command :
-                            logging.error("ACTION------ Token missing for Spotify")
-                        else :
-                            player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait}, command['token'])
-                            player.launch_app()
+
+                        if 'user' in command and 'pass' in command :
+                            username = command['user']
+                            password = command['pass']
+                        token = None
+                        if 'token' in command :
+                            token = command['token']
+
+                        if username is not None and password is not None and token is None :
+                            data = stoken.start_session(username, password)
+                            token = data[0]
+
+                        keepGoing = True
+                        if value is None :
+                            logging.error("ACTION------ Missing content id for spotify")
+                            keepGoing = False
+                        if token is None and (username is None or password is None) :
+                            logging.error("ACTION------ Missing token or user/pass paramaters for spotify")
+                            keepGoing = False
+
+                        if keepGoing == True :
+                            player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait})
+                            player.launch_app(token)
+                            spotifyClient = spotipy.Spotify(auth=token)
+
+                            devices_available = spotifyClient.devices()
+                            device_id = None
+                            for device in devices_available['devices']:
+                                if device['name'] == jcast.device.friendly_name :
+                                    device_id = device['id']
+                                    break
+                            if device_id is not None :
+                                out = spotifyClient.start_playback(device_id=device_id, uris=[value])
+
                 elif app == 'backdrop':  # also called backdrop
                     if gcast.device.cast_type == 'cast' :
                         fallbackMode=False
                         gcast.start_app('E8C28D3C')
                     else :
                         logging.error("ACTION------ Backdrop not availble on Chromecast Audio")
+
                 elif app == 'plex':            # app=plex|cmd=pause
                     quit_app_before=False
                     possibleCmd = ['play_media','play', 'stop', 'pause', 'next', 'previous']
                     if cmd in possibleCmd :
                         fallbackMode=False
 
-                        player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait}, None)
-
-                            #pxr.namespace = 'urn:x-cast:com.google.cast.sse'
+                        player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait})
+                        #player.namespace = 'urn:x-cast:com.google.cast.sse'
 
                         if cmd == 'play_media' :
                             serverurl = None
@@ -656,23 +696,28 @@ def action_handler(message):
                         forcetts = False
                         if 'forcetts' in command :
                             forcetts = True
+                        silence = 300
+                        if 'silence' in command :
+                            silence = int(command['silence'])
                         need_duration=False
                         if vol is not None or quit==True :
                             need_duration=True
-                        url,duration,mp3filename=get_tts_data(value, lang, engine, speed, forcetts, need_duration)
+                        url,duration,mp3filename=get_tts_data(value, lang, engine, speed, forcetts, need_duration, silence)
                         curvol = jcast.getCurrentVolume()
-                        if vol is not None :
+                        if vol is not None and curvol != vol/100 :
                             gcast.set_volume(vol/100)
                             time.sleep(0.1)
                         thumb=globals.JEEDOM_WEB + '/plugins/googlecast/desktop/images/tts.png'
                         jcast.disable_notif = True
-                        player = jcast.loadPlayer(app, { 'quitapp' : False, 'wait': wait}, None)
-                        #player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, stream_type="LIVE");
+                        player = jcast.loadPlayer(app, { 'quitapp' : False, 'wait': wait})
                         player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, add_delay=0.1, stream_type="LIVE");
-                        player.block_until_active(timeout=1);
+                        player.block_until_active(timeout=2);
                         jcast.disable_notif = False
-                        if vol is not None :
-                            time.sleep(duration+0.3+0.5)
+                        if vol is not None and (curvol != vol/100 or quit) :
+                            time.sleep(duration+(silence/1000)+1)
+                            if sleep>0 :
+                                time.sleep(sleep)
+                                sleep=0
                             gcast.set_volume(curvol/100)
                             vol = None
                         if quit:
@@ -748,7 +793,7 @@ def manage_callback(uuid, callback_type):
     # todo things for callback before returning value
     return True
 
-def get_tts_data(text, language, engine, speed, forcetts, calcduration):
+def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=300):
     if globals.tts_cacheenabled==False :
         try :
             if os.path.exists(globals.tts_cachefoldertmp) :
@@ -772,12 +817,61 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration):
         filenamemp3=os.path.join(cachepath,file+'.mp3')
         if not os.path.isfile(filenamemp3) or forcetts==True :
             logging.debug("CMD-TTS------Generating file")
+            if engine == 'gtts':
+                language=language.split('-')[0]
+                tts = gTTS(text=ttstext, lang=language)
+                tts.save(filenamemp3)
+                if speed!=1:
+                    try:
+                        os.system('sox '+filenamemp3+' '+filenamemp3+ 'tmp.mp3 tempo ' +str(speed))
+                        os.remove(filenamemp3)
+                        os.rename(filenamemp3+'tmp.mp3', filenamemp3);
+                    except OSError:
+                        pass
+                speech = AudioSegment.from_mp3(filenamemp3)
+                start_silence = AudioSegment.silent(duration=silence)
+                speech = start_silence + speech
+                speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                duration_seconds = speech.duration_seconds
+
+            elif engine == 'gttsapi':
+                speed = float(speed) - 0.7
+                ttsurl = globals.tts_gapi_url + 'v1/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&text='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5'
+                r = requests.get(ttsurl)
+                if r.status_code == requests.codes.ok :
+                    open(filenamemp3 , 'wb').write(r.content)
+                    speech = AudioSegment.from_mp3(filenamemp3)
+                    start_silence = AudioSegment.silent(duration=silence)
+                    speech = start_silence + speech
+                    speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                    duration_seconds = speech.duration_seconds
+                else :
+                    logging.debug("TTS------Google Speech API : Cannot connect to API - failover to picotts")
+                    engine = 'picotts'
+                    speed = 1.2
+
+            elif engine == 'gttsapidev':
+                speed = float(speed) - 0.7
+                ttsurl = globals.tts_gapi_url + 'v2/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&text='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5'
+                r = requests.get(ttsurl)
+                if r.status_code == requests.codes.ok :
+                    open(filenamemp3 , 'wb').write(r.content)
+                    speech = AudioSegment.from_mp3(filenamemp3)
+                    start_silence = AudioSegment.silent(duration=silence)
+                    speech = start_silence + speech
+                    speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                    duration_seconds = speech.duration_seconds
+                else :
+                    logging.debug("TTS------Google Speech API : Cannot connect to API - failover to picotts")
+                    engine = 'picotts'
+                    speed = 1.2
+
             if engine == 'picotts':
                 speed = float(speed) - 0.2
                 filename=os.path.join(cachepath,file+'.wav')
                 os.system('pico2wave -l '+language+' -w '+filename+ ' "' +ttstext+ '"')
                 speech = AudioSegment.from_wav(filename)
-                start_silence = AudioSegment.silent(duration=300)
+                start_silence = AudioSegment.silent(duration=silence)
                 speech = start_silence + speech
                 speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
                 duration_seconds = speech.duration_seconds
@@ -792,48 +886,6 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration):
                     os.remove(filename)
                 except OSError:
                     pass
-            elif engine == 'gtts':
-                language=language.split('-')[0]
-                tts = gTTS(text=ttstext, lang=language)
-                tts.save(filenamemp3)
-                if speed!=1:
-                    try:
-                        os.system('sox '+filenamemp3+' '+filenamemp3+ 'tmp.mp3 tempo ' +str(speed))
-                        os.remove(filenamemp3)
-                        os.rename(filenamemp3+'tmp.mp3', filenamemp3);
-                    except OSError:
-                        pass
-                speech = AudioSegment.from_mp3(filenamemp3)
-                start_silence = AudioSegment.silent(duration=300)
-                speech = start_silence + speech
-                speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
-                duration_seconds = speech.duration_seconds
-            elif engine == 'gttsapi':
-                speed = float(speed) - 0.5
-                ttsurl = globals.tts_gapi_url + 'v1/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&text='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5'
-                r = requests.get(ttsurl)
-                if r.status_code == requests.codes.ok :
-                    open(filenamemp3 , 'wb').write(r.content)
-                    speech = AudioSegment.from_mp3(filenamemp3)
-                    start_silence = AudioSegment.silent(duration=300)
-                    speech = start_silence + speech
-                    speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
-                    duration_seconds = speech.duration_seconds
-                else :
-                    logging.debug("TTS------Google API : Cannot connect to API")
-            elif engine == 'gttsapidev':
-                speed = float(speed) - 0.7
-                ttsurl = globals.tts_gapi_url + 'v2/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&text='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5'
-                r = requests.get(ttsurl)
-                if r.status_code == requests.codes.ok :
-                    open(filenamemp3 , 'wb').write(r.content)
-                    speech = AudioSegment.from_mp3(filenamemp3)
-                    start_silence = AudioSegment.silent(duration=300)
-                    speech = start_silence + speech
-                    speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
-                    duration_seconds = speech.duration_seconds
-                else :
-                    logging.debug("TTS------Google API : Cannot connect to API")
 
             logging.debug("TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+",speed:"+"{0:.2f}".format(speed)+")")
 
@@ -1251,7 +1303,7 @@ if args.cycle:
 if args.cyclemain:
     globals.cycle_main = float(args.cyclemain)
 if args.cyclefactor:
-    globals.cycle_factor = int(args.cyclefactor)
+    globals.cycle_factor = float(args.cyclefactor)
 if args.socketport:
     globals.socketport = args.socketport
 if args.sockethost:
@@ -1269,8 +1321,6 @@ globals.SCAN_FREQUENCY = int(globals.SCAN_FREQUENCY*globals.cycle_factor)
 globals.socketport = int(globals.socketport)
 globals.cycle = float(globals.cycle*globals.cycle_factor)
 globals.cycle_main = float(globals.cycle_main*globals.cycle_factor)
-
-#globals.cycle_factor = int(globals.cycle_factor)
 
 jeedom_utils.set_log_level(globals.log_level)
 logging.info('------------------------------------------------------')

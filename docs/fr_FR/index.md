@@ -254,11 +254,14 @@ ex using token :
 
 #### Paramêtres possibles pour cmd *tts* :
 ```
-- lang: str - fr-FR/en-US or any compatible language (optional)
-- engine: str - picotts/gtts. (optional)
+- lang: str - fr-FR/en-US or any compatible language (optional, default is configuration)
+- engine: str - picotts/gtts/gttsapi/gttsapidev. (optional, default is configuration)
 - quit: 0/1 - quit app after tts action.
 - forcetts: 1 - do not use cache (useful for testing).
 - speed: float (default=1.2) - speed of speech (eg: 0.5, 2).
+- vol: int (default=previous) - set the volume for the time TTS message is broadcast. Previous volume is resumed when done.
+- sleep: int (default=0) - add time in seconds after tts is finished (before volume resume)
+- silence: int (default=300) - add a short silence before the speech to make sure all is audible (in milliseconds)
 
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
 ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1

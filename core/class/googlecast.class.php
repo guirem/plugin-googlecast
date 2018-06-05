@@ -34,7 +34,7 @@ class googlecast extends eqLogic {
 		'chromecast' => 'model_chromecast_video.png',
 		'google home mini' => 'model_googlehome_mini.png',
 		'google home' => 'model_googlehome.png',
-		'google cast group' => 'model_googlehome.png',
+		'google cast group' => 'model_castgroup.png',
 		'tv' => 'model_tv.png',
 	);
 
@@ -86,6 +86,8 @@ class googlecast extends eqLogic {
 					$imgLogo = $imgRoot . 'model_googlehome.png';
 				if ($castType=='cast')
 					$imgLogo = $imgRoot . 'model_chromecast_video.png';
+                if ($castType=='group')
+    				$imgLogo = $imgRoot . 'model_castgroup.png';
 			}
 		}
 		$this->setConfiguration('logoDevice', $imgLogo);
