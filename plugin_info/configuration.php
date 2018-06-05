@@ -40,6 +40,7 @@ if (!isConnect('admin')) {
 	    <label class="col-lg-4 control-label">{{Fréquence de rafraissement}}</label>
 	    <div class="col-lg-2">
 			<select class="configKey form-control" data-l1key="cyclefactor">
+				<option value="0.5">{{Rapide}}</option>
 			    <option value="1">{{Normal (recommandé)}}</option>
 			    <option value="2">{{Basse}}</option>
 			    <option value="3">{{Très basse}}</option>

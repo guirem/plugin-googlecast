@@ -19,7 +19,7 @@ class SpotifyController(BaseController):
     # pylint: disable=useless-super-delegation
     # The pylint rule useless-super-delegation doesn't realize
     # we are setting default values here.
-    def __init__(self, access_token):
+    def __init__(self):
         super(SpotifyController, self).__init__(APP_NAMESPACE, APP_SPOTIFY)
 
         self.logger = logging.getLogger(__name__)
@@ -35,9 +35,9 @@ class SpotifyController(BaseController):
             self.is_launched = True
         return True
 
-    def launch_app(self):
+    def launch_app(self, access_token):
         """ Launch main application """
-
+        self.access_token = access_token
         def callback():
             """Callback function"""
             self.send_message({"type": TYPE_STATUS,
