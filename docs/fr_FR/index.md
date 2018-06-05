@@ -60,13 +60,14 @@ Les paramêtres de configuration n'ont généralement pas besoin d'être modifi�
 - TTS - Moteur par défaut : le moteur TTS utilisé (PicoTTS, Google Translate, Google Speach API,  Google Speach API dev)
 - TTS - Vitesse de parole : rapidité de prononciation du texte
 - TTS - Ne pas utiliser le cache : désactive l'utilisation du cache Jeedom (déconnseillé)
-- TTS - Nettoyer cache : nettoie le repertoire temporaire de generation des fichiers sons
+- TTS - Nettoyer cache : nettoie le repertoire temporaire de generation des fichiers son
+- TTS - Suppression automatique du cache de plus de X jours : supprime les fichiers son TTS non utilisé depuis X jours (cron journalier). 0 supprime tout le cache.
 - Désactiver notif pour nouveaux GoogleCast : ce sont des notifications lors de la découverte de nouveaux Google Cast non configurés
 
 > **Notes**  
 > Pour TTS (Text To Speech)
 > - PicoTTS ne nécessite pas de connexion internet, l'API Google Translate nécessite un accès web et le rendu est meilleur.
-> - Un mécanisme de cache permet de ne générer le rendu sonore que s'il n'existe pas déjà en memoire. La cache est vidé au redémarrage de Jeedom.
+> - Un mécanisme de cache permet de ne générer le rendu sonore que s'il n'existe pas déjà en mémoire (RAM). La cache est donc supprimé au redémarrage du serveur.
 > - Pour Google Speech API, une clé est nécessaire (voir FAQ)
 
 ![Configuration Plugin](../images/configuration_plugin.png "Configuration Plugin")

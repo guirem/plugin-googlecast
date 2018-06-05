@@ -133,6 +133,12 @@ class JeedomChromeCast :
         except Exception :
             return False
 
+    @property
+    def is_castgroup(self):
+        if self.gcast.device.cast_type != 'cast' :
+            return False
+        return True
+
     def getCurrentVolume(self):
         return int(self.gcast.status.volume_level*100)
 
@@ -699,12 +705,18 @@ def action_handler(message):
                         silence = 300
                         if 'silence' in command :
                             silence = int(command['silence'])
+                        elif jcast.is_castgroup==True :
+                            silence = 600
+
+                        curvol = jcast.getCurrentVolume()
+                        if curvol == vol :
+                            vol = None
                         need_duration=False
                         if vol is not None or quit==True :
                             need_duration=True
+
                         url,duration,mp3filename=get_tts_data(value, lang, engine, speed, forcetts, need_duration, silence)
-                        curvol = jcast.getCurrentVolume()
-                        if vol is not None and curvol != vol/100 :
+                        if vol is not None :
                             gcast.set_volume(vol/100)
                             time.sleep(0.1)
                         thumb=globals.JEEDOM_WEB + '/plugins/googlecast/desktop/images/tts.png'
@@ -713,7 +725,7 @@ def action_handler(message):
                         player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, add_delay=0.1, stream_type="LIVE");
                         player.block_until_active(timeout=2);
                         jcast.disable_notif = False
-                        if vol is not None and (curvol != vol/100 or quit) :
+                        if vol is not None :
                             time.sleep(duration+(silence/1000)+1)
                             if sleep>0 :
                                 time.sleep(sleep)
@@ -721,6 +733,8 @@ def action_handler(message):
                             gcast.set_volume(curvol/100)
                             vol = None
                         if quit:
+                            if vol is None :
+                                time.sleep(duration+(silence/1000)+1)
                             gcast.quit_app()
                         fallbackMode=False
                 except Exception as e:
@@ -813,26 +827,33 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
     except:
         os.symlink(symlinkpath, cachepath)
     try:
-        file = hashlib.md5(text.encode('utf-8')).hexdigest()
+        rawfilename = text+engine+language+str(silence)
+        file = hashlib.md5(rawfilename.encode('utf-8')).hexdigest()
         filenamemp3=os.path.join(cachepath,file+'.mp3')
         if not os.path.isfile(filenamemp3) or forcetts==True :
             logging.debug("CMD-TTS------Generating file")
             if engine == 'gtts':
                 language=language.split('-')[0]
-                tts = gTTS(text=ttstext, lang=language)
-                tts.save(filenamemp3)
-                if speed!=1:
-                    try:
-                        os.system('sox '+filenamemp3+' '+filenamemp3+ 'tmp.mp3 tempo ' +str(speed))
-                        os.remove(filenamemp3)
-                        os.rename(filenamemp3+'tmp.mp3', filenamemp3);
-                    except OSError:
-                        pass
-                speech = AudioSegment.from_mp3(filenamemp3)
-                start_silence = AudioSegment.silent(duration=silence)
-                speech = start_silence + speech
-                speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
-                duration_seconds = speech.duration_seconds
+                try:
+                    tts = gTTS(text=ttstext, lang=language)
+                    tts.save(filenamemp3)
+                    if speed!=1:
+                        try:
+                            os.system('sox '+filenamemp3+' '+filenamemp3+ 'tmp.mp3 tempo ' +str(speed))
+                            os.remove(filenamemp3)
+                            os.rename(filenamemp3+'tmp.mp3', filenamemp3);
+                        except OSError:
+                            pass
+                    speech = AudioSegment.from_mp3(filenamemp3)
+                    start_silence = AudioSegment.silent(duration=silence)
+                    speech = start_silence + speech
+                    speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                    duration_seconds = speech.duration_seconds
+                except Exception :
+                    logging.debug("TTS------Google Translate API : Cannot connect to API - failover to picotts")
+                    engine = 'picotts'
+                    filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
+                    speed = 1.2
 
             elif engine == 'gttsapi':
                 speed = float(speed) - 0.7
@@ -848,6 +869,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                 else :
                     logging.debug("TTS------Google Speech API : Cannot connect to API - failover to picotts")
                     engine = 'picotts'
+                    filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
                     speed = 1.2
 
             elif engine == 'gttsapidev':
@@ -864,6 +886,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                 else :
                     logging.debug("TTS------Google Speech API : Cannot connect to API - failover to picotts")
                     engine = 'picotts'
+                    filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
                     speed = 1.2
 
             if engine == 'picotts':
@@ -882,7 +905,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                         os.rename(filenamemp3+'tmp.mp3', filenamemp3);
                     except OSError:
                         pass
-                try:
+                try :
                     os.remove(filename)
                 except OSError:
                     pass
@@ -898,6 +921,10 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                 duration_seconds=0
             logging.debug("TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+")")
 
+        try :   # touch file so cleaning can be done later based on date
+            os.utime(filenamemp3, None)
+        except :
+            pass
         urltoplay=globals.JEEDOM_WEB+'/plugins/googlecast/tmp/'+file+'.mp3'
     except Exception as e:
         logging.error("CMD-TTS------Exception while generating tts file : %s" % str(e))
@@ -1037,16 +1064,15 @@ def read_socket(cycle):
                         globals.GCAST_DEVICES[uuid].sendDeviceStatus()
                 elif message['cmd'] == 'cleanttscache':
                     logging.debug('SOCKET-READ------Clean TTS cache')
-                    try:
-                        if os.path.exists(globals.tts_cachefoldertmp):
-                            shutil.rmtree(globals.tts_cachefoldertmp)
-                    except:
-                        pass
+                    if 'days' in message :
+                        cleanCache(int(message['days']))
+                    else :
+                        cleanCache()
                 elif message['cmd'] == 'refreshall':
                     logging.debug('SOCKET-READ------Attempt a refresh on all devices')
                     for uuid in globals.GCAST_DEVICES :
                         globals.GCAST_DEVICES[uuid].sendDeviceStatus()
-                elif message['cmd'] in ['action']:
+                elif message['cmd'] == 'action':
                     logging.debug('SOCKET-READ------Attempt an action on a device')
                     thread.start_new_thread( action_handler, (message,))
                     logging.debug('SOCKET-READ------Action Thread Launched')
@@ -1222,6 +1248,24 @@ def show_memory_usage():
             logging.warning(' MEMORY---- Total CPU time used : %.3fs (%.2f%%)  |  Last %i sec : %.3fs (%.2f%%)  | Memory : %s Mo' % (total, total/timediftotal*100, timedif, total-memory_last_use, (total-memory_last_use)/timedif*100, int(round(ru_maxrss/1000))))
             memory_last_use=total
             memory_last_time=curtime
+        except:
+            pass
+
+def cleanCache(nbDays=0):
+    if nbDays == 0 :    # clean entire directory including containing folder
+        try:
+            if os.path.exists(globals.tts_cachefoldertmp):
+                shutil.rmtree(globals.tts_cachefoldertmp)
+        except:
+            pass
+    else :              # clean only files older than X days
+        now = time.time()
+        path = globals.tts_cachefoldertmp
+        try:
+            for f in os.listdir(path):
+                if os.stat(os.path.join(path,f)).st_mtime < now - nbDays * 86400 :
+                    if os.path.isfile(f):
+                        os.remove(os.path.join(path, f))
         except:
             pass
 

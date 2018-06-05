@@ -102,7 +102,13 @@ if (!isConnect('admin')) {
     <div class="form-group">
 	    <label class="col-lg-4 control-label"></label>
 	    <div class="col-lg-2">
-            <a class="btn btn-success cleanTTScache">{{Nettoyer cache}}</a>
+            <a class="btn btn-success cleanTTScache">{{Nettoyer tout le cache}}</a>
+	    </div>
+    </div>
+	<div class="form-group">
+	    <label class="col-lg-4 control-label">{{Suppression automatique du cache de plus de X jours}}</label>
+	    <div class="col-lg-2">
+	        <input class="configKey form-control" type="number" data-l1key="tts_cleancache_days" min="0" max="90" placeholder="{{Nombre en jour}}" />
 	    </div>
     </div>
     <legend><i class="fa fa-envelope-o"></i>&nbsp; {{Notifications}}</legend>

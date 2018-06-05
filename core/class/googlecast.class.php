@@ -47,6 +47,15 @@ class googlecast extends eqLogic {
     	}
     }
 
+    public static function cronDaily() {
+        try {
+            $nbdays = config::byKey('tts_cleancache_days', 'googlecast', '10');
+            if ($nbdays != '') {
+                googlecast::cleanTTScache(intval($nbdays));
+            }
+        } catch (Exception $e) {}
+    }
+
 	/*     * *********************Methode d'instance************************* */
 
 	public function preUpdate() {
@@ -797,8 +806,8 @@ class googlecast extends eqLogic {
         }
 	}
 
-    public static function cleanTTScache() {
-        $value = json_encode(array('apikey' => jeedom::getApiKey('googlecast'), 'cmd' => 'cleanttscache'));
+    public static function cleanTTScache($days=0) {
+        $value = json_encode(array('apikey' => jeedom::getApiKey('googlecast'), 'cmd' => 'cleanttscache', 'days' => $days));
 		self::socket_connection($value);
 	}
 
