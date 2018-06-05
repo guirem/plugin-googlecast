@@ -71,6 +71,9 @@ function googlecast_install() {
 	if ( config::byKey('tts_speed', 'googlecast') == '' ) {
 		config::save('tts_speed','1.2', 'googlecast');
 	}
+	if ( config::byKey('tts_cleancache_days', 'googlecast') == '' ) {
+		config::save('tts_cleancache_days','7', 'googlecast');
+	}
     if ( config::byKey('tts_disablecache', 'googlecast') == '' ) {
 		config::save('tts_disablecache','0', 'googlecast');
 	}
