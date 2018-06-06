@@ -441,6 +441,7 @@ class JeedomChromeCast :
 def action_handler(message):
     rootcmd = message['cmd']
     uuid = message['device']['uuid']
+    srcuuid = uuid
 
     if uuid in globals.KNOWN_DEVICES and uuid in globals.GCAST_DEVICES and rootcmd == "action":
         hascallback=False
@@ -458,6 +459,19 @@ def action_handler(message):
             commandlist = [commandlist]
 
         for command in commandlist :
+            if 'uuid' in command :
+                newCommand = command[:]
+                del newCommand['uuid']
+                newMessage = {
+                    'cmd' : 'action',
+                    'device' : {'uuid' : command['uuid'], 'source' : message['device']['source'] },
+                    'command' : newCommand
+                }
+                logging.debug("ACTION------DELEGATED command to other uuid : " + command['uuid'])
+                thread.start_new_thread( action_handler, (newMessage,))
+                pass
+
+            app = 'media'
             cmd = 'NONE'
             if 'cmd' in command :
                 cmd = command['cmd']
