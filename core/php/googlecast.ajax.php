@@ -16,7 +16,6 @@
  */
 try {
     require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
-	//require_once dirname(__FILE__) . '/../class/googlecast.class.php';
 
     include_file('core', 'authentification', 'php');
 
@@ -27,8 +26,8 @@ try {
         ajax::success();
     }
 
-    if (init('action') == 'changeLogLive') {
-		ajax::success(googlecast::changeLogLive(init('level')));
+    if (init('action') == 'cleanTTScache') {
+		ajax::success(googlecast::cleanTTScache());
 	}
 
     if (init('action') == 'nowplaying') {

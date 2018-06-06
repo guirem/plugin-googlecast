@@ -84,6 +84,17 @@ if ( isset($result['nowplaying']) ) {
 	}
 }
 
+if ( isset($result['callback']) ) {
+	if ( isset($result['uuid']) ) {
+        if ( isset($result['source']) && $result['source'].startsWith('plugin') && class_exists('gcastplayer') ) {
+            gcastplayer::manageCallback($result);
+        }
+        else {
+            googlecast::manageCallback($result);
+        }
+	}
+}
+
 if (isset($result['devices'])) {
 
 	foreach ($result['devices'] as $key => $data) {
@@ -112,6 +123,17 @@ if (isset($result['devices'])) {
 					$cmd->event($flattenResults[$logicalId]);
 				}
 			}
+
+            if ( isset($flattenResults['friendly_name']) && $flattenResults['friendly_name'] != $googlecast->getConfiguration('friendly_name') ) {
+                $googlecast->setConfiguration('friendly_name', $flattenResults['friendly_name']);
+                $googlecast->lightSave();
+            }
+            if ( isset($flattenResults['uri']) && $flattenResults['uri'] != $googlecast->getConfiguration('uri') ) {
+                $googlecast->setConfiguration('uri', $flattenResults['uri']);
+                $googlecast->setConfiguration('ip', $googlecast->getChromecastIPfromURI());
+                $googlecast->lightSave();
+            }
+
 		}
 	}
 }

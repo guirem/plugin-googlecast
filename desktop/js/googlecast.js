@@ -184,9 +184,10 @@ function addCmdToTable(_cmd) {
         tr += '<option value="">Aucune</option>';
         tr += '</select>';
         tr += '<input class="cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="updateCmdToValue" placeholder="Valeur de l\'information" style="display : none;margin-top : 5px;">';
+        tr += '<input class="tooltips cmdAttr form-control input-sm expertModeVisible" data-l1key="configuration" data-l2key="listValue" placeholder="Liste de valeur|texte sÃ©parÃ© par ;" title="Liste" style="margin-top : 5px;">';
         tr += '<input class="cmdAttr form-control input-sm" data-l1key="unite"  style="width : 100px;" placeholder="Unité" title="Unité">';
-        tr += '<input class="cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="minValue" placeholder="Min" title="Min"> ';
-        tr += '<input class="cmdAttr form-control input-sm data-l1key="configuration" data-l2key="maxValue" placeholder="Max" title="Max" style="margin-top : 5px;">';
+        tr += '<input class="tooltips cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="minValue" placeholder="Min" title="Min" style="width : 40%;display : inline-block;"> ';
+        tr += '<input class="tooltips cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="maxValue" placeholder="Max" title="Max" style="width : 40%;display : inline-block;">';
         tr += '</td>';
         tr += '<td>';
         if (is_numeric(_cmd.id)) {

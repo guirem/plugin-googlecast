@@ -166,6 +166,12 @@ foreach (jeedom::getConfiguration('eqLogic:category') as $key => $value) {
         </div>
       </div>
 	  <div class="form-group">
+        <label class="col-lg-3 control-label">{{IP}}</label>
+        <div class="col-lg-4">
+          <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="ip" readonly/>
+        </div>
+      </div>
+	  <div class="form-group">
         <label class="col-lg-3 control-label">{{Ignorer contrôle CEC}}</label>
         <div class="col-lg-4">
           <input type="checkbox" class="eqLogicAttr" data-l1key="configuration" data-l2key="ignore_CEC"/>

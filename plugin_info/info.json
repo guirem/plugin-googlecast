@@ -7,7 +7,7 @@
 	"hasOwnDeamon" : true,
 	"hasDependency" : true,
 	"maxDependancyInstallTime" : 20,
-	"version" : "1.0",
+	"version" : "2.3",
 	"require" : "3.0",
     "category" : "multimedia",
     "changelog" : "https://github.com/guirem/plugin-googlecast/blob/develop/docs/fr_FR/changelog.md",
@@ -15,5 +15,5 @@
 	"forum_link" : "https://www.jeedom.com/forum/viewtopic.php?f=142&t=35863",
 	"languages" : "french, english",
 	"compatibility" : "miniplus, smart, docker, rpi, diy, mobileapp",
-	"description" : "Plugin pour commander et connaitre l'état des équipements compatibles Google Cast. <br>Fonctionnalités :<br> - Contrôle du son (mute, +/-)<br> - Contrôle des médias (play/pause/stop...)<br> - Arrêt appli en cours, reboot<br> - Diffuser une page web sur un écran<br> - Lecture de fichier audio et vidéo via url<br> - Retour d'état sur les principales Fonctionnalités<br> - Affichage de la lecture en cours<br> <br> Modèle compatibles Google Cast<br> - Chromecast Audio/Video, Google Home<br> - Android TV, GoogleCast TV (Vizio, Sharp, Sony, Toshiba, Philips)<br> - GoogleCast Soundbars et speakers<br>"
+	"description" : "Plugin pour commander et connaitre l'état des équipements compatibles Google Cast. <br>Fonctionnalités :<br> - Contrôle du son (mute, +/-)<br> - Contrôle des médias (play/pause/stop...)<br> - Arrêt appli en cours, reboot<br> - Diffuser une page web sur un écran<br> - Lecture de fichier audio et vidéo via url<br> - Retour d'état sur les principales Fonctionnalités<br> - Affichage de la lecture en cours<br> - Text To Speech (TTS)<br> <br> Modèles compatibles Google Cast<br> - Chromecast Audio/Video, Google Home<br> - Android TV, GoogleCast TV (Vizio, Sharp, Sony, Toshiba, Philips)<br> - GoogleCast Soundbars et speakers<br>"
 }
