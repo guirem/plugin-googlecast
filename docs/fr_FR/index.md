@@ -178,9 +178,10 @@ Elles doivent être séparés par *|*
         * backdrop : no command
         * plex : play_media/play/stop/pause
 - value : chain of parameters separated by ',' (depending of command)
-- vol (optional, entre 1 et 100) : adjust volume for the command.
+- vol (optional, entre 1 et 100) : adjust volume for the command
 - sleep (optional) : add a break after end of command (in seconds)
-- uuid (optional) : redirect to other google cast uuid. Useful when using sequences on several device.
+- uuid (optional) : redirect to other google cast uuid in new thread (parallel processing). Useful when using sequences on several device.
+- nothread (optional) : if uuid provided, disable use of thread for parallel processing. (eg: nothread=1)
 
 ex web : app=web|cmd=load_url|vol=90|value='http://pictoplasma.sound-creatures.com',True,10
 ex TTS : cmd=tts|vol=100|value=Mon text a dire
@@ -277,6 +278,9 @@ Il est possible de lancer plusieurs commandes à la suite en séparant par *$$*
 ```
 ex 1 : cmd=tts|sleep=2|value=Je lance ma vidéo$$app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name'
 ex 2 : app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name',current_time:148|sleep=10$$cmd=quit_app
+ex Commande TTS sur plusieurs google cast en parallèle en s'assurant que le fichier est déjà en cache :   
+    cmd=tts|value=My TTS message|generateonly=1$$uuid=XXXXXXXXXXX|cmd=tts|value=My TTS message$$uuid=YYYYYYYYYYY|cmd=tts|value=My TTS message
+
 ```
 > **Note**   
 > adding 'uuid' parameter will redirect to this uuid device in new thread. This can be used to send a sequence to several device in one command.
