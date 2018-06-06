@@ -178,8 +178,8 @@ Elles doivent être séparés par *|*
         * backdrop : no command
         * plex : play_media/play/stop/pause
 - value : chain of parameters separated by ',' (depending of command)
-- vol (optional, entre 1 et 100) : adjust volume for the command
-- sleep (optional) : add a break after end of command (in seconds)
+- vol (optional, between 1 et 100) : adjust volume for the command
+- sleep (optional, int/float) : add a break after end of command in seconds (eg: 2, 2.5)
 - uuid (optional) : redirect to other google cast uuid in new thread (parallel processing). Useful when using sequences on several device.
 - nothread (optional) : if uuid provided, disable use of thread for parallel processing. (eg: nothread=1)
 
@@ -264,7 +264,7 @@ ex using token :
 - forcetts: 1 - do not use cache (useful for testing).
 - speed: float (default=1.2) - speed of speech (eg: 0.5, 2).
 - vol: int (default=previous) - set the volume for the time TTS message is broadcast. Previous volume is resumed when done.
-- sleep: int (default=0) - add time in seconds after tts is finished (before volume resume)
+- sleep: float (default=0) - add time in seconds after tts is finished (before volume resume)
 - silence: int (default=300) - add a short silence before the speech to make sure all is audible (in milliseconds)
 - generateonly: 1 - only generate speech file in cache (no action on device)
 
