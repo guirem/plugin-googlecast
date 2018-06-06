@@ -135,7 +135,7 @@ class JeedomChromeCast :
 
     @property
     def is_castgroup(self):
-        if self.gcast.device.cast_type != 'cast' :
+        if self.gcast.device.cast_type != 'group' :
             return False
         return True
 
