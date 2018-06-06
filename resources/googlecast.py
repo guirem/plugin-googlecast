@@ -845,14 +845,16 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                         except OSError:
                             pass
                     speech = AudioSegment.from_mp3(filenamemp3)
-                    start_silence = AudioSegment.silent(duration=silence)
-                    speech = start_silence + speech
+                    if silence > 0 :
+                        start_silence = AudioSegment.silent(duration=silence)
+                        speech = start_silence + speech
                     speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
                     duration_seconds = speech.duration_seconds
                 except Exception :
                     logging.debug("TTS------Google Translate API : Cannot connect to API - failover to picotts")
                     engine = 'picotts'
                     filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
+                    file = file + '_failover'
                     speed = 1.2
 
             elif engine == 'gttsapi':
@@ -862,14 +864,16 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                 if r.status_code == requests.codes.ok :
                     open(filenamemp3 , 'wb').write(r.content)
                     speech = AudioSegment.from_mp3(filenamemp3)
-                    start_silence = AudioSegment.silent(duration=silence)
-                    speech = start_silence + speech
+                    if silence > 0 :
+                        start_silence = AudioSegment.silent(duration=silence)
+                        speech = start_silence + speech
                     speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
                     duration_seconds = speech.duration_seconds
                 else :
                     logging.debug("TTS------Google Speech API : Cannot connect to API - failover to picotts")
                     engine = 'picotts'
                     filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
+                    file = file + '_failover'
                     speed = 1.2
 
             elif engine == 'gttsapidev':
@@ -879,14 +883,16 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                 if r.status_code == requests.codes.ok :
                     open(filenamemp3 , 'wb').write(r.content)
                     speech = AudioSegment.from_mp3(filenamemp3)
-                    start_silence = AudioSegment.silent(duration=silence)
-                    speech = start_silence + speech
+                    if silence > 0 :
+                        start_silence = AudioSegment.silent(duration=silence)
+                        speech = start_silence + speech
                     speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
                     duration_seconds = speech.duration_seconds
                 else :
                     logging.debug("TTS------Google Speech API : Cannot connect to API - failover to picotts")
                     engine = 'picotts'
                     filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
+                    file = file + '_failover'
                     speed = 1.2
 
             if engine == 'picotts':
@@ -894,8 +900,9 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                 filename=os.path.join(cachepath,file+'.wav')
                 os.system('pico2wave -l '+language+' -w '+filename+ ' "' +ttstext+ '"')
                 speech = AudioSegment.from_wav(filename)
-                start_silence = AudioSegment.silent(duration=silence)
-                speech = start_silence + speech
+                if silence > 0 :
+                    start_silence = AudioSegment.silent(duration=silence)
+                    speech = start_silence + speech
                 speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
                 duration_seconds = speech.duration_seconds
                 if speed!=1:

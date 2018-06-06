@@ -769,7 +769,7 @@ class googlecast extends eqLogic {
         else {
             $cmd .= ' --ttscache 1';
         }
-		$cmd .= ' --ttsgapikey ' . config::byKey('tts_gapikey', 'googlecast', '');
+		$cmd .= ' --ttsgapikey ' . config::byKey('tts_gapikey', 'googlecast', 'none');
 		$cmd .= ' --daemonname local';
 		$cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', 'googlecast', '1');
         $cmd .= ' --defaultstatus ' . "'". config::byKey('defaultsatus', 'googlecast', "&nbsp;") ."'";
