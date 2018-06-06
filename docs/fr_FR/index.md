@@ -12,16 +12,16 @@ Plugin pour commander les équipements compatibles Google Cast.
 - Contrôle des médias (play/pause/stop...)
 - Arrêt appli en cours, reboot
 - Diffuser une page web sur un écran
-- Lecture de fichier audio et vidéo via url
+- Lecture de fichiers audio et vidéo via url
 - Retour d'état sur les principales Fonctionnalités
 - Affichage de la lecture en cours
 - Text To Speech (TTS)
-- Récupération/modification de configuration d'équipement
+- Récupération/modification de configuration d'équipements
 
 
 ![Logo plugin](../images/chromecast.png "Chromecast")
 
-**Modèle compatibles Google Cast**
+**Modèles compatibles Google Cast**
 - Chromecast Audio/Video
 - Android TV, Nexus Player, TV (Vizio, Sharp, Sony, Toshiba, Philips)
 - Google Home
@@ -51,18 +51,18 @@ Après téléchargement du plugin :
 - Niveau de log recommandé : info
 - Lancer le démon.
 
-Les paramêtres de configuration n'ont généralement pas besoin d'être modifiés
+Les paramètres de configuration n'ont généralement pas besoin d'être modifiés
 - Port du socket interne de communication. Ne modifier que si nécessaire (ex: s'il est déjà pris par un autres plugin)
 - Configuration spéciale (eg: Docker, VM). Ne modifier que si ça ne fonctionne pas sans l'option.
 - Fréquence de rafraîchissement. A ne modifier uniquement si la fréquence normale à un impact important sur les performances globales
 - TTS - Utiliser l'adresse Jeedom externe : par défaut utilise l'addresse web Jeedom interne
 - TTS - Langue par défaut : langue du moteur TTS utilisé par défaut
-- TTS - Moteur par défaut : le moteur TTS utilisé (PicoTTS, Google Translate, Google Speach API,  Google Speach API dev)
+- TTS - Moteur par défaut : le moteur TTS utilisé (PicoTTS, Google Translate, Google Speach API, Google Speach API dev)
 - TTS - Vitesse de parole : rapidité de prononciation du texte
-- TTS - Ne pas utiliser le cache : désactive l'utilisation du cache Jeedom (déconnseillé)
-- TTS - Nettoyer cache : nettoie le repertoire temporaire de generation des fichiers son
-- TTS - Suppression automatique du cache de plus de X jours : supprime les fichiers son TTS non utilisé depuis X jours (cron journalier). 0 supprime tout le cache.
-- Désactiver notif pour nouveaux GoogleCast : ce sont des notifications lors de la découverte de nouveaux Google Cast non configurés
+- TTS - Ne pas utiliser le cache : désactive l'utilisation du cache Jeedom (déconseillé)
+- TTS - Nettoyer cache : nettoie le repertoire temporaire de géneration des fichiers son
+- TTS - Suppression automatique du cache de plus de X jours : supprime les fichiers son TTS non utilisés depuis X jours (cron journalier). 0 supprime tout le cache.
+- Désactiver notifs pour nouveaux Google Cast : ce sont des notifications lors de la découverte de nouveaux Google Cast non configurés
 
 > **Notes**  
 > Pour TTS (Text To Speech)
@@ -75,7 +75,7 @@ Les paramêtres de configuration n'ont généralement pas besoin d'être modifi�
 Configuration des équipements
 =============================
 
-La configuration des équipements GoogleCast est accessible à partir du menu *Plugins > Multimedia > Google Cast*.
+La configuration des équipements Google Cast est accessible à partir du menu *Plugins > Multimedia > Google Cast*.
 
 ![Configuration](../images/configuration.png "Configuration")
 
@@ -98,7 +98,7 @@ Liste des commandes non visibles par défaut :
 - *Statut Player* : info affichant l'état de lecture Média (ex: PLAYING/PAUSED) ;
 - *Titre* : Titre du média en cours ;
 - *Artist* : Artist du média en cours ;
-- *Custom Cmd* : Ce composant est destiné à être utilisé via un schénario ou pour test (voir section [Utilisation dans un scénario](#utilisation-dans-un-scénario));
+- *Custom Cmd* : Ce composant est destiné à être utilisé via un scénario ou pour test (voir section [Utilisation dans un scénario](#utilisation-dans-un-scénario));
 - *Pincode* : pincode pour association rapide (exemple de configuration avancée)
 
 Pour les voir sur le dashboard, il faut activer 'Afficher' dans l'onglet des commandes.
@@ -117,13 +117,13 @@ Installation / configuration :
 - Pour une utilisation dans un dashboard, iL est possible d'utiliser un virtuel en créant une commande de type *info / autres* avec pour valeur la commande *Display* de l'ampli. Appliquer alors le widget dashboard *googlecast_playing* (via onglet *Affichage* de la configuration avancée de la commande)
 - Pour une utilisation dans un design, ajouter la commande *Playing Widget* directement dans le design.
 
-Paramêtres CSS optionnels (via '*Paramètres optionnels widget*'):
+paramètres CSS optionnels (via '*Paramètres optionnels widget*'):
 - *fontSize* (ex: 35px, défaut=25px) : taille de police de base
 - *fontColor* (ex: blue, défaut=white) : couleur de l'afficheur
 - *fontFamily* (ex: 'Arial') : change la police de l'afficheur
 - *backColor* (ex: blue, défaut=black) : couleur du fond de l'afficheur
-- *playingSize* (ex: 300px, défaut 250px) : Largeur et hauteur de l'image de lecture en cours
-- *contentSize* (ex: 70px,défaut 50px) : Hauteur de la partie textuelle
+- *playingSize* (ex: 300px, défaut 250px) : largeur et hauteur de l'image de lecture en cours
+- *contentSize* (ex: 70px,défaut 50px) : hauteur de la partie textuelle
 - *additionalCss* (format css, ex: '.blabla {...}') : pour ajouter/modifier d'autres CSS (utilisateur avancé)
 
 ![Configuration CSS](../images/configuration_css.png "Configuration CSS")
@@ -137,14 +137,15 @@ Commandes personnalisées
 
 ### Applications spéciales
 
-- *Web* : afficher une page web sur un google cast. Les paramêtres disponibles sont l'url, forcer, et le délai de recharchement (ex: value='https://google.com',False,0 pour charger Google sans forcer (nécessaire pour certains sites) et sans rechargement)
+- *Web* : afficher une page web sur un Google Cast. Les paramètres disponibles sont l'url, forcer, et le délai de rechargement (ex: value='https://google.com',False,0 pour charger Google sans forcer (nécessaire pour certains sites) et sans rechargement)
 - *Media* : lire un fichier audio ou vidéo à partir d'une URL
 - *YouTube* : afficher une vidéo à artir d'un ID de vidéo (en fin d'url) => Ne fonctionne pas pour le moment
-- *Backdrom* : afficher le fond d'écran ou économiseur d'écran Google Cast (selon les modèles)
+- *Backdrop* : afficher le fond d'écran ou économiseur d'écran Google Cast (selon les modèles)
+- *Plex* : jouer un fichier ou une playliste à partir d'un serveur Plex
 
 > **Notes**   
 > - Voir les boutons créés par défaut pour un exemple d'utilisation    
-> - Youtube est non fontionnel pour le moment
+> - Youtube est non fonctionnel pour le moment
 
 
 ### Commandes avancées
@@ -161,7 +162,7 @@ Elles doivent être séparés par *|*
     * volume_down
     * volume_set : use value (0-100)
     * mute_on
-    * muto_off
+    * mute_off
     * quit_app
     * start_app : use value to pass app id
     * play
@@ -176,9 +177,11 @@ Elles doivent être séparés par *|*
         * youtube : play_video/add_to_queue/remove_video/play_next
         * backdrop : no command
         * plex : play_media/play/stop/pause
-- value : chain of parameters seperated by ',' (depending of command)
-- vol (optional, entre 1 et 100) : adjust volume for the command.
+- value : chain of parameters separated by ',' (depending of command)
+- vol (optional, entre 1 et 100) : adjust volume for the command
 - sleep (optional) : add a break after end of command (in seconds)
+- uuid (optional) : redirect to other google cast uuid in new thread (parallel processing). Useful when using sequences on several device.
+- nothread (optional) : if uuid provided, disable use of thread for parallel processing. (eg: nothread=1)
 
 ex web : app=web|cmd=load_url|vol=90|value='http://pictoplasma.sound-creatures.com',True,10
 ex TTS : cmd=tts|vol=100|value=Mon text a dire
@@ -187,7 +190,7 @@ ex TTS : cmd=tts|vol=100|value=Mon text a dire
 > **Notes**     
 > les chaines de caractères pour les commandes sont limitées dans Jeedom à 128 caractères. Utiliser les scénarios (voir plus bas pour passer outre cette limitation)
 
-#### Paramêtres possibles pour *play_media* en mode *media* :
+#### paramètres possibles pour *play_media* en mode *media* :
 ```
 - url: str - url of the media.
 - content_type: str - mime type. Example: 'video/mp4' (optional).
@@ -213,10 +216,10 @@ ex long : app=media|cmd=play_media|value='http://contentlink','video/mp4',title:
 ```
 
 > **Notes**   
-> - Les url et chaines de caractères sont entourés de guillements simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
+> - Les url et chaînes de caractères sont entourées de guillements simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
 > - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
 
-#### Paramêtres possibles pour *load_url* en mode *web* :
+#### paramètres possibles pour *load_url* en mode *web* :
 ```
 - url: str - website url.
 - force: bool - force mode. To be used if default is not working. (optional, default False).
@@ -230,7 +233,7 @@ ex 2 : app=web|cmd=load_url|value='http://mywebsite/index.php?apikey%3Dmyapikey'
 > - Les url et chaines de caractères sont entourés de guillements simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
 > - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
 
-#### Paramêtres possibles pour *play_media* en mode *plex* :
+#### paramètres possibles pour *play_media* en mode *plex* :
 ```
 - value: str - search query. It will play the first element returned.
 - type: str - type of content. Example: 'video/audio' (optional, default=video).
@@ -253,7 +256,7 @@ ex using token :
 > - Token value is displayed in logs (debug) when user & pass has been used the first time
 > - you can simulate result of search query (value) in main search field of Plex web UI
 
-#### Paramêtres possibles pour cmd *tts* :
+#### paramètres possibles pour cmd *tts* :
 ```
 - lang: str - fr-FR/en-US or any compatible language (optional, default is configuration)
 - engine: str - picotts/gtts/gttsapi/gttsapidev. (optional, default is configuration)
@@ -263,6 +266,7 @@ ex using token :
 - vol: int (default=previous) - set the volume for the time TTS message is broadcast. Previous volume is resumed when done.
 - sleep: int (default=0) - add time in seconds after tts is finished (before volume resume)
 - silence: int (default=300) - add a short silence before the speech to make sure all is audible (in milliseconds)
+- generateonly: 1 - only generate speech file in cache (no action on device)
 
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
 ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
@@ -274,9 +278,14 @@ Il est possible de lancer plusieurs commandes à la suite en séparant par *$$*
 ```
 ex 1 : cmd=tts|sleep=2|value=Je lance ma vidéo$$app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name'
 ex 2 : app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name',current_time:148|sleep=10$$cmd=quit_app
-```
+ex Commande TTS sur plusieurs google cast en parallèle en s'assurant que le fichier est déjà en cache :   
+    cmd=tts|value=My TTS message|generateonly=1$$uuid=XXXXXXXXXXX|cmd=tts|value=My TTS message$$uuid=YYYYYYYYYYY|cmd=tts|value=My TTS message
 
-#### Configuration avancé des équipements
+```
+> **Note**   
+> adding 'uuid' parameter will redirect to this uuid device in new thread. This can be used to send a sequence to several device in one command.
+
+#### Configuration avancée des équipements
 
 ##### Récupérer une configuration
 Certaines configurations peuvent être récupérées dans une commande de type info (*cmd=getconfig*).
@@ -288,10 +297,10 @@ http://IP:8008/setup/eureka_info?options=detail
 
 Pour plus d'info voir  https://rithvikvibhu.github.io/GHLocalApi/
 
-###### Paramêtres possibles pour cmd *getconfig* :
+###### paramètres possibles pour cmd *getconfig* :
 ```
 - value: str - uri base after 'setup/' based on API doc (default is 'eureka_info'). If starts with 'post:', a POST type request will be issued.
-- data: str - json path to be returned seperated by '/'. To get several data, seperate by ','.
+- data: str - json path to be returned separated by '/'. To get several data, separate by ','.
 - sep: str - seperator if several data is set (default = ',').
 - format: json/string/custom - output format (default = 'string'). 'custom' follows 'sprintf' php function format (ex: %d, %s).
 - error: 1 - seperator if several data is set (default = ',').
@@ -302,7 +311,7 @@ Exemples:
 cmd=getconfig|data=opencast_pin_code
 - Google Home : Récupération de l'état de la première alarme (-1 en cas de problème ou non existant):
 cmd=getconfig|value=assistant/alarms|data=alarm/0/status|reterror=-1
-- Google Home : Récupération la date et heure de la première alarme au format JJ-MM-AAAA HH:MM:
+- Google Home : Récupération de la date et heure de la première alarme au format JJ-MM-AAAA HH:MM:
 cmd=getconfig|value=assistant/alarms|data=alarm/0|format=%02d-%02d-%04d %02d:%02d|reterror=00-00-0000 00:00
 - Changer le nom du Google cast
 cmd=setconfig|data={"name":"Mon nouveau nom"}
@@ -317,7 +326,7 @@ Certaines configurations peuvent être modifiées dans une commande de type acti
 
 Voir l'api Google sur ce lien pour ce qui est modifiable : https://rithvikvibhu.github.io/GHLocalApi/
 
-###### Paramêtres possibles pour cmd *setconfig* :
+###### paramètres possibles pour cmd *setconfig* :
 ```
 - value: str - uri base after 'setup/' based on API doc.
 - data: str - json data.
@@ -331,7 +340,7 @@ cmd=setconfig|value=assistant/alarms/volume|data={'volume': 1}
 
 ##### Commande configuration pré-définies
 
-Les commandes suivantes peuvent être utilisé dans une commande 'info' ou scénario (via fonction *getInfoHttpSimple()*) :
+Les commandes suivantes peuvent être utilisées dans une commande 'info' ou scénario (via fonction *getInfoHttpSimple()*) :
 
 - *gh_get_alarm_date_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme.
 - *gh_get_alarm_datenice_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme.
@@ -354,7 +363,7 @@ Les commandes suivantes peuvent être utilisé dans une commande 'action' ou sc�
 - *gh_set_donotdisturb_#* (#=true/false) : active/désavtive la fonction 'Do Not Disturb'
 - *gh_set_alarms_volume_#* (# = entre 0 et 1 (eg: 0.4)) : configure le volume des alarmes et timers.
 - *bt_connectdefault* : connecte l'équipement bluetooth configuré par défaut.
-- *bt_connect_X* (#=adresse mac au format xx:xx:xx:xx:xx:xx) : connecte l'équipement bluetooth donné en paramêtre.
+- *bt_connect_X* (#=adresse mac au format xx:xx:xx:xx:xx:xx) : connecte l'équipement bluetooth donné en paramètre.
 - *bt_disconnectdefault* : déconnecte l'équipement bluetooth configuré par défaut.
 
 ### Utilisation dans un scénario
@@ -362,7 +371,7 @@ Les commandes suivantes peuvent être utilisé dans une commande 'action' ou sc�
 #### Avec commande dédiée *Custom Cmd*
 La commande nommée *Custom Cmd* permet de lancer une commande brute à partir d'un scénario.
 
-Par exemple pour lancer Google sur un Google Cast à partir d'un scénrio, ajouter la commande avec la valeur souhaitée dans le champs 'message'.
+Par exemple, pour lancer Google sur un Google Cast à partir d'un scénario, ajouter la commande avec la valeur souhaitée dans le champs 'message'.
 ```
 app=web|cmd=load_url|value='https://google.com',True,10
 ```
@@ -396,7 +405,7 @@ FAQ
 
 - Vérifier que le Google Cast est disponible à partir d'une application permettant la visulisation des appareils compatibles ;
 - Jeedom doit se trouver sur le même réseau que les équipements Google Cast    
-(pour docker, le container est soit en mode Host, soit est configuré pour être sur le même réseau ; en VM, la machine est en mode bridge) ;
+(pour Docker, le container est soit en mode Host, soit est configuré pour être sur le même réseau ; en VM, la machine est en mode bridge) ;
 - Vérifier qu'il n'y a pas de blocages au niveau du firewall pour la découverte via le protocol 'Zeroconf' ;
 
 #### Aucune commande ne semble fonctionner
@@ -414,8 +423,8 @@ FAQ
 
 #### Le Text To Speech (TTS) ne fonctionne pas
 
-- Essayer avec les paramêtres suivants : 'Utiliser l'adresse Jeedom externe' ou 'Ne pas utiliser le cache'
-- Si jeedom n'a pas d'accès web, utiliser le moteur picoTTS
+- Essayer avec les paramètres suivants : 'Utiliser l'adresse Jeedom externe' ou 'Ne pas utiliser le cache'
+- Si Jeedom n'a pas d'accès web, utiliser le moteur picoTTS
 - Vérifier dans les logs la nature de l'erreur
 
 #### Diffuser Jeedom sans authentification sur un Google Cast
