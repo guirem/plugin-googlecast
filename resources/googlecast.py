@@ -837,6 +837,7 @@ def manage_callback(uuid, callback_type):
     return True
 
 def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=300):
+    srclanguage = language
     if globals.tts_cacheenabled==False :
         try :
             if os.path.exists(globals.tts_cachefoldertmp) :
@@ -861,7 +862,9 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
         filenamemp3=os.path.join(cachepath,file+'.mp3')
         if not os.path.isfile(filenamemp3) or forcetts==True :
             logging.debug("CMD-TTS------Generating file")
+
             if engine == 'gtts':
+                speed = float(speed)
                 language=language.split('-')[0]
                 try:
                     tts = gTTS(text=ttstext, lang=language)
@@ -884,6 +887,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     engine = 'picotts'
                     filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
                     file = file + '_failover'
+                    language = srclanguage
                     speed = 1.2
 
             elif engine == 'gttsapi':
@@ -904,6 +908,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     engine = 'picotts'
                     filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
                     file = file + '_failover'
+                    language = srclanguage
                     speed = 1.2
 
             elif engine == 'gttsapidev':
@@ -924,11 +929,14 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     engine = 'picotts'
                     filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
                     file = file + '_failover'
+                    language = srclanguage
                     speed = 1.2
 
             if engine == 'picotts':
                 speed = float(speed) - 0.2
                 filename=os.path.join(cachepath,file+'.wav')
+                # fix accent issue for picotts
+                ttstext = ttstext.encode('utf-8').decode('ascii','ignore')
                 os.system('pico2wave -l '+language+' -w '+filename+ ' "' +ttstext+ '"')
                 speech = AudioSegment.from_wav(filename)
                 if silence > 0 :
