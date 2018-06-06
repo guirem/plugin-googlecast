@@ -1443,7 +1443,7 @@ logging.info('GLOBAL------Callback : '+str(globals.callback))
 logging.info('GLOBAL------Event cycle : '+str(globals.cycle))
 logging.info('GLOBAL------Main cycle : '+str(globals.cycle_main))
 logging.info('GLOBAL------Default status message : '+str(globals.DEFAULT_NOSTATUS))
-logging.info('------------------------------------------------------')
+logging.info('-----------------------------------------------------')
 
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)
