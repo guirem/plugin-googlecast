@@ -721,6 +721,9 @@ def action_handler(message):
                             silence = int(command['silence'])
                         elif jcast.is_castgroup==True :
                             silence = 600
+                        generateonly = False
+                        if 'generateonly' in command :
+                            generateonly = True
 
                         curvol = jcast.getCurrentVolume()
                         if curvol == vol :
@@ -729,27 +732,32 @@ def action_handler(message):
                         if vol is not None or quit==True :
                             need_duration=True
 
-                        url,duration,mp3filename=get_tts_data(value, lang, engine, speed, forcetts, need_duration, silence)
-                        if vol is not None :
-                            gcast.set_volume(vol/100)
-                            time.sleep(0.1)
-                        thumb=globals.JEEDOM_WEB + '/plugins/googlecast/desktop/images/tts.png'
-                        jcast.disable_notif = True
-                        player = jcast.loadPlayer(app, { 'quitapp' : False, 'wait': wait})
-                        player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, add_delay=0.1, stream_type="LIVE");
-                        player.block_until_active(timeout=2);
-                        jcast.disable_notif = False
-                        if vol is not None :
-                            time.sleep(duration+(silence/1000)+1)
-                            if sleep>0 :
-                                time.sleep(sleep)
-                                sleep=0
-                            gcast.set_volume(curvol/100)
-                            vol = None
-                        if quit:
-                            if vol is None :
+                        if generateonly == False :
+                            url,duration,mp3filename=get_tts_data(value, lang, engine, speed, forcetts, need_duration, silence)
+                            if vol is not None :
+                                gcast.set_volume(vol/100)
+                                time.sleep(0.1)
+                            thumb=globals.JEEDOM_WEB + '/plugins/googlecast/desktop/images/tts.png'
+                            jcast.disable_notif = True
+                            player = jcast.loadPlayer(app, { 'quitapp' : False, 'wait': wait})
+                            player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, add_delay=0.1, stream_type="LIVE");
+                            player.block_until_active(timeout=2);
+                            jcast.disable_notif = False
+                            if vol is not None :
                                 time.sleep(duration+(silence/1000)+1)
-                            gcast.quit_app()
+                                if sleep>0 :
+                                    time.sleep(sleep)
+                                    sleep=0
+                                gcast.set_volume(curvol/100)
+                                vol = None
+                            if quit:
+                                if vol is None :
+                                    time.sleep(duration+(silence/1000)+1)
+                                gcast.quit_app()
+                        else :
+                            logging.error("TTS------Only generating TTS file without playing")
+                            get_tts_data(value, lang, engine, speed, forcetts, False, silence)
+
                         fallbackMode=False
                 except Exception as e:
                     logging.error("ACTION------Error while playing action " +cmd+ " on low level commands : %s" % str(e))

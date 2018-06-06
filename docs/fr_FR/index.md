@@ -265,6 +265,7 @@ ex using token :
 - vol: int (default=previous) - set the volume for the time TTS message is broadcast. Previous volume is resumed when done.
 - sleep: int (default=0) - add time in seconds after tts is finished (before volume resume)
 - silence: int (default=300) - add a short silence before the speech to make sure all is audible (in milliseconds)
+- generateonly: 1 - only generate speech file in cache (no action on device)
 
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
 ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
