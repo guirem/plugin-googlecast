@@ -953,10 +953,10 @@ class googlecast extends eqLogic {
     				$data[trim($value[0])] = 1;
     			}
     		}
-            if ( !isset($data['app']) ) {
+            if ( !isset($data['app']) && !is_null($_app) ) {
                 $data['app'] = $_app;
             }
-            if ( !isset($data['appid']) ) {
+            if ( !isset($data['appid']) && !is_null($_appid) ) {
                 $data['appid'] = $_appid;
             }
             array_push($datalist, $data);
