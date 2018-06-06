@@ -459,17 +459,23 @@ def action_handler(message):
             commandlist = [commandlist]
 
         for command in commandlist :
+            uuid = srcuuid
             if 'uuid' in command :
-                newUuid = command['uuid']
-                del command['uuid']
-                newMessage = {
-                    'cmd' : 'action',
-                    'device' : {'uuid' : newUuid, 'source' : message['device']['source'] },
-                    'command' : command
-                }
-                logging.debug("ACTION------DELEGATED command to other uuid : " + newUuid)
-                thread.start_new_thread( action_handler, (newMessage,))
-                continue
+                if 'nothread' in command and command['uuid'] in globals.GCAST_DEVICES:
+                    uuid = command['uuid']
+                    logging.debug("ACTION------Changing uuid to run in sequence in this tread : " + uuid)
+                else :
+                    newUuid = command['uuid']
+                    del command['uuid']
+                    newMessage = {
+                        'cmd' : 'action',
+                        'delegated' : True,
+                        'device' : {'uuid' : newUuid, 'source' : message['device']['source'] },
+                        'command' : command
+                    }
+                    logging.debug("ACTION------DELEGATED command to other uuid : " + newUuid)
+                    thread.start_new_thread( action_handler, (newMessage,))
+                    continue
 
             app = 'media'
             cmd = 'NONE'
