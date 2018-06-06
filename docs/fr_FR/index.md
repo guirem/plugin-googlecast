@@ -267,6 +267,7 @@ ex using token :
 - sleep: float (default=0) - add time in seconds after tts is finished (before volume resume)
 - silence: int (default=300) - add a short silence before the speech to make sure all is audible (in milliseconds)
 - generateonly: 1 - only generate speech file in cache (no action on device)
+- forcevol: 1 - Set volume also if the current volume is the same (useful for TTS synchronisation in multithreading)
 
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
 ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
