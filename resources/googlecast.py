@@ -730,9 +730,12 @@ def action_handler(message):
                         generateonly = False
                         if 'generateonly' in command :
                             generateonly = True
-
+                        forcevol = False
+                        if 'forcevol' in command :
+                            forcevol = True
+                            
                         curvol = jcast.getCurrentVolume()
-                        if curvol == vol :
+                        if curvol == vol and not forcevol :
                             vol = None
                         need_duration=False
                         if vol is not None or quit==True :
