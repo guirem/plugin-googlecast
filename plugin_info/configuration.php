@@ -31,7 +31,7 @@ if (!isConnect('admin')) {
 	    </div>
     </div>
 	<div class="form-group">
-	    <label class="col-lg-4 control-label">{{Fréquence de rafraissement}}</label>
+	    <label class="col-lg-4 control-label">{{Fréquence de rafraichissement}}</label>
 	    <div class="col-lg-2">
 			<select class="configKey form-control" data-l1key="cyclefactor">
 			    <option value="1">{{Normal (recommandé)}}</option>
@@ -42,7 +42,7 @@ if (!isConnect('admin')) {
     </div>
 	<legend><i class="fa fa-envelope-o"></i> {{Notifications}}</legend>
 	<div class="form-group">
-	    <label class="col-lg-4 control-label">{{Désactiver notif pour nouveaux GoogleCast}}</label>
+	    <label class="col-lg-4 control-label">{{Désactiver notifs pour nouveaux GoogleCast}}</label>
 	    <div class="col-lg-2">
 	        <input  type="checkbox" class="configKey" data-l1key="disableNotification"/>
 	    </div>
