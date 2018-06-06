@@ -37,7 +37,7 @@ if (!isConnect('admin')) {
 	    </div>
     </div>
 	<div class="form-group">
-	    <label class="col-lg-4 control-label">{{Fréquence de rafraissement}}</label>
+	    <label class="col-lg-4 control-label">{{Fréquence de rafraichissement}}</label>
 	    <div class="col-lg-2">
 			<select class="configKey form-control" data-l1key="cyclefactor">
 				<option value="0.5">{{Rapide}}</option>
@@ -60,6 +60,9 @@ if (!isConnect('admin')) {
             <select class="configKey form-control" data-l1key="tts_language">
                 <option value="fr-FR">{{Français}}</option>
                 <option value="en-US">{{Anglais}}</option>
+                <option value="es-ES">{{Espagnol}}</option>
+                <option value="de-DE">{{Allemand}}</option>
+                <option value="it-IT">{{Italien}}</option>
             </select>
 	    </div>
     </div>
@@ -77,7 +80,7 @@ if (!isConnect('admin')) {
 	<div class="form-group ttsgapikeyform">
 	    <label class="col-lg-4 control-label">{{Key Google Speech API}}</label>
 	    <div class="col-lg-4">
-	        <input  type="text" class="configKey form-control" data-l1key="tts_gapikey" placeholder="Voir doc"/>
+	        <input  type="text" class="configKey form-control" data-l1key="tts_gapikey" placeholder="Voir la documenttion pour obtenir une clé API"/>
 	    </div>
     </div>
 	<div class="form-group">
@@ -113,7 +116,7 @@ if (!isConnect('admin')) {
     </div>
     <legend><i class="fa fa-envelope-o"></i>&nbsp; {{Notifications}}</legend>
 	<div class="form-group">
-	    <label class="col-lg-4 control-label">{{Désactiver notif pour nouveaux GoogleCast}}</label>
+	    <label class="col-lg-4 control-label">{{Désactiver notifs pour nouveaux GoogleCast}}</label>
 	    <div class="col-lg-2">
 	        <input  type="checkbox" class="configKey" data-l1key="disableNotification"/>
 	    </div>
