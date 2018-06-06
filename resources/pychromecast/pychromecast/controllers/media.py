@@ -9,6 +9,7 @@ import threading
 
 from ..config import APP_MEDIA_RECEIVER
 from . import BaseController
+import time
 
 STREAM_TYPE_UNKNOWN = "UNKNOWN"
 STREAM_TYPE_BUFFERED = "BUFFERED"
@@ -441,7 +442,7 @@ class MediaController(BaseController):
                    current_time=0, autoplay=True,
                    stream_type=STREAM_TYPE_BUFFERED,
                    metadata=None, subtitles=None, subtitles_lang='en-US',
-                   subtitles_mime='text/vtt', subtitle_id=1):
+                   subtitles_mime='text/vtt', subtitle_id=1, add_delay=0):
         """
         Plays media on the Chromecast. Start default media receiver if not
         already started.
@@ -470,6 +471,7 @@ class MediaController(BaseController):
         # pylint: disable=too-many-locals
         def app_launched_callback():
             """Plays media after chromecast has switched to requested app."""
+            time.sleep(add_delay);
             self._send_start_play_media(
                 url, content_type, title, thumb, current_time, autoplay,
                 stream_type, metadata, subtitles, subtitles_lang,

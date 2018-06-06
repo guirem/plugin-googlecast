@@ -133,7 +133,7 @@ class jeedom_com():
                 logging.error('SENDER------Callback error: %s %s. Please check your network configuration page'% (response.status.code, response.status.message,))
                 return False
         except Exception as e:
-            logging.error('SENDER------Callback result as a unknown error: %s. Please check your network configuration page'% (e.message,))
+            logging.error('SENDER------Callback result as a unknown error: %s. Please check your network configuration page. '% str(e))
             return False
         return True
 
@@ -162,10 +162,16 @@ class jeedom_utils():
 
         if level=='debug' :
             logging.getLogger("pychromecast").setLevel(logging.ERROR)
+            logging.getLogger("plexapi").setLevel(logging.DEBUG)
             logging.getLogger("urllib3").setLevel(logging.ERROR)
+            logging.getLogger("pydub").setLevel(logging.ERROR)
+            logging.getLogger("gtts").setLevel(logging.ERROR)
         else :
             logging.getLogger("pychromecast").setLevel(logging.CRITICAL)
+            logging.getLogger("plexapi").setLevel(logging.ERROR)
             logging.getLogger("urllib3").setLevel(logging.CRITICAL)
+            logging.getLogger("pydub").setLevel(logging.CRITICAL)
+            logging.getLogger("gtts").setLevel(logging.CRITICAL)
 
         logging.basicConfig(level=jeedom_utils.convert_log_level(level),format=FORMAT, datefmt="%Y-%m-%d %H:%M:%S")
 
@@ -186,7 +192,7 @@ class jeedom_socket_handler(StreamRequestHandler):
     def handle(self):
         global JEEDOM_SOCKET_MESSAGE
         logging.debug("SOCKETHANDLER------Client connected to [%s:%d]" % self.client_address)
-        lg = self.rfile.readline().strip().decode("utf-8")
+        lg = self.rfile.readline().strip().decode("ascii")
         JEEDOM_SOCKET_MESSAGE.put(lg)
         logging.debug("SOCKETHANDLER------Message read from socket: " + lg)
         self.netAdapterClientConnected = False

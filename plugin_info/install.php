@@ -37,6 +37,8 @@ function googlecast_update() {
 	$core_version = get_plugin_version();
 	config::save('plugin_version', $core_version, 'googlecast');
 
+    createHtaccess();
+
 	foreach (googlecast::byType('googlecast') as $googlecast) {
 		try {
 			$googlecast->save();
@@ -51,11 +53,34 @@ function googlecast_install() {
 	if ( config::byKey('socketport', 'googlecast') == '' ) {
 		config::save('socketport','55012', 'googlecast');
 	}
+	if ( config::byKey('fixdocker', 'googlecast') == '' ) {
+		config::save('fixdocker','0', 'googlecast');
+	}
 	if ( config::byKey('cyclefactor', 'googlecast') == '' ) {
 		config::save('cyclefactor','1', 'googlecast');
 	}
+	if ( config::byKey('tts_externalweb', 'googlecast') == '' ) {
+		config::save('tts_externalweb','0', 'googlecast');
+	}
+    if ( config::byKey('tts_language', 'googlecast') == '' ) {
+		config::save('tts_language','fr-FR', 'googlecast');
+	}
+    if ( config::byKey('tts_engine', 'googlecast') == '' ) {
+		config::save('tts_engine','gtts', 'googlecast');
+	}
+	if ( config::byKey('tts_speed', 'googlecast') == '' ) {
+		config::save('tts_speed','1.2', 'googlecast');
+	}
+	if ( config::byKey('tts_cleancache_days', 'googlecast') == '' ) {
+		config::save('tts_cleancache_days','7', 'googlecast');
+	}
+    if ( config::byKey('tts_disablecache', 'googlecast') == '' ) {
+		config::save('tts_disablecache','0', 'googlecast');
+	}
 
 	linkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
+
+    createHtaccess();
 
 	message::removeAll('googlecast');
     message::add('googlecast', 'Installation du plugin Google Cast terminé (version ' . $core_version . ').', null, null);
@@ -72,6 +97,15 @@ function linkTemplate($templateFilename) {
 
 	if (!file_exists($pathDest)) {
 		shell_exec('ln -s '.$pathSrc. ' '. $pathDest);
+	}
+}
+
+function createHtaccess() {
+	$htaccess = dirname(__FILE__) . '/../.htaccess';
+
+	if (!file_exists($htaccess)) {
+        $content = "Options +FollowSymLinks\n";
+        file_put_contents($htaccess, $content);
 	}
 }
 

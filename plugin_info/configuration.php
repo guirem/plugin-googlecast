@@ -23,7 +23,7 @@ if (!isConnect('admin')) {
 ?>
 <form class="form-horizontal">
     <fieldset>
-    <legend><i class="icon loisir-darth"></i> {{Démon}}</legend>
+    <legend><i class="icon loisir-darth"></i>&nbsp; {{Démon}}</legend>
     <div class="form-group">
 	    <label class="col-lg-4 control-label">{{Port socket interne (modification dangereuse)}}</label>
 	    <div class="col-lg-2">
@@ -31,44 +31,135 @@ if (!isConnect('admin')) {
 	    </div>
     </div>
 	<div class="form-group">
-	    <label class="col-lg-4 control-label">{{Fréquence de rafraissement}}</label>
+	    <label class="col-lg-4 control-label">{{Configuration spéciale (eg: Docker, VM)}}</label>
+	    <div class="col-lg-2">
+	        <input  type="checkbox" class="configKey" data-l1key="fixdocker"/>
+	    </div>
+    </div>
+	<div class="form-group">
+	    <label class="col-lg-4 control-label">{{Fréquence de rafraichissement}}</label>
 	    <div class="col-lg-2">
 			<select class="configKey form-control" data-l1key="cyclefactor">
+				<option value="0.5">{{Rapide}}</option>
 			    <option value="1">{{Normal (recommandé)}}</option>
 			    <option value="2">{{Basse}}</option>
 			    <option value="3">{{Très basse}}</option>
 			</select>
 	    </div>
     </div>
-	<legend><i class="fa fa-envelope-o"></i> {{Notifications}}</legend>
+    <legend><i class="fa fa-volume-up"></i>&nbsp; {{TTS - Text To Speech}}</legend>
 	<div class="form-group">
-	    <label class="col-lg-4 control-label">{{Désactiver notif pour nouveaux GoogleCast}}</label>
+	    <label class="col-lg-4 control-label">{{Utiliser l'adresse Jeedom externe}}</label>
+	    <div class="col-lg-2">
+	        <input  type="checkbox" class="configKey" data-l1key="tts_externalweb"/>
+	    </div>
+    </div>
+    <div class="form-group">
+	    <label class="col-lg-4 control-label">{{Langue par défaut}}</label>
+	    <div class="col-lg-2">
+            <select class="configKey form-control" data-l1key="tts_language">
+                <option value="fr-FR">{{Français}}</option>
+                <option value="en-US">{{Anglais}}</option>
+                <option value="es-ES">{{Espagnol}}</option>
+                <option value="de-DE">{{Allemand}}</option>
+                <option value="it-IT">{{Italien}}</option>
+            </select>
+	    </div>
+    </div>
+	<div class="form-group">
+	    <label class="col-lg-4 control-label">{{Moteur par défaut}}</label>
+	    <div class="col-lg-4">
+            <select class="configKey form-control ttsengineform" data-l1key="tts_engine">
+                <option value="picotts">{{PicoTTS (local)}}</option>
+                <option value="gtts">{{Google Translate API (internet requis)}}</option>
+				<option value="gttsapi">{{Google Speech API (clé api & internet requis)}}</option>
+				<option value="gttsapidev">{{Google Speech API - dev (clé api & internet requis)}}</option>
+            </select>
+	    </div>
+    </div>
+	<div class="form-group ttsgapikeyform">
+	    <label class="col-lg-4 control-label">{{Key Google Speech API}}</label>
+	    <div class="col-lg-4">
+	        <input  type="text" class="configKey form-control" data-l1key="tts_gapikey" placeholder="Voir la documenttion pour obtenir une clé API"/>
+	    </div>
+    </div>
+	<div class="form-group">
+	    <label class="col-lg-4 control-label">{{Vitesse de parole}}</label>
+	    <div class="col-lg-2">
+            <select class="configKey form-control" data-l1key="tts_speed">
+                <option value="0.8">{{Très lent}}</option>
+				<option value="1">{{Lent}}</option>
+				<option value="1.2">{{Normal}}</option>
+                <option value="1.4">{{Rapide}}</option>
+				<option value="1.6">{{Très rapide}}</option>
+				<option value="1.8">{{Encore plus rapide}}</option>
+            </select>
+	    </div>
+    </div>
+    <div class="form-group">
+	    <label class="col-lg-4 control-label">{{Ne pas utiliser le cache (déconseillé)}}</label>
+	    <div class="col-lg-2">
+	        <input  type="checkbox" class="configKey" data-l1key="tts_disablecache"/>
+	    </div>
+    </div>
+    <div class="form-group">
+	    <label class="col-lg-4 control-label"></label>
+	    <div class="col-lg-2">
+            <a class="btn btn-success cleanTTScache">{{Nettoyer tout le cache}}</a>
+	    </div>
+    </div>
+	<div class="form-group">
+	    <label class="col-lg-4 control-label">{{Suppression automatique du cache de plus de X jours}}</label>
+	    <div class="col-lg-2">
+	        <input class="configKey form-control" type="number" data-l1key="tts_cleancache_days" min="0" max="90" placeholder="{{Nombre en jour}}" />
+	    </div>
+    </div>
+    <legend><i class="fa fa-envelope-o"></i>&nbsp; {{Notifications}}</legend>
+	<div class="form-group">
+	    <label class="col-lg-4 control-label">{{Désactiver notifs pour nouveaux GoogleCast}}</label>
 	    <div class="col-lg-2">
 	        <input  type="checkbox" class="configKey" data-l1key="disableNotification"/>
 	    </div>
     </div>
+
 </fieldset>
 </form>
 <script>
- $('.changeLogLive').on('click', function () {
-	 $.ajax({// fonction permettant de faire de l'ajax
-            type: "POST", // methode de transmission des données au fichier php
-            url: "plugins/googlecast/core/php/googlecast.ajax.php", // url du fichier php
-            data: {
-                action: "changeLogLive",
-				level : $(this).attr('data-log')
-            },
-            dataType: 'json',
-            error: function (request, status, error) {
-                handleAjaxError(request, status, error);
-            },
-            success: function (data) { // si l'appel a bien fonctionné
-                if (data.state != 'ok') {
-                    $('#div_alert').showAlert({message: data.result, level: 'danger'});
-                    return;
-                }
-                $('#div_alert').showAlert({message: '{{Réussie}}', level: 'success'});
-            }
-        });
+
+function manage_gttskey() {
+    console.log('in');
+    var val = $('.ttsengineform').val();
+    if (val=='gttsapi' || val=='gttsapidev') {
+        $('.ttsgapikeyform').show();
+    }
+    else {
+        $('.ttsgapikeyform').hide();
+    }
+}
+
+$( document ).ready(function() {
+    manage_gttskey();
+});
+$('.ttsengineform').on('change', manage_gttskey);
+
+$('.cleanTTScache').on('click', function () {
+    $.ajax({// fonction permettant de faire de l'ajax
+           type: "POST", // methode de transmission des données au fichier php
+           url: "plugins/googlecast/core/php/googlecast.ajax.php", // url du fichier php
+           data: {
+               action: "cleanTTScache"
+           },
+           dataType: 'json',
+           error: function (request, status, error) {
+               handleAjaxError(request, status, error);
+           },
+           success: function (data) { // si l'appel a bien fonctionné
+               if (data.state != 'ok') {
+                   $('#div_alert').showAlert({message: data.result, level: 'danger'});
+                   return;
+               }
+               $('#div_alert').showAlert({message: '{{Réussie}}', level: 'success'});
+           }
+       });
 });
 </script>

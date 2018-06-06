@@ -4,3 +4,4 @@ Thumbs.db
 *.php~
 __pycache__
 *.bak
+tmp/

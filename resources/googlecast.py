@@ -19,6 +19,8 @@
 # pylint: disable=E
 
 import os,re
+import os.path
+import shutil
 import logging
 import sys
 import argparse
@@ -30,6 +32,9 @@ import traceback
 import _thread as thread
 import socket
 import resource
+from pydub import AudioSegment
+import hashlib
+from gtts import gTTS
 
 import globals
 
@@ -43,17 +48,34 @@ except ImportError:
 
 try:
     import pychromecast.pychromecast.controllers.dashcast as dashcast
-    import pychromecast.pychromecast.controllers.plex as plex
     import pychromecast.pychromecast.controllers.spotify as Spotify
+    import pychromecast.pychromecast.controllers.youtube as youtube
 except ImportError:
     logging.error("ERROR: One or several pychromecast controllers are not loaded !")
     print(traceback.format_exc())
     pass
 
 try:
-    import pychromecast.pychromecast.customcontrollers.youtube as youtube
+    #import pychromecast.pychromecast.customcontrollers.youtube as youtube
+    import pychromecast.pychromecast.customcontrollers.plex2 as plex
 except ImportError:
     logging.error("ERROR: Custom controller not loaded !")
+    logging.error(traceback.format_exc())
+    pass
+
+try:
+    from plexapi.myplex import MyPlexAccount
+    from plexapi.server import PlexServer
+except ImportError:
+    logging.error("ERROR: Plex API not loaded !")
+    logging.error(traceback.format_exc())
+    pass
+
+try:
+    import spotipy.spotify_token as stoken
+    import spotipy
+except ImportError:
+    logging.error("ERROR: Spotify API not loaded !")
     logging.error(traceback.format_exc())
     pass
 
@@ -78,6 +100,7 @@ class JeedomChromeCast :
         if scan_mode == False :
             self.being_shutdown = False
             self.is_recovering = False
+            self.disable_notif = False
             self.customplayer = None
             self.customplayername = ""
             self.nowplaying_lastupdated = 0
@@ -110,6 +133,15 @@ class JeedomChromeCast :
         except Exception :
             return False
 
+    @property
+    def is_castgroup(self):
+        if self.gcast.device.cast_type != 'cast' :
+            return False
+        return True
+
+    def getCurrentVolume(self):
+        return int(self.gcast.status.volume_level*100)
+
     def startNowPlaying(self):
         if self.now_playing == False and self.online == True :
             logging.debug("JEEDOMCHROMECAST------ Starting monitoring of " + self.uuid)
@@ -122,12 +154,13 @@ class JeedomChromeCast :
 
     def new_cast_status(self, new_status):
         #logging.debug("JEEDOMCHROMECAST------ Status " + str(new_status))
-        self._internal_refresh_status(False)
-        self.sendNowPlaying(force=True)
+        if not self.disable_notif :
+            self._internal_refresh_status(False)
+            self.sendNowPlaying(force=True)
 
     def new_media_status(self, new_mediastatus):
         #logging.debug("JEEDOMCHROMECAST------ New media status " + str(new_mediastatus))
-        if self.now_playing==True and new_mediastatus.player_state!="BUFFERING" :
+        if self.now_playing==True and new_mediastatus.player_state!="BUFFERING" and not self.disable_notif :
             self._internal_send_now_playing()
 
     def new_connection_status(self, new_status):
@@ -185,7 +218,7 @@ class JeedomChromeCast :
         del self.gcast
         del self
 
-    def loadPlayer(self, playername, params=None, token=None) :
+    def loadPlayer(self, playername, params=None) :
         if self.gcast.socket_client :
             forceReload = False
             if params and 'forcereload' in params :
@@ -198,11 +231,17 @@ class JeedomChromeCast :
                     elif playername == 'youtube' :
                         player = youtube.YouTubeController()
                         self.gcast.register_handler(player)
+                        time.sleep(5)
                     elif playername == 'spotify' :
-                        player = spotify.SpotifyController(token)
+                        player = spotify.SpotifyController()
                         self.gcast.register_handler(player)
+                        time.sleep(2)
                     elif playername == 'plex' :
+                        #player = plex.PlexController(self.gcast)
+                        #player.register_status_listener(self)
                         player = plex.PlexController()
+                        self.gcast.register_handler(player)
+                        time.sleep(2)
                     else :
                         player = self.gcast.media_controller
                     logging.debug("JEEDOMCHROMECAST------ Initiating player " + str(player.namespace))
@@ -214,15 +253,20 @@ class JeedomChromeCast :
                         self.gcast.quit_app()
                     if params and 'wait' in params :
                         time.sleep(params['wait'])
-                except Exception :
+                except Exception as e:
+                    logging.error("JEEDOMCHROMECAST------ Error while initiating player " +playername+ " on low level commands : %s" % str(e))
+                    logging.debug(traceback.format_exc())
                     player = None
                     pass
-            self.sendNowPlaying(force=True)
+            #else:
+            #    time.sleep(0.2)
+            if not self.disable_notif :
+                self.sendNowPlaying(force=True)
             return self.customplayer
         return None
 
     def resetPlayer(self) :
-        if self.customplayer is not None :
+        if self.customplayer is not None and self.customplayername != 'media' :
             if self.gcast.socket_client and self.customplayer.namespace in self.gcast.socket_client._handlers :
                 del self.gcast.socket_client._handlers[self.customplayer.namespace]
             self.customplayer = None
@@ -245,8 +289,9 @@ class JeedomChromeCast :
     def _internal_get_status(self):
         if self.gcast.status is not None and self.online == True:
             uuid = self.uuid
+            playStatus = self.gcast.media_controller.status
             status = {
-                "uuid" : uuid,
+                "uuid" : uuid, "uri" : self.gcast.uri, "friendly_name" : self.gcast.device.friendly_name,
                 "friendly_name" : self.gcast.device.friendly_name,
                 "is_active_input" : True if self.gcast.status.is_active_input else False,
                 "is_stand_by" :  True if self.gcast.status.is_stand_by else False,
@@ -256,14 +301,20 @@ class JeedomChromeCast :
                 "display_name" : self.gcast.status.display_name if self.gcast.status.display_name is not None else globals.DEFAULT_NODISPLAY,
                 "status_text" : self.gcast.status.status_text if self.gcast.status.status_text!="" else globals.DEFAULT_NOSTATUS,
                 "is_busy" : not self.gcast.is_idle,
+                "title" : "" if playStatus is None else playStatus.title,
+                "artist" : "" if playStatus is None else playStatus.artist,
+                'series_title': "" if playStatus is None else playStatus.series_title,
+                "stream_type" : "" if playStatus is None else playStatus.stream_type,
+                "player_state" : "" if playStatus is None else playStatus.player_state,
             }
             return status
         else :
             return {
                 "uuid" : self.uuid,
-                "friendly_name" : "", "is_stand_by" :  False, "is_active_input" : False,
+                "is_stand_by" :  False, "is_active_input" : False,
                 "display_name" : globals.DEFAULT_NODISPLAY, "status_text" : globals.DEFAULT_NOSTATUS,
                 "app_id" : "", "is_busy" : False,
+                "title" : "", "artist" : "", 'series_title': "", "stream_type" : "", "player_state" : "",
             }
 
 
@@ -271,19 +322,19 @@ class JeedomChromeCast :
         prev_status = self.previous_status
         if len(prev_status) != len(new_status) or len(prev_status)==2 or 'volume_level' not in new_status :
             return True
-        if prev_status['volume_level'] != new_status['volume_level'] :
+        if prev_status['status_text'] != new_status['status_text'] :
             return True
-        if prev_status['app_id'] != new_status['app_id'] :
+        if prev_status['volume_level'] != new_status['volume_level'] :
             return True
         if prev_status['is_busy'] != new_status['is_busy'] :
-            return True
-        if prev_status['volume_level'] != new_status['volume_level'] :
             return True
         if prev_status['volume_muted'] != new_status['volume_muted'] :
             return True
         if prev_status['is_stand_by'] != new_status['is_stand_by'] :
             return True
-        if prev_status['status_text'] != new_status['status_text'] :
+        if prev_status['app_id'] != new_status['app_id'] :
+            return True
+        if prev_status['player_state'] != new_status['player_state'] :
             return True
         return False
 
@@ -299,7 +350,6 @@ class JeedomChromeCast :
 
     def getStatus(self):
         return self._internal_get_status()
-
 
     def _internal_trigger_now_playing_update(self) :
         try :
@@ -389,132 +439,532 @@ class JeedomChromeCast :
 # main method to manage actions
 # -------------------------------
 def action_handler(message):
-    #name = message['command']['name']
     rootcmd = message['cmd']
-    uuid = message['command']['device']['uuid']
+    uuid = message['device']['uuid']
+    srcuuid = uuid
 
-    cmd = 'NONE'
-    if 'cmd' in message['command'] :
-        cmd = message['command']['cmd']
-    app = 'media'
-    if 'app' in message['command'] :
-        app = message['command']['app']
-    value = None
-    if 'value' in message['command'] :
-        value = message['command']['value']
-
-    needSendStatus = True
-    logging.debug("ACTION------ " + rootcmd + " - " + cmd + ' - ' + uuid + ' - ' + str(value)+ ' - ' + app)
     if uuid in globals.KNOWN_DEVICES and uuid in globals.GCAST_DEVICES and rootcmd == "action":
+        hascallback=False
+        callback=''
+        if 'callback' in message['device'] :
+            hascallback=message['device']['callback'] if True is not None else False
+            callback=message['device']['callback'] if message['device']['callback'] is not None else ''
 
-        jcast = globals.GCAST_DEVICES[uuid]
-        gcast = jcast.gcast
-        if cmd == 'refresh':
-            logging.debug("ACTION------Refresh action")
-        elif cmd == 'reboot':
-            logging.debug("ACTION------Reboot action")
-            gcast.reboot()
-            time.sleep(5)
-        elif cmd == 'volume_up':
-            logging.debug("ACTION------Volumme up action")
-            gcast.volume_up(value if value!=None else 0.1)
-        elif cmd == 'volume_down':
-            logging.debug("ACTION------Volume down action")
-            gcast.volume_down(value if value!=None else 0.1)
-        elif cmd == 'volume_set':
-            logging.debug("ACTION------Volume set action")
-            gcast.set_volume(int(value)/100)
-        elif cmd == 'play' and app == 'media':
-            logging.debug("ACTION------Play action")
-            gcast.media_controller.play()
-        elif cmd == 'stop' and app == 'media':
-            logging.debug("ACTION------Stop action")
-            gcast.media_controller.stop()
-        elif cmd == 'rewind':
-            logging.debug("ACTION------Rewind action")
-            gcast.media_controller.rewind()
-        elif cmd == 'skip':
-            logging.debug("ACTION------Skip action")
-            gcast.media_controller.skip()
-        elif cmd == 'seek':
-            logging.debug("ACTION------Seek action")
-            gcast.media_controller.seek(0 if value is None else value)
-        elif cmd == 'start_app':
-            logging.debug("ACTION------Stop action")
-            gcast.start_app('' if value is None else value)
-        elif cmd == 'quit_app':
-            logging.debug("ACTION------Stop action")
-            gcast.quit_app()
-        elif cmd == 'pause' and app == 'media':
-            logging.debug("ACTION------Stop action")
-            gcast.media_controller.pause()
-        elif cmd == 'mute_on':
-            logging.debug("ACTION------Mute on action")
-            gcast.set_volume_muted(True)
-        elif cmd == 'mute_off':
-            logging.debug("ACTION------Mute off action")
-            gcast.set_volume_muted(False)
-        elif app is not None:
-            logging.debug("ACTION------Playing action " + cmd + ' for application ' + app)
+        source=''
+        if 'source' in message['device'] :
+            source=message['device']['source']
+
+        commandlist = message['command']
+        if not isinstance(commandlist, list) :
+            commandlist = [commandlist]
+
+        for command in commandlist :
+            uuid = srcuuid
+            if 'uuid' in command :
+                if 'nothread' in command and command['uuid'] in globals.GCAST_DEVICES:
+                    uuid = command['uuid']
+                    logging.debug("ACTION------Changing uuid to run in sequence in this tread : " + uuid)
+                else :
+                    newUuid = command['uuid']
+                    del command['uuid']
+                    newMessage = {
+                        'cmd' : 'action',
+                        'delegated' : True,
+                        'device' : {'uuid' : newUuid, 'source' : message['device']['source'] },
+                        'command' : command
+                    }
+                    logging.debug("ACTION------DELEGATED command to other uuid : " + newUuid)
+                    thread.start_new_thread( action_handler, (newMessage,))
+                    continue
+
+            app = 'media'
+            cmd = 'NONE'
+            if 'cmd' in command :
+                cmd = command['cmd']
+            app = 'media'
+            if 'app' in command :
+                app = command['app']
+            appid = ''
+            if 'appid' in command :
+                appid = command['appid']
+            value = None
+            if 'value' in command :
+                value = command['value']
+            sleep=0
+            if 'sleep' in command :
+                sleep = command['sleep']
+            vol = None
+            if 'vol' in command :
+                try:
+                    vol = int(command['vol'])
+                    if not (0 <= vol <= 100) or command['vol'] == '':
+                        vol = None
+                except:
+                    vol = None
+
+            # specific parameters for apps
+            quit_app_before=True
+            if 'quit_app_before' in command :
+                quit_app_before = True if command['quit_app_before'] else False
+            quit=False
+            if 'quit' in command :
+                quit = True if command['quit'] else False
+            force_register=False
+            if 'force_register' in command :
+                force_register = True if command['force_register'] else False
+            wait=2
+            if 'wait' in command :
+                wait = int(command['wait']) if command['wait'].isnumeric() else 2
+
+            if app == 'tts' :
+                cmd = 'tts'
+                app = 'media'
+
+            needSendStatus = True
+            fallbackMode = True
+            logging.debug("ACTION------ " + rootcmd + " - " + cmd + ' - ' + uuid + ' - ' + str(value)+ ' - ' + app)
+
+            jcast = globals.GCAST_DEVICES[uuid]
+            gcast = jcast.gcast
             try:
-                quit_app_before=True
-                if 'quit_app_before' in message['command'] :
-                    quit_app_before = True if message['command']['quit_app_before'] else False
-                force_register=False
-                if 'force_register' in message['command'] :
-                    force_register = True if message['command']['force_register'] else False
-                wait=2
-                if 'wait' in message['command'] :
-                    wait = message['command']['wait'] if message['command']['wait'].isnumeric() else 1
+                if app == 'media' :    # app=media|cmd=play_media|value=http://bit.ly/2JzYtfX,video/mp4,Mon film
+                    possibleCmd = ['play_media']
+                    if cmd in possibleCmd :
+                        fallbackMode=False
+                        player = jcast.loadPlayer('media', { 'quitapp' : quit_app_before})
+                        eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
 
-                if app == 'web':    # app=web|cmd=load_url|value=https://news.google.com,True,5
+                elif app == 'web':    # app=web|cmd=load_url|value=https://news.google.com,True,5
                     force_register=True
                     possibleCmd = ['load_url']
                     if cmd in possibleCmd :
-                        player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before}, None)
+                        fallbackMode=False
+                        player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before})
                         eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
+
                 elif app == 'youtube':  # app=youtube|cmd=play_video|value=fra4QBLF3GU
-                    if gcast.device.cast_type == 'cast' :
-                        possibleCmd = ['play_video', 'start_new_session', 'add_to_queue', 'update_screen_id', 'clear_playlist', 'play', 'stop', 'pause']
-                        if cmd in possibleCmd :
-                            player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait}, None)
-                            eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
-                    else :
-                        logging.error("ACTION------ YouTube not availble on Chromecast Audio")
-                elif app == 'spotify':  # app=spotify|cmd=launch_app|token=XXXXXX
-                    possibleCmd = ['launch_app']
+                    #possibleCmd = ['play_video', 'start_new_session', 'add_to_queue', 'update_screen_id', 'clear_playlist', 'play', 'stop', 'pause']
+                    possibleCmd = ['play_video', 'add_to_queue', 'play_next', 'remove_video']
                     if cmd in possibleCmd :
-                        if 'token' not in message['command'] :
-                            logging.error("ACTION------ Token missing for Spotify")
+                        fallbackMode=False
+                        if gcast.device.cast_type == 'cast' :
+                            player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait})
+                            eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
                         else :
-                            player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait}, message['command']['token'])
-                            player.launch_app()
+                            logging.error("ACTION------ YouTube not availble on Chromecast Audio")
+
+                elif app == 'spotify':  # app=spotify|cmd=launch_app|user=XXXXXX|pass=YYYY|value
+                    possibleCmd = ['play_media']
+                    if cmd == 'play_media' :
+                        fallbackMode=False
+
+                        if 'user' in command and 'pass' in command :
+                            username = command['user']
+                            password = command['pass']
+                        token = None
+                        if 'token' in command :
+                            token = command['token']
+
+                        if username is not None and password is not None and token is None :
+                            data = stoken.start_session(username, password)
+                            token = data[0]
+
+                        keepGoing = True
+                        if value is None :
+                            logging.error("ACTION------ Missing content id for spotify")
+                            keepGoing = False
+                        if token is None and (username is None or password is None) :
+                            logging.error("ACTION------ Missing token or user/pass paramaters for spotify")
+                            keepGoing = False
+
+                        if keepGoing == True :
+                            player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait})
+                            player.launch_app(token)
+                            spotifyClient = spotipy.Spotify(auth=token)
+
+                            devices_available = spotifyClient.devices()
+                            device_id = None
+                            for device in devices_available['devices']:
+                                if device['name'] == jcast.device.friendly_name :
+                                    device_id = device['id']
+                                    break
+                            if device_id is not None :
+                                out = spotifyClient.start_playback(device_id=device_id, uris=[value])
+
                 elif app == 'backdrop':  # also called backdrop
                     if gcast.device.cast_type == 'cast' :
+                        fallbackMode=False
                         gcast.start_app('E8C28D3C')
                     else :
                         logging.error("ACTION------ Backdrop not availble on Chromecast Audio")
+
                 elif app == 'plex':            # app=plex|cmd=pause
                     quit_app_before=False
-                    possibleCmd = ['play', 'stop', 'pause']
+                    possibleCmd = ['play_media','play', 'stop', 'pause', 'next', 'previous']
                     if cmd in possibleCmd :
-                        player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait}, None)
-                        eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
-                else : # media        # app=media|cmd=play_media|value=http://bit.ly/2JzYtfX,video/mp4,Mon film
-                    possibleCmd = ['play', 'stop', 'pause', 'play_media']
-                    player = jcast.loadPlayer('media', { 'quitapp' : quit_app_before}, None)
-                    eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
+                        fallbackMode=False
+
+                        player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait})
+                        #player.namespace = 'urn:x-cast:com.google.cast.sse'
+
+                        if cmd == 'play_media' :
+                            serverurl = None
+                            if 'server' in command :
+                                serverurl = command['server']
+                            username = None
+                            password = None
+                            if 'user' in command and 'pass' in command :
+                                username = command['user']
+                                password = command['pass']
+                            token = None
+                            if 'token' in command :
+                                token = command['token']
+                            type = 'video'
+                            if 'type' in command :
+                                type = command['type']
+                            offset = 0
+                            if 'offset' in command :
+                                offset = command['offset']
+                            shuffle = 0
+                            if 'shuffle' in command :
+                                shuffle = int(command['shuffle'])
+                            repeat = 0
+                            if 'repeat' in command :
+                                repeat = int(command['repeat'])
+
+                            keepGoing = True
+                            if serverurl is None :
+                                logging.error("ACTION------ Missing server paramater for plex")
+                                keepGoing = False
+                            if token is None and (username is None or password is None) :
+                                logging.error("ACTION------ Missing token or user/pass paramaters for plex")
+                                keepGoing = False
+
+                            if keepGoing==True :
+                                if username is not None and password is not None and token is None :
+                                    account = MyPlexAccount(username, password)
+                                    for res in account.resources() :
+                                        logging.debug("PLEX------ Resource available : " +str(res.name))
+                                    plexServer = account.resource(serverurl).connect()
+                                    logging.debug("PLEX------ Token for reuse : " +str(account._token))
+                                else :
+                                    plexServer = PlexServer(serverurl, token)
+
+                                plexmedia = plexServer.search(value, limit=1)
+                                if len(plexmedia)>0 :
+                                    player.play_media(plexmedia[0], plexServer, {'offset':offset, 'type':type, 'shuffle':shuffle, 'repeat':repeat} )
+                                else :
+                                    logging.debug("PLEX------No media found for query " + value)
+                        else :
+                            eval( 'player.' + cmd + '()' )
+
+                if fallbackMode==False :
+                    logging.debug("ACTION------Playing action " + cmd + ' for application ' + app)
             except Exception as e:
-                logging.error("ACTION------Error while playing "+app+" : %s" % str(e))
+                logging.error("ACTION------Error while playing action " +cmd+ " on app " +app+" : %s" % str(e))
                 logging.debug(traceback.format_exc())
 
+            # low level google cast actions
+            if fallbackMode==True :
+                try:
+                    if cmd == 'refresh':
+                        logging.debug("ACTION------Refresh action")
+                        time.sleep(1)
+                        fallbackMode=False
+                    elif cmd == 'reboot':
+                        logging.debug("ACTION------Reboot action")
+                        gcast.reboot()
+                        time.sleep(5)
+                        fallbackMode=False
+                    elif cmd == 'volume_up':
+                        logging.debug("ACTION------Volumme up action")
+                        gcast.volume_up(value if value is not None else 0.1)
+                        fallbackMode=False
+                    elif cmd == 'volume_down':
+                        logging.debug("ACTION------Volume down action")
+                        gcast.volume_down(value if value is not None else 0.1)
+                        fallbackMode=False
+                    elif cmd == 'volume_set':
+                        logging.debug("ACTION------Volume set action")
+                        gcast.set_volume(int(value)/100)
+                        fallbackMode=False
+                    elif cmd == 'start_app':
+                        logging.debug("ACTION------Start app action")
+                        appToLaunch = '' if value is None else value
+                        if appid != '':
+                            appToLaunch=appid
+                        gcast.start_app(appToLaunch)
+                        fallbackMode=False
+                    elif cmd == 'quit_app':
+                        logging.debug("ACTION------Stop action")
+                        gcast.quit_app()
+                        jcast.resetPlayer()
+                        fallbackMode=False
+                    elif cmd == 'mute_on':
+                        logging.debug("ACTION------Mute on action")
+                        gcast.set_volume_muted(True)
+                        fallbackMode=False
+                    elif cmd == 'mute_off':
+                        logging.debug("ACTION------Mute off action")
+                        gcast.set_volume_muted(False)
+                        fallbackMode=False
+                    elif cmd == 'tts':
+                        logging.debug("ACTION------TTS action")
+                        lang = globals.tts_language
+                        if 'lang' in command :
+                            lang = command['lang']
+                        engine = globals.tts_engine
+                        if 'engine' in command :
+                            engine = command['engine']
+                        speed = globals.tts_speed
+                        if 'speed' in command :
+                            speed = float(command['speed'])
+                        forcetts = False
+                        if 'forcetts' in command :
+                            forcetts = True
+                        silence = 300
+                        if 'silence' in command :
+                            silence = int(command['silence'])
+                        elif jcast.is_castgroup==True :
+                            silence = 600
+                        generateonly = False
+                        if 'generateonly' in command :
+                            generateonly = True
+
+                        curvol = jcast.getCurrentVolume()
+                        if curvol == vol :
+                            vol = None
+                        need_duration=False
+                        if vol is not None or quit==True :
+                            need_duration=True
+
+                        if generateonly == False :
+                            url,duration,mp3filename=get_tts_data(value, lang, engine, speed, forcetts, need_duration, silence)
+                            if vol is not None :
+                                gcast.set_volume(vol/100)
+                                time.sleep(0.1)
+                            thumb=globals.JEEDOM_WEB + '/plugins/googlecast/desktop/images/tts.png'
+                            jcast.disable_notif = True
+                            player = jcast.loadPlayer(app, { 'quitapp' : False, 'wait': wait})
+                            player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, add_delay=0.1, stream_type="LIVE");
+                            player.block_until_active(timeout=2);
+                            jcast.disable_notif = False
+                            if vol is not None :
+                                time.sleep(duration+(silence/1000)+1)
+                                if sleep>0 :
+                                    time.sleep(sleep)
+                                    sleep=0
+                                gcast.set_volume(curvol/100)
+                                vol = None
+                            if quit:
+                                if vol is None :
+                                    time.sleep(duration+(silence/1000)+1)
+                                gcast.quit_app()
+                        else :
+                            logging.error("TTS------Only generating TTS file without playing")
+                            get_tts_data(value, lang, engine, speed, forcetts, False, silence)
+
+                        fallbackMode=False
+                except Exception as e:
+                    logging.error("ACTION------Error while playing action " +cmd+ " on low level commands : %s" % str(e))
+                    logging.debug(traceback.format_exc())
+
+            # media/application controler level Google Cast actions
+            if fallbackMode==True :
+                try:
+                    player=gcast.media_controller
+                    if cmd == 'play':
+                        logging.debug("ACTION------Play action")
+                        player.play()
+                        fallbackMode=False
+                    elif cmd == 'stop':
+                        logging.debug("ACTION------Stop action")
+                        player.stop()
+                        fallbackMode=False
+                    elif cmd == 'rewind':
+                        logging.debug("ACTION------Rewind action")
+                        player.rewind()
+                        fallbackMode=False
+                    elif cmd == 'skip':
+                        logging.debug("ACTION------Skip action")
+                        player.skip()
+                        fallbackMode=False
+                    elif cmd == 'seek':
+                        logging.debug("ACTION------Seek action")
+                        player.seek(0 if value is None else value)
+                        fallbackMode=False
+                    elif cmd == 'pause':
+                        logging.debug("ACTION------Stop action")
+                        player.pause()
+                        fallbackMode=False
+                    elif cmd == 'sleep':
+                        logging.debug("ACTION------Sleep")
+                        time.sleep(int(value))
+                        fallbackMode=False
+                except Exception as e:
+                    logging.error("ACTION------Error while playing action " +cmd+ " on default media controler : %s" % str(e))
+                    logging.debug(traceback.format_exc())
+
+            if vol is not None :
+                logging.debug("ACTION------SET VOLUME OPTION")
+                time.sleep(0.1)
+                gcast.set_volume(vol/100)
+
+            if fallbackMode==True :
+                logging.debug("ACTION------Action " + cmd + " not implemented !")
+
+            if sleep>0 :
+                time.sleep(sleep)
+
+            if needSendStatus :
+                time.sleep(0.1)
+                globals.GCAST_DEVICES[uuid].sendDeviceStatus()
+
+        if hascallback :
+            callbackret=manage_callback(uuid, callback)
+            callbackmsg={'callback' : 1,'source' : source, 'uuid' : uuid, 'result': callbackret}
+            globals.JEEDOM_COM.send_change_immediate(callbackmsg);
+
+    else :
+        logging.error("ACTION------ Device not connected !")
+        return False
+
+    return True
+
+def manage_callback(uuid, callback_type):
+    # todo things for callback before returning value
+    return True
+
+def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=300):
+    if globals.tts_cacheenabled==False :
+        try :
+            if os.path.exists(globals.tts_cachefoldertmp) :
+                shutil.rmtree(globals.tts_cachefoldertmp)
+        except :
+            pass
+    cachepath=globals.tts_cachefolderweb
+    # manage cache in ram memory
+    symlinkpath=globals.tts_cachefoldertmp
+    ttstext = text
+    try:
+        os.stat(symlinkpath)
+    except:
+        os.mkdir(symlinkpath)
+    try:
+        os.stat(cachepath)
+    except:
+        os.symlink(symlinkpath, cachepath)
+    try:
+        rawfilename = text+engine+language+str(silence)
+        file = hashlib.md5(rawfilename.encode('utf-8')).hexdigest()
+        filenamemp3=os.path.join(cachepath,file+'.mp3')
+        if not os.path.isfile(filenamemp3) or forcetts==True :
+            logging.debug("CMD-TTS------Generating file")
+            if engine == 'gtts':
+                language=language.split('-')[0]
+                try:
+                    tts = gTTS(text=ttstext, lang=language)
+                    tts.save(filenamemp3)
+                    if speed!=1:
+                        try:
+                            os.system('sox '+filenamemp3+' '+filenamemp3+ 'tmp.mp3 tempo ' +str(speed))
+                            os.remove(filenamemp3)
+                            os.rename(filenamemp3+'tmp.mp3', filenamemp3);
+                        except OSError:
+                            pass
+                    speech = AudioSegment.from_mp3(filenamemp3)
+                    if silence > 0 :
+                        start_silence = AudioSegment.silent(duration=silence)
+                        speech = start_silence + speech
+                    speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                    duration_seconds = speech.duration_seconds
+                except Exception :
+                    logging.debug("TTS------Google Translate API : Cannot connect to API - failover to picotts")
+                    engine = 'picotts'
+                    filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
+                    file = file + '_failover'
+                    speed = 1.2
+
+            elif engine == 'gttsapi':
+                speed = float(speed) - 0.7
+                ttsurl = globals.tts_gapi_url + 'v1/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&text='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5'
+                r = requests.get(ttsurl)
+                if r.status_code == requests.codes.ok :
+                    open(filenamemp3 , 'wb').write(r.content)
+                    speech = AudioSegment.from_mp3(filenamemp3)
+                    if silence > 0 :
+                        start_silence = AudioSegment.silent(duration=silence)
+                        speech = start_silence + speech
+                    speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                    duration_seconds = speech.duration_seconds
+                else :
+                    logging.debug("TTS------Google Speech API : Cannot connect to API - failover to picotts")
+                    engine = 'picotts'
+                    filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
+                    file = file + '_failover'
+                    speed = 1.2
+
+            elif engine == 'gttsapidev':
+                speed = float(speed) - 0.7
+                ttsurl = globals.tts_gapi_url + 'v2/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&text='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5'
+                r = requests.get(ttsurl)
+                if r.status_code == requests.codes.ok :
+                    open(filenamemp3 , 'wb').write(r.content)
+                    speech = AudioSegment.from_mp3(filenamemp3)
+                    if silence > 0 :
+                        start_silence = AudioSegment.silent(duration=silence)
+                        speech = start_silence + speech
+                    speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                    duration_seconds = speech.duration_seconds
+                else :
+                    logging.debug("TTS------Google Speech API : Cannot connect to API - failover to picotts")
+                    engine = 'picotts'
+                    filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
+                    file = file + '_failover'
+                    speed = 1.2
+
+            if engine == 'picotts':
+                speed = float(speed) - 0.2
+                filename=os.path.join(cachepath,file+'.wav')
+                os.system('pico2wave -l '+language+' -w '+filename+ ' "' +ttstext+ '"')
+                speech = AudioSegment.from_wav(filename)
+                if silence > 0 :
+                    start_silence = AudioSegment.silent(duration=silence)
+                    speech = start_silence + speech
+                speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                duration_seconds = speech.duration_seconds
+                if speed!=1:
+                    try:
+                        os.system('sox '+filenamemp3+' '+filenamemp3+ 'tmp.mp3 tempo ' +str(speed))
+                        os.remove(filenamemp3)
+                        os.rename(filenamemp3+'tmp.mp3', filenamemp3);
+                    except OSError:
+                        pass
+                try :
+                    os.remove(filename)
+                except OSError:
+                    pass
+
+            logging.debug("TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+",speed:"+"{0:.2f}".format(speed)+")")
+
         else:
-            logging.debug("ACTION------NOT IMPLEMENTED : " + cmd)
+            logging.debug("CMD-TTS------Using from cache")
+            if calcduration == True:
+                speech = AudioSegment.from_mp3(filenamemp3)
+                duration_seconds = speech.duration_seconds
+            else:
+                duration_seconds=0
+            logging.debug("TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+")")
 
-        if needSendStatus :
-            globals.GCAST_DEVICES[uuid].sendDeviceStatus()
-    return
-
+        try :   # touch file so cleaning can be done later based on date
+            os.utime(filenamemp3, None)
+        except :
+            pass
+        urltoplay=globals.JEEDOM_WEB+'/plugins/googlecast/tmp/'+file+'.mp3'
+    except Exception as e:
+        logging.error("CMD-TTS------Exception while generating tts file : %s" % str(e))
+        logging.debug(traceback.format_exc())
+    return urltoplay, duration_seconds, filenamemp3
 
 def gcast_prepareAppParam(params):
     if params is None or params == '':
@@ -530,15 +980,15 @@ def gcast_prepareAppParam(params):
             p = s2[1].strip()
         if p.isnumeric() :
             ret = ret + ',' + prefix + p
-        elif p == 'True' or p == 'False' or p == 'None' :
-            ret = ret + ',' + prefix + p
+        elif p.lower() == 'true' or p.lower() == 'false' or p.lower() == 'none' :
+            ret = ret + ',' + prefix + p[0].upper()+p[1:]
         else :
             if p.startswith( "'" ) and p.endswith("'") :    # if starts already with simple quote
-                withoutQuote = p[1:-1]
+                withoutQuote = p[1:-1].lower()
                 if withoutQuote.isnumeric() :
                     ret = ret + ',' + prefix + withoutQuote
-                elif withoutQuote=='True' or withoutQuote=='False' or withoutQuote=='None' :
-                    ret = ret + ',' + prefix + withoutQuote
+                elif withoutQuote=='true' or withoutQuote=='false' or withoutQuote=='none' :
+                    ret = ret + ',' + prefix + withoutQuote[0].upper()+withoutQuote[1:]
                 else :
                     ret = ret + ',' + prefix + p
             else :
@@ -607,7 +1057,7 @@ def read_socket(cycle):
                         if uuid not in globals.KNOWN_DEVICES :
                             globals.KNOWN_DEVICES[uuid] = {
                                 'uuid': uuid, 'status': {},
-                                'friendly_name': message['device']['name'],
+                                #'friendly_name': message['device']['name'],
                                 'lastOnline':0, 'online':False,
                                 'lastSent': 0, 'lastOfflineSent': 0,
                                 'options' : message['device']['options']
@@ -647,11 +1097,17 @@ def read_socket(cycle):
                     uuid = message['device']['uuid']
                     if uuid in globals.GCAST_DEVICES :
                         globals.GCAST_DEVICES[uuid].sendDeviceStatus()
+                elif message['cmd'] == 'cleanttscache':
+                    logging.debug('SOCKET-READ------Clean TTS cache')
+                    if 'days' in message :
+                        cleanCache(int(message['days']))
+                    else :
+                        cleanCache()
                 elif message['cmd'] == 'refreshall':
                     logging.debug('SOCKET-READ------Attempt a refresh on all devices')
                     for uuid in globals.GCAST_DEVICES :
                         globals.GCAST_DEVICES[uuid].sendDeviceStatus()
-                elif message['cmd'] in ['action']:
+                elif message['cmd'] == 'action':
                     logging.debug('SOCKET-READ------Attempt an action on a device')
                     thread.start_new_thread( action_handler, (message,))
                     logging.debug('SOCKET-READ------Action Thread Launched')
@@ -771,10 +1227,11 @@ def scanner(name):
                     globals.KNOWN_DEVICES[known]['online'] = False
                     globals.KNOWN_DEVICES[known]['lastOfflineSent'] = current_time
                     globals.KNOWN_DEVICES[known]['status'] = status = {
-                        "uuid" : known, "friendly_name" : "",
+                        "uuid" : known,
                         "is_stand_by" : False, "is_active_input" : False,
                         "display_name" : globals.DEFAULT_NODISPLAY, "status_text" : globals.DEFAULT_NOSTATUS,
                         "app_id" : "", "is_busy" : False,
+                        "title" : "", "artist" : "", 'series_title': "", "stream_type" : "", "player_state" : "",
                     }
                     #globals.JEEDOM_COM.add_changes('devices::'+known, globals.KNOWN_DEVICES[known])
                     globals.JEEDOM_COM.send_change_immediate_device(known, globals.KNOWN_DEVICES[known])
@@ -829,6 +1286,24 @@ def show_memory_usage():
         except:
             pass
 
+def cleanCache(nbDays=0):
+    if nbDays == 0 :    # clean entire directory including containing folder
+        try:
+            if os.path.exists(globals.tts_cachefoldertmp):
+                shutil.rmtree(globals.tts_cachefoldertmp)
+        except:
+            pass
+    else :              # clean only files older than X days
+        now = time.time()
+        path = globals.tts_cachefoldertmp
+        try:
+            for f in os.listdir(path):
+                if os.stat(os.path.join(path,f)).st_mtime < now - nbDays * 86400 :
+                    if os.path.isfile(f):
+                        os.remove(os.path.join(path, f))
+        except:
+            pass
+
 def handler(signum=None, frame=None):
     logging.debug("GLOBAL------Signal %i caught, exiting..." % int(signum))
     shutdown()
@@ -860,6 +1335,12 @@ parser.add_argument("--loglevel", help="Log Level for the daemon", type=str)
 parser.add_argument("--pidfile", help="PID filname", type=str)
 parser.add_argument("--callback", help="Callback url", type=str)
 parser.add_argument("--apikey", help="Jeedom API key", type=str)
+parser.add_argument("--ttsweb", help="Jeedom Web server (for TTS)", type=str)
+parser.add_argument("--ttslang", help="Default TTS language", type=str)
+parser.add_argument("--ttsengine", help="Default TTS engine", type=str)
+parser.add_argument("--ttscache", help="Use cache", type=str)
+parser.add_argument("--ttsspeed", help="TTS speech speed", type=str)
+parser.add_argument("--ttsgapikey", help="TTS Google API Key", type=str)
 parser.add_argument("--socketport", help="Socket Port", type=str)
 parser.add_argument("--sockethost", help="Socket Host", type=str)
 parser.add_argument("--daemonname", help="Daemon Name", type=str)
@@ -884,12 +1365,24 @@ if args.callback:
     globals.callback = args.callback
 if args.apikey:
     globals.apikey = args.apikey
+if args.ttsweb:
+    globals.JEEDOM_WEB = args.ttsweb
+if args.ttslang:
+    globals.tts_language = args.ttslang
+if args.ttsengine:
+    globals.tts_engine = args.ttsengine
+if args.ttsspeed:
+    globals.tts_speed = args.ttsspeed
+if args.ttscache:
+    globals.tts_cacheenabled = False if int(args.ttscache)==0 else True
+if args.ttsgapikey:
+    globals.tts_gapi_key = args.ttsgapikey
 if args.cycle:
     globals.cycle = float(args.cycle)
 if args.cyclemain:
     globals.cycle_main = float(args.cyclemain)
 if args.cyclefactor:
-    globals.cycle_factor = int(args.cyclefactor)
+    globals.cycle_factor = float(args.cyclefactor)
 if args.socketport:
     globals.socketport = args.socketport
 if args.sockethost:
@@ -908,8 +1401,6 @@ globals.socketport = int(globals.socketport)
 globals.cycle = float(globals.cycle*globals.cycle_factor)
 globals.cycle_main = float(globals.cycle_main*globals.cycle_factor)
 
-#globals.cycle_factor = int(globals.cycle_factor)
-
 jeedom_utils.set_log_level(globals.log_level)
 logging.info('------------------------------------------------------')
 logging.info('------------------------------------------------------')
@@ -921,6 +1412,12 @@ logging.info('GLOBAL------Socket port : '+str(globals.socketport))
 logging.info('GLOBAL------Socket host : '+str(globals.sockethost))
 logging.info('GLOBAL------PID file : '+str(globals.pidfile))
 logging.info('GLOBAL------Apikey : '+str(globals.apikey))
+logging.info('GLOBAL------TTS Jeedom server : '+str(globals.JEEDOM_WEB))
+logging.info('GLOBAL------TTS default language : '+str(globals.tts_language))
+logging.info('GLOBAL------TTS default engine : '+str(globals.tts_engine))
+logging.info('GLOBAL------TTS default speech speed : '+str(globals.tts_speed))
+logging.info('GLOBAL------TTS Google API Key (optional) : '+str(globals.tts_gapi_key))
+logging.info('GLOBAL------Cache status : '+str(globals.tts_cacheenabled))
 logging.info('GLOBAL------Callback : '+str(globals.callback))
 logging.info('GLOBAL------Event cycle : '+str(globals.cycle))
 logging.info('GLOBAL------Main cycle : '+str(globals.cycle_main))
