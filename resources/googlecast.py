@@ -460,14 +460,14 @@ def action_handler(message):
 
         for command in commandlist :
             if 'uuid' in command :
-                newCommand = command[:]
-                del newCommand['uuid']
+                newUuid = command['uuid']
+                del command['uuid']
                 newMessage = {
                     'cmd' : 'action',
-                    'device' : {'uuid' : command['uuid'], 'source' : message['device']['source'] },
-                    'command' : newCommand
+                    'device' : {'uuid' : newUuid, 'source' : message['device']['source'] },
+                    'command' : command
                 }
-                logging.debug("ACTION------DELEGATED command to other uuid : " + command['uuid'])
+                logging.debug("ACTION------DELEGATED command to other uuid : " + newUuid)
                 thread.start_new_thread( action_handler, (newMessage,))
                 pass
 

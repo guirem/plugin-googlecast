@@ -180,6 +180,7 @@ Elles doivent être séparés par *|*
 - value : chain of parameters separated by ',' (depending of command)
 - vol (optional, entre 1 et 100) : adjust volume for the command.
 - sleep (optional) : add a break after end of command (in seconds)
+- uuid (optional) : redirect to other google cast uuid. Useful when using sequences on several device.
 
 ex web : app=web|cmd=load_url|vol=90|value='http://pictoplasma.sound-creatures.com',True,10
 ex TTS : cmd=tts|vol=100|value=Mon text a dire
@@ -276,6 +277,8 @@ Il est possible de lancer plusieurs commandes à la suite en séparant par *$$*
 ex 1 : cmd=tts|sleep=2|value=Je lance ma vidéo$$app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name'
 ex 2 : app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name',current_time:148|sleep=10$$cmd=quit_app
 ```
+> **Note**   
+> adding 'uuid' parameter will redirect to this uuid device in new thread. This can be used to send a sequence to several device in one command.
 
 #### Configuration avancée des équipements
 
