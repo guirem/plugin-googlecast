@@ -6,9 +6,9 @@ Liste des versions du plugin googlecast.
 
 ## Version du 25 avril 2018
 
-- Fix installation des dépendances pour certain systèmes
+- Fix installation des dépendances pour certains systèmes
 - Fix impossibilité de (re)connection après quelques heures
-- Réduction de l'tuilisation mémoire (fuite)
+- Réduction de l'utilisation mémoire (fuite)
 
 ## Version du 23 avril 2018
 
