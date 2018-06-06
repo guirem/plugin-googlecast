@@ -492,7 +492,7 @@ def action_handler(message):
                 value = command['value']
             sleep=0
             if 'sleep' in command :
-                sleep = command['sleep']
+                sleep = float(command['sleep'])
             vol = None
             if 'vol' in command :
                 try:
@@ -763,6 +763,7 @@ def action_handler(message):
                         else :
                             logging.error("TTS------Only generating TTS file without playing")
                             get_tts_data(value, lang, engine, speed, forcetts, False, silence)
+                            needSendStatus = False
 
                         fallbackMode=False
                 except Exception as e:
@@ -799,7 +800,7 @@ def action_handler(message):
                         fallbackMode=False
                     elif cmd == 'sleep':
                         logging.debug("ACTION------Sleep")
-                        time.sleep(int(value))
+                        time.sleep(float(value))
                         fallbackMode=False
                 except Exception as e:
                     logging.error("ACTION------Error while playing action " +cmd+ " on default media controler : %s" % str(e))
@@ -890,7 +891,8 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                 ttsurl = globals.tts_gapi_url + 'v1/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&text='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5'
                 r = requests.get(ttsurl)
                 if r.status_code == requests.codes.ok :
-                    open(filenamemp3 , 'wb').write(r.content)
+                    with open(filenamemp3 , 'wb') as f:
+                        f.write(r.content)
                     speech = AudioSegment.from_mp3(filenamemp3)
                     if silence > 0 :
                         start_silence = AudioSegment.silent(duration=silence)
@@ -909,7 +911,8 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                 ttsurl = globals.tts_gapi_url + 'v2/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&text='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5'
                 r = requests.get(ttsurl)
                 if r.status_code == requests.codes.ok :
-                    open(filenamemp3 , 'wb').write(r.content)
+                    with open(filenamemp3 , 'wb') as f:
+                        f.write(r.content)
                     speech = AudioSegment.from_mp3(filenamemp3)
                     if silence > 0 :
                         start_silence = AudioSegment.silent(duration=silence)
