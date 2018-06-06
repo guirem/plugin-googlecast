@@ -469,7 +469,7 @@ def action_handler(message):
                 }
                 logging.debug("ACTION------DELEGATED command to other uuid : " + newUuid)
                 thread.start_new_thread( action_handler, (newMessage,))
-                pass
+                continue
 
             app = 'media'
             cmd = 'NONE'
