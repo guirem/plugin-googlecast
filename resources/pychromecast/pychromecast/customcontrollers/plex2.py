@@ -59,7 +59,7 @@ class PlexController(BaseController):
             shuffle = params['shuffle']
         repeat=0
         if 'repeat' in params :
-            shuffle = params['repeat']
+            repeat = params['repeat']
 
         transient_token = server.query("/security/token?type=delegation&scope=all").attrib.get('token')
         playqueue = server.createPlayQueue(item, shuffle=shuffle, repeat=repeat).playQueueID
