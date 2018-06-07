@@ -135,9 +135,15 @@ class JeedomChromeCast :
 
     @property
     def is_castgroup(self):
-        if self.gcast.device.cast_type != 'cast' :
+        if self.gcast.device.cast_type != 'group' :
             return False
         return True
+
+    @property
+    def support_video(self):
+        if self.gcast.device.cast_type == 'cast' :
+            return True
+        return False
 
     def getCurrentVolume(self):
         return int(self.gcast.status.volume_level*100)
@@ -547,11 +553,11 @@ def action_handler(message):
                     possibleCmd = ['play_video', 'add_to_queue', 'play_next', 'remove_video']
                     if cmd in possibleCmd :
                         fallbackMode=False
-                        if gcast.device.cast_type == 'cast' :
+                        if jcast.support_video == True :
                             player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait})
                             eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
                         else :
-                            logging.error("ACTION------ YouTube not availble on Chromecast Audio")
+                            logging.error("ACTION------ YouTube not availble on Google Cast Audio")
 
                 elif app == 'spotify':  # app=spotify|cmd=launch_app|user=XXXXXX|pass=YYYY|value
                     possibleCmd = ['play_media']
@@ -592,11 +598,11 @@ def action_handler(message):
                                 out = spotifyClient.start_playback(device_id=device_id, uris=[value])
 
                 elif app == 'backdrop':  # also called backdrop
-                    if gcast.device.cast_type == 'cast' :
+                    if jcast.support_video == True :
                         fallbackMode=False
                         gcast.start_app('E8C28D3C')
                     else :
-                        logging.error("ACTION------ Backdrop not availble on Chromecast Audio")
+                        logging.error("ACTION------ Backdrop not availble on Google Cast Audio")
 
                 elif app == 'plex':            # app=plex|cmd=pause
                     quit_app_before=False
@@ -619,9 +625,11 @@ def action_handler(message):
                             token = None
                             if 'token' in command :
                                 token = command['token']
-                            type = 'video'
+                            type = 'audio'
                             if 'type' in command :
                                 type = command['type']
+                            if jcast.support_video==False and type=='video' :
+                                type = 'audio'
                             offset = 0
                             if 'offset' in command :
                                 offset = command['offset']
@@ -726,13 +734,16 @@ def action_handler(message):
                         if 'silence' in command :
                             silence = int(command['silence'])
                         elif jcast.is_castgroup==True :
-                            silence = 600
+                            silence = 1000
                         generateonly = False
                         if 'generateonly' in command :
                             generateonly = True
-
+                        forcevol = False
+                        if 'forcevol' in command :
+                            forcevol = True
+                            
                         curvol = jcast.getCurrentVolume()
-                        if curvol == vol :
+                        if curvol == vol and not forcevol :
                             vol = None
                         need_duration=False
                         if vol is not None or quit==True :
@@ -860,6 +871,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
         rawfilename = text+engine+language+str(silence)
         file = hashlib.md5(rawfilename.encode('utf-8')).hexdigest()
         filenamemp3=os.path.join(cachepath,file+'.mp3')
+        logging.debug("CMD-TTS------TTS Filename hexdigest : " + file + "  ("+rawfilename+")")
         if not os.path.isfile(filenamemp3) or forcetts==True :
             logging.debug("CMD-TTS------Generating file")
 
@@ -882,8 +894,9 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                         speech = start_silence + speech
                     speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
                     duration_seconds = speech.duration_seconds
-                except Exception :
-                    logging.debug("TTS------Google Translate API : Cannot connect to API - failover to picotts")
+                except Exception as e:
+                    logging.error("CMD-TTS------Google Translate API : Cannot connect to API - failover to picotts  (%s)" % str(e))
+                    logging.debug(traceback.format_exc())
                     engine = 'picotts'
                     filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
                     file = file + '_failover'
@@ -904,7 +917,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
                     duration_seconds = speech.duration_seconds
                 else :
-                    logging.debug("TTS------Google Speech API : Cannot connect to API - failover to picotts")
+                    logging.debug("CMD-TTS------Google Speech API : Cannot connect to API - failover to picotts")
                     engine = 'picotts'
                     filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
                     file = file + '_failover'
@@ -925,7 +938,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
                     duration_seconds = speech.duration_seconds
                 else :
-                    logging.debug("TTS------Google Speech API : Cannot connect to API - failover to picotts")
+                    logging.debug("CMD-TTS------Google Speech API : Cannot connect to API - failover to picotts")
                     engine = 'picotts'
                     filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
                     file = file + '_failover'
@@ -956,7 +969,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                 except OSError:
                     pass
 
-            logging.debug("TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+",speed:"+"{0:.2f}".format(speed)+")")
+            logging.debug("CMD-TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+",speed:"+"{0:.2f}".format(speed)+")")
 
         else:
             logging.debug("CMD-TTS------Using from cache")
@@ -965,7 +978,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                 duration_seconds = speech.duration_seconds
             else:
                 duration_seconds=0
-            logging.debug("TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+")")
+            logging.debug("CMD-TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+")")
 
         try :   # touch file so cleaning can be done later based on date
             os.utime(filenamemp3, None)
@@ -1433,7 +1446,7 @@ logging.info('GLOBAL------Callback : '+str(globals.callback))
 logging.info('GLOBAL------Event cycle : '+str(globals.cycle))
 logging.info('GLOBAL------Main cycle : '+str(globals.cycle_main))
 logging.info('GLOBAL------Default status message : '+str(globals.DEFAULT_NOSTATUS))
-logging.info('------------------------------------------------------')
+logging.info('-----------------------------------------------------')
 
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)
