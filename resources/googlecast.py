@@ -224,6 +224,9 @@ class JeedomChromeCast :
         beforeTTSappid = (self.previous_playercmd['current_appid'] if 'current_appid' in self.previous_playercmd else None)
         if 'params' in self.previous_playercmd :
             if self.previous_playercmd['appid']==beforeTTSappid :
+                self.previous_playercmd['params']
+                if 'current_time' in self.previous_playercmd :
+                    self.previous_playercmd['params']['offset'] = self.previous_playercmd['current_time']
                 ret = self.previous_playercmd['params']
         elif beforeTTSappid is not None :
             ret = {'cmd': 'start_app', 'appid' : beforeTTSappid}
@@ -597,6 +600,9 @@ def action_handler(message):
                 if app == 'media' :    # app=media|cmd=play_media|value=http://bit.ly/2JzYtfX,video/mp4,Mon film
                     possibleCmd = ['play_media']
                     if cmd in possibleCmd :
+                        if 'offset' in command and float(command['offset'])>0 and 'current_time' not in value :
+                            value = value + ',current_time:'+ str(command['offset'])
+
                         fallbackMode=False
                         player = jcast.loadPlayer('media', { 'quitapp' : quit_app_before})
                         eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
@@ -698,7 +704,7 @@ def action_handler(message):
                                 type = 'audio'
                             offset = 0
                             if 'offset' in command :
-                                offset = command['offset']
+                                offset = int(command['offset'])
                             shuffle = 0
                             if 'shuffle' in command :
                                 shuffle = int(command['shuffle'])
