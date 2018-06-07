@@ -52,23 +52,25 @@ Après téléchargement du plugin :
 - Lancer le démon.
 
 Les paramètres de configuration n'ont généralement pas besoin d'être modifiés
-- Port du socket interne de communication. Ne modifier que si nécessaire (ex: s'il est déjà pris par un autres plugin)
-- Configuration spéciale (eg: Docker, VM). Ne modifier que si ça ne fonctionne pas sans l'option.
-- Fréquence de rafraîchissement. A ne modifier uniquement si la fréquence normale à un impact important sur les performances globales
-- TTS - Utiliser l'adresse Jeedom externe : par défaut utilise l'addresse web Jeedom interne
-- TTS - Langue par défaut : langue du moteur TTS utilisé par défaut
-- TTS - Moteur par défaut : le moteur TTS utilisé (PicoTTS, Google Translate, Google Speach API, Google Speach API dev)
-- TTS - Vitesse de parole : rapidité de prononciation du texte
-- TTS - Ne pas utiliser le cache : désactive l'utilisation du cache Jeedom (déconseillé)
-- TTS - Nettoyer cache : nettoie le repertoire temporaire de géneration des fichiers son
-- TTS - Suppression automatique du cache de plus de X jours : supprime les fichiers son TTS non utilisés depuis X jours (cron journalier). 0 supprime tout le cache.
-- Désactiver notifs pour nouveaux Google Cast : ce sont des notifications lors de la découverte de nouveaux Google Cast non configurés
+- **Démon**
+  - Port du socket interne de communication. Ne modifier que si nécessaire (ex: s'il est déjà pris par un autres plugin)
+  - Configuration spéciale (eg: Docker, VM). Ne modifier que si ça ne fonctionne pas sans l'option.
+  - Fréquence de rafraîchissement. A ne modifier uniquement si la fréquence normale à un impact important sur les performances globales
+- **TTS**
+  - Utiliser l'adresse Jeedom externe : par défaut utilise l'addresse web Jeedom interne
+  - Langue par défaut : langue du moteur TTS utilisé par défaut
+  - Moteur par défaut : le moteur TTS utilisé (PicoTTS, Google Translate, Google Speach API, Google Speach API dev)
+  - Vitesse de parole : rapidité de prononciation du texte
+  - Ne pas utiliser le cache : désactive l'utilisation du cache Jeedom (déconseillé)
+  - Nettoyer cache : nettoie le repertoire temporaire de géneration des fichiers son
+  - Suppression automatique du cache de plus de X jours : supprime les fichiers son TTS non utilisés depuis X jours (cron journalier). 0 supprime tout le cache.
+- **Notifications**
+  - Désactiver notifs pour nouveaux Google Cast : ce sont des notifications lors de la découverte de nouveaux Google Cast non configurés
 
-> **Notes**  
-> Pour TTS (Text To Speech)
+> **Notes pour TTS (Text To Speech)**  
 > - PicoTTS ne nécessite pas de connexion internet, l'API Google Translate nécessite un accès web et le rendu est meilleur.
+> - Pour Google Speech API, une clé est nécessaire (voir FAQ). Le rendu est meilleur que Google Translate API.
 > - Un mécanisme de cache permet de ne générer le rendu sonore que s'il n'existe pas déjà en mémoire (RAM). La cache est donc supprimé au redémarrage du serveur.
-> - Pour Google Speech API, une clé est nécessaire (voir FAQ)
 
 ![Configuration Plugin](../images/configuration_plugin.png "Configuration Plugin")
 
@@ -141,7 +143,7 @@ Commandes personnalisées
 - *Media* : lire un fichier audio ou vidéo à partir d'une URL
 - *YouTube* : afficher une vidéo à artir d'un ID de vidéo (en fin d'url) => Ne fonctionne pas pour le moment
 - *Backdrop* : afficher le fond d'écran ou économiseur d'écran Google Cast (selon les modèles)
-- *Plex* : jouer un fichier ou une playliste à partir d'un serveur Plex
+- *Plex* : jouer un fichier ou une playlist à partir d'un serveur Plex
 
 > **Notes**   
 > - Voir les boutons créés par défaut pour un exemple d'utilisation    
@@ -190,7 +192,7 @@ ex TTS : cmd=tts|vol=100|value=Mon text a dire
 > **Notes**     
 > les chaines de caractères pour les commandes sont limitées dans Jeedom à 128 caractères. Utiliser les scénarios (voir plus bas pour passer outre cette limitation)
 
-#### paramètres possibles pour *play_media* en mode *media* :
+#### Paramètres possibles pour *play_media* en mode *media* :
 ```
 - url: str - url of the media.
 - content_type: str - mime type. Example: 'video/mp4' (optional).
@@ -219,7 +221,7 @@ ex long : app=media|cmd=play_media|value='http://contentlink','video/mp4',title:
 > - Les url et chaînes de caractères sont entourées de guillements simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
 > - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
 
-#### paramètres possibles pour *load_url* en mode *web* :
+#### Paramètres possibles pour *load_url* en mode *web* :
 ```
 - url: str - website url.
 - force: bool - force mode. To be used if default is not working. (optional, default False).
@@ -233,7 +235,7 @@ ex 2 : app=web|cmd=load_url|value='http://mywebsite/index.php?apikey%3Dmyapikey'
 > - Les url et chaines de caractères sont entourés de guillements simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
 > - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
 
-#### paramètres possibles pour *play_media* en mode *plex* :
+#### Paramètres possibles pour *play_media* en mode *plex* :
 ```
 - value: str - search query. It will play the first element returned.
 - type: str - type of content. Example: 'video/audio' (optional, default=video).
@@ -256,7 +258,7 @@ ex using token :
 > - Token value is displayed in logs (debug) when user & pass has been used the first time
 > - you can simulate result of search query (value) in main search field of Plex web UI
 
-#### paramètres possibles pour cmd *tts* :
+#### Paramètres possibles pour cmd *tts* :
 ```
 - lang: str - fr-FR/en-US or any compatible language (optional, default is configuration)
 - engine: str - picotts/gtts/gttsapi/gttsapidev. (optional, default is configuration)
@@ -267,6 +269,7 @@ ex using token :
 - sleep: float (default=0) - add time in seconds after tts is finished (before volume resume)
 - silence: int (default=300) - add a short silence before the speech to make sure all is audible (in milliseconds)
 - generateonly: 1 - only generate speech file in cache (no action on device)
+- forcevol: 1 - Set volume also if the current volume is the same (useful for TTS synchronisation in multithreading)
 
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
 ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
