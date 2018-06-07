@@ -7,7 +7,7 @@
 	"hasOwnDeamon" : true,
 	"hasDependency" : true,
 	"maxDependancyInstallTime" : 20,
-	"version" : "2.3",
+	"version" : "2.4",
 	"require" : "3.0",
     "category" : "multimedia",
     "changelog" : "https://github.com/guirem/plugin-googlecast/blob/develop/docs/fr_FR/changelog.md",

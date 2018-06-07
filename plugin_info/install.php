@@ -33,6 +33,7 @@ function get_plugin_version() {
 
 function googlecast_update() {
 	linkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
+    linkTemplate('dashboard/cmd.action.message.googlecast_speak.html');
 
 	$core_version = get_plugin_version();
 	config::save('plugin_version', $core_version, 'googlecast');
@@ -79,7 +80,7 @@ function googlecast_install() {
 	}
 
 	linkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
-
+    linkTemplate('dashboard/cmd.action.message.googlecast_speak.html');
     createHtaccess();
 
 	message::removeAll('googlecast');
@@ -88,6 +89,7 @@ function googlecast_install() {
 
 function googlecast_remove() {
 	unlinkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
+    unlinkTemplate('dashboard/cmd.action.message.googlecast_speak.html');
 }
 
 function linkTemplate($templateFilename) {
