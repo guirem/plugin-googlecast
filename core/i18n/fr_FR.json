@@ -32,6 +32,15 @@
         "Options": "Options",
         "IP": "IP"
     },
+    "plugins\/googlecast\/core\/class\/googlecast.class.php": {
+        "Statut Name": "Statut Name"
+    },
+    "plugins\/googlecast\/core\/class\/googlecast_utils.inc.php": {
+        "Alarme 1": "Alarme 1",
+        "Statut Alarme 1": "Statut Alarme 1",
+        "Aujourd'hui": "Aujourd'hui",
+        "Demain": "Demain"
+    },
     "plugins\/googlecast\/desktop\/modal\/googlecast.health.php": {
         "Nom": "Nom",
         "Nom diffusé": "Nom diffusé",

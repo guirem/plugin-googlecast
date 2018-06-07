@@ -1,0 +1,80 @@
+<style scoped>
+.speakslidecontainer {
+	width: 100%; /* Width of the outside container */
+	border-radius:0px;
+	margin:0px;
+	margin:0px;
+}
+/* The slider itself */
+.speakslider {
+	-webkit-appearance: none;  /* Override default CSS styles */
+	appearance: none;
+	width: 100%; /* Full-width */
+	height: 14px; /* Specified height */
+	background: #d3d3d3; /* Grey background */
+	outline: none; /* Remove outline */
+	opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+	-webkit-transition: .2s; /* 0.2 seconds transition on hover */
+	transition: opacity .2s;
+	margin:0px;
+	margin:0px;
+	border-radius:0px;
+}
+/* Mouse-over effects */
+.speakslider:hover { opacity: 1; }
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.speakslider::-webkit-slider-thumb {
+	-webkit-appearance: none; /* Override default look */
+	appearance: none;
+	width: 20px; /* Set a specific slider handle width */
+	height: 14px; /* Slider handle height */
+	background: #4CAF50; /* Green background */
+	cursor: pointer; /* Cursor on hover */
+}
+.speakslider::-moz-range-thumb {
+	width: 20px; /* Set a specific slider handle width */
+	height: 14px; /* Slider handle height */
+	background: #4CAF50; /* Green background */
+	cursor: pointer; /* Cursor on hover */
+}
+.btnspeak {
+	background-color:#cmdColor# !important;
+	border-color : transparent !important;
+	margin-top: 1px;
+	width: 100%;
+}
+.textspeak {
+	margin-top : 5px;
+	/* resize:vertical; */
+	height: 50px;
+	width:#width#;
+}
+#additionalCss#
+</style>
+<div class="cmd cmd-widget reportModeHidden" data-type="action" data-subtype="message" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#" style="min-width: 150px;width:#width#;">
+	<textarea class="form-control input-sm message textspeak" rows="2" placeholder="#message_placeholder#" data-cmd_uid="#uid#" data-cmd_id="#id#"></textarea>
+	<div class="speakslidecontainer"><input type="range" min="0" max="100" value="100" class="form-control slider speakslider volume" data-cmd_id="#id#"/></div>
+	<center><a class='btn btn-default btn-xs execute cmdName btnspeak'>#name_display#</a></center>
+	<script>
+		if('#default_volume#' == '1'){
+			$('.cmd[data-cmd_uid=#uid#] .volume').attr('value', '#default_volume#');
+		}
+		if('#default_message#' == '1'){
+			$('.cmd[data-cmd_uid=#uid#] .volume').val('#default_message#');
+		}
+		$('.cmd[data-cmd_uid=#uid#]:last .execute').on('click', function() {
+			if ($('.cmd[data-cmd_uid=#uid#] .message').value()!='') {
+				jeedom.cmd.execute({id: '#id#', value: {volume: $('.cmd[data-cmd_uid=#uid#] .volume').value(), message: $('.cmd[data-cmd_uid=#uid#] .message').value()}});
+			}
+			else {
+				var $el = $('.cmd[data-cmd_uid=#uid#] .message'),
+			    x = 500,
+			    originalColor = $el.css("background");
+				$el.css("background", "#FFCCFF");
+				setTimeout(function(){
+				  $el.css("background", originalColor);
+				}, x);
+			}
+		});
+	</script>
+</div>

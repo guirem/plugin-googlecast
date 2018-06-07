@@ -103,6 +103,9 @@ class JeedomChromeCast :
             self.disable_notif = False
             self.customplayer = None
             self.customplayername = ""
+            self.previous_playercmd =  {}
+            self.sessionid_storenext = False
+            self.sessionid_current = ''
             self.nowplaying_lastupdated = 0
             self.gcast.media_controller.register_status_listener(self)
             self.gcast.register_status_listener(self)
@@ -160,6 +163,7 @@ class JeedomChromeCast :
 
     def new_cast_status(self, new_status):
         #logging.debug("JEEDOMCHROMECAST------ Status " + str(new_status))
+        self._manage_previous_status(new_status)
         if not self.disable_notif :
             self._internal_refresh_status(False)
             self.sendNowPlaying(force=True)
@@ -189,6 +193,64 @@ class JeedomChromeCast :
             self._internal_refresh_status(True)
             if self.now_playing == True :
                 self._internal_trigger_now_playing_update()
+
+    def _manage_previous_status(self, new_status):
+        logging.debug("JEEDOMCHROMECAST------ Manage previous status " + str(new_status))
+        if self.sessionid_storenext and new_status.session_id is not None :
+            self.sessionid_current = new_status.session_id
+            self.sessionid_storenext = False
+        appid = new_status.app_id
+        if appid is not None and new_status.status_text not in ['Casting: TTS', 'Default Media Receiver'] and self.sessionid_current != new_status.session_id :
+            self.previous_playercmd = {}
+            logging.debug("JEEDOMCHROMECAST------ Manage previous status : Removing previous playercmd!")
+
+    def savePreviousPlayerCmd(self, params):
+        #logging.debug("JEEDOMCHROMECAST------ Manage previous player cmd " + str(params))
+        self.previous_playercmd['params'] = params
+        self.previous_playercmd['time'] = int(time.time())
+        self.previous_playercmd['appid'] = self.getAppId(params['app'] if 'app' in params else None)
+        self.previous_playercmd['appname'] = params['app'] if 'app' in params else None
+        self.sessionid_storenext = True
+        self.sessionid_current = ''
+
+    def resetPreviousPlayerCmd(self):
+        self.previous_playercmd = {}
+        self.sessionid_storenext = False
+        self.sessionid_current = ''
+
+    def getPreviousPlayerCmd(self):
+        logging.debug("JEEDOMCHROMECAST------ getPreviousPlayerCmd " + str(self.previous_playercmd))
+        ret = None
+        beforeTTSappid = (self.previous_playercmd['current_appid'] if 'current_appid' in self.previous_playercmd else None)
+        if 'params' in self.previous_playercmd :
+            if self.previous_playercmd['appid']==beforeTTSappid :
+                ret = self.previous_playercmd['params']
+        elif beforeTTSappid is not None :
+            ret = {'cmd': 'start_app', 'appid' : beforeTTSappid}
+        return ret
+
+    def prepareTTSplay(self):
+        retval = 0
+        try :
+            self.previous_playercmd['current_appid'] = self.gcast.status.app_id
+            self.previous_playercmd['current_sessionid'] = self.gcast.status.session_id
+            retval = self.gcast.media_controller.status.adjusted_current_time
+        except Exception :
+            pass
+        self.previous_playercmd['current_time'] = retval
+        return retval
+
+    def getAppId(self, appname):
+        retval = None
+        if appname=='plex' :
+            retval = '9AC194DC'
+        elif appname=='media' :
+            retval = 'CC1AD845';
+        elif appname=='backdrop' :
+            retval = 'E8C28D3C';
+        elif appname=='web' :
+            retval = '84912283';
+        return retval
 
     def sendDeviceStatus(self, _force=True):
         try :
@@ -243,8 +305,6 @@ class JeedomChromeCast :
                         self.gcast.register_handler(player)
                         time.sleep(2)
                     elif playername == 'plex' :
-                        #player = plex.PlexController(self.gcast)
-                        #player.register_status_listener(self)
                         player = plex.PlexController()
                         self.gcast.register_handler(player)
                         time.sleep(2)
@@ -272,6 +332,7 @@ class JeedomChromeCast :
         return None
 
     def resetPlayer(self) :
+        self.resetPreviousPlayerCmd()
         if self.customplayer is not None and self.customplayername != 'media' :
             if self.gcast.socket_client and self.customplayer.namespace in self.gcast.socket_client._handlers :
                 del self.gcast.socket_client._handlers[self.customplayer.namespace]
@@ -503,7 +564,7 @@ def action_handler(message):
             if 'vol' in command :
                 try:
                     vol = int(command['vol'])
-                    if not (0 <= vol <= 100) or command['vol'] == '':
+                    if not (0 < vol <= 100) or command['vol'] == '':
                         vol = None
                 except:
                     vol = None
@@ -539,6 +600,7 @@ def action_handler(message):
                         fallbackMode=False
                         player = jcast.loadPlayer('media', { 'quitapp' : quit_app_before})
                         eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
+                        jcast.savePreviousPlayerCmd(command)
 
                 elif app == 'web':    # app=web|cmd=load_url|value=https://news.google.com,True,5
                     force_register=True
@@ -547,6 +609,7 @@ def action_handler(message):
                         fallbackMode=False
                         player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before})
                         eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
+                        jcast.savePreviousPlayerCmd(command)
 
                 elif app == 'youtube':  # app=youtube|cmd=play_video|value=fra4QBLF3GU
                     #possibleCmd = ['play_video', 'start_new_session', 'add_to_queue', 'update_screen_id', 'clear_playlist', 'play', 'stop', 'pause']
@@ -556,6 +619,7 @@ def action_handler(message):
                         if jcast.support_video == True :
                             player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait})
                             eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
+                            jcast.savePreviousPlayerCmd(command)
                         else :
                             logging.error("ACTION------ YouTube not availble on Google Cast Audio")
 
@@ -596,11 +660,13 @@ def action_handler(message):
                                     break
                             if device_id is not None :
                                 out = spotifyClient.start_playback(device_id=device_id, uris=[value])
+                                jcast.savePreviousPlayerCmd(command)
 
                 elif app == 'backdrop':  # also called backdrop
                     if jcast.support_video == True :
                         fallbackMode=False
                         gcast.start_app('E8C28D3C')
+                        jcast.savePreviousPlayerCmd(command)
                     else :
                         logging.error("ACTION------ Backdrop not availble on Google Cast Audio")
 
@@ -649,20 +715,33 @@ def action_handler(message):
                                 keepGoing = False
 
                             if keepGoing==True :
-                                if username is not None and password is not None and token is None :
-                                    account = MyPlexAccount(username, password)
-                                    for res in account.resources() :
-                                        logging.debug("PLEX------ Resource available : " +str(res.name))
-                                    plexServer = account.resource(serverurl).connect()
-                                    logging.debug("PLEX------ Token for reuse : " +str(account._token))
-                                else :
-                                    plexServer = PlexServer(serverurl, token)
+                                is_resume = False
+                                if 'resume_plexitem' in command :
+                                    is_resume = True
 
-                                plexmedia = plexServer.search(value, limit=1)
-                                if len(plexmedia)>0 :
-                                    player.play_media(plexmedia[0], plexServer, {'offset':offset, 'type':type, 'shuffle':shuffle, 'repeat':repeat} )
+                                if not is_resume :
+                                    if username is not None and password is not None and token is None :
+                                        account = MyPlexAccount(username, password)
+                                        for res in account.resources() :
+                                            logging.debug("PLEX------ Resource available : " +str(res.name))
+                                        plexServer = account.resource(serverurl).connect()
+                                        logging.debug("PLEX------ Token for reuse : " +str(account._token))
+                                    else :
+                                        plexServer = PlexServer(serverurl, token)
+                                    plexmedia = plexServer.search(value, limit=1)
+                                    if len(plexmedia)>0 :
+                                        command['resume_plexitem'] = plexmedia[0]
+                                        command['resume_plexserver'] = plexServer
+                                        player.play_media(plexmedia[0], plexServer, {'offset':offset, 'type':type, 'shuffle':shuffle, 'repeat':repeat} )
+                                        jcast.savePreviousPlayerCmd(command)
+                                    else :
+                                        logging.debug("PLEX------No media found for query " + value)
+
                                 else :
-                                    logging.debug("PLEX------No media found for query " + value)
+                                    logging.debug("PLEX------Restoring from previous call")
+                                    player.play_media(command['resume_plexitem'], command['resume_plexserver'], {'offset':offset, 'type':type, 'shuffle':shuffle, 'repeat':repeat} )
+                                    jcast.savePreviousPlayerCmd(command)
+
                         else :
                             eval( 'player.' + cmd + '()' )
 
@@ -741,12 +820,15 @@ def action_handler(message):
                         forcevol = False
                         if 'forcevol' in command :
                             forcevol = True
-                            
+                        resume = False
+                        if 'resume' in command :
+                            resume = True
+
                         curvol = jcast.getCurrentVolume()
                         if curvol == vol and not forcevol :
                             vol = None
                         need_duration=False
-                        if vol is not None or quit==True :
+                        if vol is not None or quit==True or resume==True :
                             need_duration=True
 
                         if generateonly == False :
@@ -756,6 +838,8 @@ def action_handler(message):
                                 time.sleep(0.1)
                             thumb=globals.JEEDOM_WEB + '/plugins/googlecast/desktop/images/tts.png'
                             jcast.disable_notif = True
+                            if resume:
+                                jcast.prepareTTSplay()
                             player = jcast.loadPlayer(app, { 'quitapp' : False, 'wait': wait})
                             player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, add_delay=0.1, stream_type="LIVE");
                             player.block_until_active(timeout=2);
@@ -771,6 +855,22 @@ def action_handler(message):
                                 if vol is None :
                                     time.sleep(duration+(silence/1000)+1)
                                 gcast.quit_app()
+                            if resume:
+                                prevcommand = jcast.getPreviousPlayerCmd()
+                                if prevcommand is not None :
+                                    newMessage = {
+                                        'cmd' : 'action',
+                                        'delegated' : True,
+                                        'resume' : True,
+                                        'device' : {'uuid' : uuid, 'source' : message['device']['source'] },
+                                        'command' : prevcommand
+                                    }
+                                    logging.debug("TTS------DELEGATED RESUME AFTER TTS for uuid : " + uuid)
+                                    time.sleep(0.3)
+                                    jcast.resetPreviousPlayerCmd()
+                                    thread.start_new_thread( action_handler, (newMessage,))
+                                else :
+                                    logging.debug("TTS------Resume is not possible!")
                         else :
                             logging.error("TTS------Only generating TTS file without playing")
                             get_tts_data(value, lang, engine, speed, forcetts, False, silence)
@@ -849,6 +949,11 @@ def manage_callback(uuid, callback_type):
 
 def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=300):
     srclanguage = language
+    if not globals.tts_gapi_haskey and (engine=='gttsapi' or engine=='gttsapidev') :
+        logging.error("CMD-TTS------No key provided, fallback to picotts engine")
+        engine = 'picotts'
+        speed = 1
+
     if globals.tts_cacheenabled==False :
         try :
             if os.path.exists(globals.tts_cachefoldertmp) :
@@ -989,6 +1094,21 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
         logging.error("CMD-TTS------Exception while generating tts file : %s" % str(e))
         logging.debug(traceback.format_exc())
     return urltoplay, duration_seconds, filenamemp3
+
+def logByTTS(text_id):
+    lang = globals.tts_language
+    engine = globals.tts_engine
+    speed = globals.tts_speed
+    if text_id == 'CMD_ERROR' :
+        text = "La commande n'a pas pu être lancée !"
+    else :
+        text = "Un erreur s'est produite !"
+    url,duration,mp3filename=get_tts_data(text, language, engine, speed, False, False, 300)
+    thumb=globals.JEEDOM_WEB + '/plugins/googlecast/desktop/images/tts.png'
+    player = jcast.loadPlayer('media', { 'quitapp' : False, 'wait': 0})
+    player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, add_delay=0.1, stream_type="LIVE");
+    player.block_until_active(timeout=2);
+
 
 def gcast_prepareAppParam(params):
     if params is None or params == '':
@@ -1401,6 +1521,8 @@ if args.ttscache:
     globals.tts_cacheenabled = False if int(args.ttscache)==0 else True
 if args.ttsgapikey:
     globals.tts_gapi_key = args.ttsgapikey
+    if globals.tts_gapi_key != 'none' :
+        globals.tts_gapi_haskey = True
 if args.cycle:
     globals.cycle = float(args.cycle)
 if args.cyclemain:
@@ -1440,7 +1562,10 @@ logging.info('GLOBAL------TTS Jeedom server : '+str(globals.JEEDOM_WEB))
 logging.info('GLOBAL------TTS default language : '+str(globals.tts_language))
 logging.info('GLOBAL------TTS default engine : '+str(globals.tts_engine))
 logging.info('GLOBAL------TTS default speech speed : '+str(globals.tts_speed))
-logging.info('GLOBAL------TTS Google API Key (optional) : '+str(globals.tts_gapi_key))
+if globals.tts_gapi_haskey :
+    logging.info('GLOBAL------TTS Google API Key (optional) : OK')
+else :
+    logging.info('GLOBAL------TTS Google API Key (optional) : NOK')
 logging.info('GLOBAL------Cache status : '+str(globals.tts_cacheenabled))
 logging.info('GLOBAL------Callback : '+str(globals.callback))
 logging.info('GLOBAL------Event cycle : '+str(globals.cycle))

@@ -41,6 +41,7 @@ Dashboard
 =======================
 
 ![Visuel du dashboard](../images/dashboard.png "Visuel du dashboard")
+![Visuel du dashboard 2](../images/dashboard2.png "Visuel du dashboard 2")
 
 Configuration du plugin
 =======================
@@ -116,7 +117,7 @@ L'afficheur se rafraichit toutes les 20 secondes par défaut.
 
 Installation / configuration :
 - Affiché par défaut après installation. Désactiver l'affichage pour cacher.
-- Pour une utilisation dans un dashboard, iL est possible d'utiliser un virtuel en créant une commande de type *info / autres* avec pour valeur la commande *Display* de l'ampli. Appliquer alors le widget dashboard *googlecast_playing* (via onglet *Affichage* de la configuration avancée de la commande)
+- Pour une utilisation dans un dashboard, iL est possible d'utiliser un virtuel en créant une commande de type *info / autres* avec pour valeur la commande *Playing Widget* (non interne *nowplaying*) du Google Cast. Appliquer alors le widget dashboard *googlecast_playing* (via onglet *Affichage* de la configuration avancée de la commande)
 - Pour une utilisation dans un design, ajouter la commande *Playing Widget* directement dans le design.
 
 paramètres CSS optionnels (via '*Paramètres optionnels widget*'):
@@ -129,6 +130,26 @@ paramètres CSS optionnels (via '*Paramètres optionnels widget*'):
 - *additionalCss* (format css, ex: '.blabla {...}') : pour ajouter/modifier d'autres CSS (utilisateur avancé)
 
 ![Configuration CSS](../images/configuration_css.png "Configuration CSS")
+
+> **Notes**   
+> Non disponible pour mobile pour le moment
+
+### Widget TTS pour saisie de texte et control du volume
+
+Un widget est disponible pour les commandes de type action et sous-type message pour permettre de saisir du texte pour le TTS et régler le volume.
+
+![Speak Widget](../images/widget_speak.png "Speak Widget")
+
+Installation / configuration :
+- Un exemple est affiché par défaut après installation pour tester la fonction TTS.
+- Pour une utilisation dans un dashboard, iL est possible d'utiliser un virtuel en créant une commande de type *action / message* avec pour valeur la commande *Custom Cmd* du Google Cast. Appliquer alors le widget dashboard *googlecast_speak* (via onglet *Affichage* de la configuration avancée de la commande)
+- Le contenu de la commande action (sous-type message) peut contenir les variables *#message#* et *#volume#*
+
+paramètres CSS optionnels (via '*Paramètres optionnels widget*'):
+- *width* (ex: 35px, défaut=150px) : taille du widget
+- *default_volume* (ex: blue, défaut=100) : valume par défaut
+- *default_message* (ex: 'Test') : texte par défaut dans le widget
+- *additionalCss* (format css, ex: '.blabla {...}') : pour ajouter/modifier d'autres CSS (utilisateur avancé)
 
 > **Notes**   
 > Non disponible pour mobile pour le moment
@@ -268,6 +289,7 @@ ex using token :
 - vol: int (default=previous) - set the volume for the time TTS message is broadcast. Previous volume is resumed when done.
 - sleep: float (default=0) - add time in seconds after tts is finished (before volume resume)
 - silence: int (default=300) - add a short silence before the speech to make sure all is audible (in milliseconds)
+- resume: 1 - try to resume to previous state if possible.
 - generateonly: 1 - only generate speech file in cache (no action on device)
 - forcevol: 1 - Set volume also if the current volume is the same (useful for TTS synchronisation in multithreading)
 
@@ -364,10 +386,18 @@ Les commandes suivantes peuvent être utilisé dans une commande 'action' ou sc�
 - *gh_set_donotdisturb_on* : active la fonction 'Do Not Disturb'.
 - *gh_set_donotdisturb_off* : désactive la fonction 'Do Not Disturb'.
 - *gh_set_donotdisturb_#* (#=true/false) : active/désavtive la fonction 'Do Not Disturb'
-- *gh_set_alarms_volume_#* (# = entre 0 et 1 (eg: 0.4)) : configure le volume des alarmes et timers.
+- *gh_set_alarms_volume_#* (# = entre 0 et 100 (eg: 10)) : configure le volume des alarmes et timers.
 - *bt_connectdefault* : connecte l'équipement bluetooth configuré par défaut.
 - *bt_connect_X* (#=adresse mac au format xx:xx:xx:xx:xx:xx) : connecte l'équipement bluetooth donné en paramètre.
 - *bt_disconnectdefault* : déconnecte l'équipement bluetooth configuré par défaut.
+
+```
+Exemples:
+- Commande de type info
+gh_get_alarm_date_0
+- Commande de type action
+gh_set_alarms_volume_80
+```
 
 ### Utilisation dans un scénario
 
