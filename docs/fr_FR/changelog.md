@@ -4,6 +4,14 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
+## Version du 08 juin 2018 (beta)
+
+- Implémention fonction 'resume' pour TTS. Dsiponible que pour les applications lancées via le plugin (limitation Google)
+- Fix pour retour alarme GH
+- Correction de bug mineurs
+- Changement d'icone du plugin (par Alois)
+- Maj doc (exemple de bloc php pour scénario)
+
 ## Version du 07 juin 2018 (beta)
 
 - Première version de la fonction 'resume' pour TTS

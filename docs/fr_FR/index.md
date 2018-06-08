@@ -72,6 +72,7 @@ Les paramètres de configuration n'ont généralement pas besoin d'être modifi�
 > - PicoTTS ne nécessite pas de connexion internet, l'API Google Translate nécessite un accès web et le rendu est meilleur.
 > - Pour Google Speech API, une clé est nécessaire (voir FAQ). Le rendu est meilleur que Google Translate API.
 > - Un mécanisme de cache permet de ne générer le rendu sonore que s'il n'existe pas déjà en mémoire (RAM). La cache est donc supprimé au redémarrage du serveur.
+> - En cas d'échec sur un des moteurs autre que picotts (ex: problème de connexion internet), la commande sera lancée via picotts
 
 ![Configuration Plugin](../images/configuration_plugin.png "Configuration Plugin")
 
@@ -180,7 +181,7 @@ Elles doivent être séparés par *|*
 - cmd : name of command (dépend of application)
     * tts : text to speech, use value to pass text
     * refresh
-    * reboot
+    * reboot : reboot the Google Cast
     * volume_up
     * volume_down
     * volume_set : use value (0-100)
@@ -190,9 +191,9 @@ Elles doivent être séparés par *|*
     * start_app : use value to pass app id
     * play
     * stop
-    * rewind
-    * skip
-    * seek : use value (seconds)
+    * rewind : go back to media start
+    * skip : got to next media
+    * seek : use value in seconds. Can use +/- to use relative seek (ex: +20 to pass 20 seconds)
     * pause
     For application dependant commands
         * web : load_url
@@ -289,13 +290,18 @@ ex using token :
 - vol: int (default=previous) - set the volume for the time TTS message is broadcast. Previous volume is resumed when done.
 - sleep: float (default=0) - add time in seconds after tts is finished (before volume resume)
 - silence: int (default=300) - add a short silence before the speech to make sure all is audible (in milliseconds)
-- resume: 1 - try to resume to previous state if possible.
 - generateonly: 1 - only generate speech file in cache (no action on device)
 - forcevol: 1 - Set volume also if the current volume is the same (useful for TTS synchronisation in multithreading)
+- resume: 1 - try to resume to previous state if possible (only plugin launched application).
+- forceapplaunch: 1 - will try to force launch of previous application even if not lauched by plugin (to be used with 'resume').
 
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
 ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
 ```
+
+> **Notes**   
+> 'resume' will only work when previous application has been launched by the plugin.
+> You can try to force resume of any application using 'forceapplaunch=1' but there is a good chance that it will not resume correctly.
 
 #### Séquence de commandes
 Il est possible de lancer plusieurs commandes à la suite en séparant par *$$*
@@ -334,15 +340,15 @@ Pour plus d'info voir  https://rithvikvibhu.github.io/GHLocalApi/
 Exemples:
 - Récupération du pincode d'une Google Chromecast :
 cmd=getconfig|data=opencast_pin_code
-- Google Home : Récupération de l'état de la première alarme (-1 en cas de problème ou non existant):
+- Google Home : Récupération de l'état de la première alarme (-1 en cas de problème ou non existant) :
 cmd=getconfig|value=assistant/alarms|data=alarm/0/status|reterror=-1
-- Google Home : Récupération de la date et heure de la première alarme au format JJ-MM-AAAA HH:MM:
-cmd=getconfig|value=assistant/alarms|data=alarm/0|format=%02d-%02d-%04d %02d:%02d|reterror=00-00-0000 00:00
-- Changer le nom du Google cast
+- Google Home : Récupération de la date et heure de la première alarme au format JJ-MM-AAAA HH:MM :
+'cmd=getconfig|value=assistant/alarms|data=alarm/0/fire_time|fnc=ts2long|reterror=00-00-0000 00:00
+- Changer le nom du Google cast :
 cmd=setconfig|data={"name":"Mon nouveau nom"}
-- Google Home : Désactiver le mode nuit
+- Google Home : Désactiver le mode nuit :
 cmd=setconfig|value=assistant/set_night_mode_params|data={"enabled": false}
-- Google Home : Changer luminosité du mode nuit
+- Google Home : Changer luminosité du mode nuit :
 cmd=setconfig|value=assistant/set_night_mode_params|data={"led_brightness": 0.2}
 ```
 
@@ -357,7 +363,7 @@ Voir l'api Google sur ce lien pour ce qui est modifiable : https://rithvikvibhu.
 - data: str - json data.
 
 Exemples:
-- Disable notification on Google home
+- Disable notification on Google home :
 cmd=setconfig|value=assistant/notifications|data={'notifications_enabled': false}
 - Google Home : Volume au plus bas pour alarme :
 cmd=setconfig|value=assistant/alarms/volume|data={'volume': 1}
@@ -367,8 +373,8 @@ cmd=setconfig|value=assistant/alarms/volume|data={'volume': 1}
 
 Les commandes suivantes peuvent être utilisées dans une commande 'info' ou scénario (via fonction *getInfoHttpSimple()*) :
 
-- *gh_get_alarm_date_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme.
-- *gh_get_alarm_datenice_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme.
+- *gh_get_alarm_date_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format dd-mm-yyyy HH:mm.
+- *gh_get_alarm_datenice_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format {'Today'|'Tomorrow'|dd-mm-yyyy} HH:mm.
 - *gh_get_alarm_timestamp_#* (#=numéro, commence par 0) : retourne le timestamp de la prochaine alarme.
 - *gh_get_alarm_status_#* (#=numéro, commence par 0) : statut de l'alarme (1 = configuré,  2 = sonne).
 - *gh_get_timer_timesec_#* (#=numéro, commence par 0) : retourne le nombre de secondes avant déclenchement du timer.
@@ -413,22 +419,44 @@ app=web|cmd=load_url|value='https://google.com',True,10
 
 #### Avec bloc code php
 
-Exemple avec récupération d'info de config en utilisant un bloc code php.
+Exemples en utilisant un bloc code php :
 
-Récupérer le jour de l'alarme pour un Google Home :
-```
-$googlecast = googlecast::byLogicalId('d2fd3db1-bd0f-fe4c-d8dd-XXXXXXXXX', 'googlecast');
-if (!is_object($googlecast)) {
-  	$scenario->setData("_alarm_jour", "00000000");
+```php
+$googlecast = googlecast::byLogicalId('XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXX', 'googlecast');
+if ( !is_object($googlecast) or $googlecast->getIsEnable()==false ) {
+  	$scenario->setData("_test", "None");
+    // variable _test contains 'None' if google cast does not exist or is disable
 }
 else {
-  // via commande longue
-  $ret =  $googlecast->getInfoHttpSimple('cmd=getconfig|value=assistant/alarms|data=alarm/0|format=%02d%02d%04d|reterror=00000000');
-  // via commande courte pré-configurée
-  // $ret =  $googlecast->getInfoHttpSimple('gh_get_alarm_date_0');
-  $scenario->setData("_alarm",$ret);
+  // Run a command
+  $ret =  $googlecast->helperSendCustomCmd('cmd=tts|value=Test Scénario PHP|vol=100');
+  $scenario->setData("_test", $ret);
+  // Command launched
+  // $ret = true if command has been ran, false if deamon is not running
+  // variable _test contains 1 si true, 0 if false
+
+  // Configure a Google Home equipement
+  $ret =  $googlecast->setInfoHttpSimple('bt_connect_xx:xx:xx:xx:xx:xx');
+  // or $googlecast->helperSendCustomCmd('bt_connect_xx:xx:xx:xx:xx:xx'); (return false if deamon not running, true otherwise)
+  // Try to connect a bluetooth device (mac=xx:xx:xx:xx:xx:xx) to Google Home
+  // $ret = true if command has been launched, false if failed (Google Home not accessible)
+
+  // Get curent GH alarm time (via long command)
+  $ret =  $googlecast->getInfoHttpSimple('cmd=getconfig|value=assistant/alarms|data=alarm/0/fire_time|fnc=ts2long|reterror=Undefined');
+  $scenario->setData("_test",$ret);
+  // variable _test contains dd-mm-yyyy HH:mm (Undefined if failed)
+
+  // Get curent GH alarm time (via pre-configured command)
+  $ret =  $googlecast->getInfoHttpSimple('gh_get_alarm_date_0');
+  // or $googlecast->helperSendCustomCmd('gh_get_alarm_date_0'); (return false if deamon not running, true otherwise)
+  $scenario->setData("_test",$ret);
+  // variable _test contains dd-mm-yyyy HH:mm (Undefined if failed)
+
+ // Get curent GH alarm date only (via long command with formatting)
+  $ret =  $googlecast->getInfoHttpSimple('cmd=getconfig|value=assistant/alarms|data=alarm/0/date_pattern|format=%02d%02d%04d|reterror=00000000');
+  $scenario->setData("_test",$ret);
+  // variable _test contains JJMMAAAA (00000000 if failed)
 }
-// variable _alarm contient JJMMAAAA (00000000 en cas de problème)
 ```
 
 FAQ
@@ -466,7 +494,7 @@ C'est possible via le mode web. Pour gérer l'authentification automatiquement, 
 
 #### Récupérer une clé API pour Google Speech API
 
-Les étapes pour obtenir cette clé se trouve sur ce lien : http://domotique-home.fr/comment-obtenir-google-speech-api-et-integrer-dans-sarah/
+Les étapes pour obtenir cette clé se trouvent sur ce lien : http://domotique-home.fr/comment-obtenir-google-speech-api-et-integrer-dans-sarah/
 
 Changelog
 =============================
