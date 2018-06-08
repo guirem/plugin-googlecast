@@ -235,8 +235,9 @@ class JeedomChromeCast :
         if 'params' in self.previous_playercmd :
             if self.previous_playercmd['appid']==beforeTTSappid :
                 self.previous_playercmd['params']
-                if 'current_time' in self.previous_playercmd and self.previous_playercmd['current_time'] > 0:
-                    self.previous_playercmd['params']['offset'] = self.previous_playercmd['current_time']
+                if 'current_time' in self.previous_playercmd and self.previous_playercmd['current_time'] > 0 :
+                    if 'stream_type' in self.previous_playercmd and self.previous_playercmd['stream_type'] != 'LIVE' :
+                        self.previous_playercmd['params']['offset'] = self.previous_playercmd['current_time']
                 playerstate = self.previous_playercmd['current_player_state'] if 'current_player_state' in self.previous_playercmd else 'PLAYING'
                 if playerstate == 'PAUSED' :
                     ret = [self.previous_playercmd['params'], {'cmd':'pause'}]
@@ -252,6 +253,7 @@ class JeedomChromeCast :
             self.previous_playercmd['current_appid'] = self.gcast.status.app_id
             self.previous_playercmd['current_sessionid'] = self.gcast.status.session_id
             self.previous_playercmd['current_player_state'] = self.gcast.media_controller.status.player_state
+            self.previous_playercmd['current_stream_type'] = self.gcast.media_controller.status.stream_type
             retval = self.media_current_time
         except Exception :
             pass
@@ -903,6 +905,7 @@ def action_handler(message):
                         fallbackMode=False
                 except Exception as e:
                     logging.error("ACTION------Error while playing action " +cmd+ " on low level commands : %s" % str(e))
+                    sendErrorDeviceStatus(uuid, 'ERROR')
                     logging.debug(traceback.format_exc())
 
             # media/application controler level Google Cast actions
@@ -953,6 +956,7 @@ def action_handler(message):
 
             if fallbackMode==True :
                 logging.debug("ACTION------Action " + cmd + " not implemented !")
+                sendErrorDeviceStatus(uuid, 'CMD NOT IMPLEMENTED')
 
             if sleep>0 :
                 time.sleep(sleep)
@@ -968,6 +972,7 @@ def action_handler(message):
 
     else :
         logging.error("ACTION------ Device not connected !")
+        sendErrorDeviceStatus(uuid, 'NOT CONNECTED')
         return False
 
     return True
@@ -1230,7 +1235,7 @@ def read_socket(cycle):
                         if uuid not in globals.KNOWN_DEVICES :
                             globals.KNOWN_DEVICES[uuid] = {
                                 'uuid': uuid, 'status': {},
-                                #'friendly_name': message['device']['name'],
+                                'typemsg': 'info',
                                 'lastOnline':0, 'online':False,
                                 'lastSent': 0, 'lastOfflineSent': 0,
                                 'options' : message['device']['options']
@@ -1437,6 +1442,23 @@ def scanner(name):
 
     globals.SCAN_LAST = int(time.time())
     globals.SCAN_PENDING = False
+
+def sendErrorDeviceStatus(uuid, message, online=True):
+    errorstatus = {
+        "uuid" : uuid, "display_name" : message, "status_text" : message
+    }
+    globals.JEEDOM_COM.add_changes('devices::'+uuid, {'uuid': uuid, 'typemsg': 'error', 'status': errorstatus})
+    data = {
+        "uuid" : uuid, "online" : online,
+        "is_active_input" : False, "is_stand_by" : False,
+        "display_name" : message, "status_text" : message, "player_state" : message,
+        "title" : "", "album_artist" : "",
+        "album_name" : "", "current_time" : 0,
+        "artist" : "", "image" : None,
+        'series_title': "", 'season': "", 'episode': "",
+        "stream_type" : "", "track" : ""
+    }
+    globals.JEEDOM_COM.send_change_immediate({'uuid' :  uuid, 'nowplaying':data});
 
 memory_last_use=0
 memory_last_time=int(time.time())

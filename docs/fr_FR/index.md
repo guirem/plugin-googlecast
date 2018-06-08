@@ -311,7 +311,6 @@ ex 1 : cmd=tts|sleep=2|value=Je lance ma vidéo$$app=media|cmd=play_video|value=
 ex 2 : app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name',current_time:148|sleep=10$$cmd=quit_app
 ex Commande TTS sur plusieurs google cast en parallèle en s'assurant que le fichier est déjà en cache :   
     cmd=tts|value=My TTS message|generateonly=1$$uuid=XXXXXXXXXXX|cmd=tts|value=My TTS message$$uuid=YYYYYYYYYYY|cmd=tts|value=My TTS message
-
 ```
 > **Note**   
 > adding 'uuid' parameter will redirect to this uuid device in new thread. This can be used to send a sequence to several device in one command.
@@ -424,8 +423,8 @@ Exemples en utilisant un bloc code php :
 ```php
 $googlecast = googlecast::byLogicalId('XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXX', 'googlecast');
 if ( !is_object($googlecast) or $googlecast->getIsEnable()==false ) {
-  	$scenario->setData("_test", "None");
-    // variable _test contains 'None' if google cast does not exist or is disable
+  $scenario->setData("_test", "None");
+  // variable _test contains 'None' if google cast does not exist or is disable
 }
 else {
   // Run a command
@@ -433,7 +432,7 @@ else {
   $scenario->setData("_test", $ret);
   // Command launched
   // $ret = true if command has been ran, false if deamon is not running
-  // variable _test contains 1 si true, 0 if false
+  // variable _test contains 1 if true, 0 if false
 
   // Configure a Google Home equipement
   $ret =  $googlecast->setInfoHttpSimple('bt_connect_xx:xx:xx:xx:xx:xx');
@@ -458,6 +457,12 @@ else {
   // variable _test contains JJMMAAAA (00000000 if failed)
 }
 ```
+
+Limitations et bug connus
+=============================
+
+- Moteur PicoTTS ne gère pas les phrases accentuées (ils sont supprimés)
+
 
 FAQ
 =============================
