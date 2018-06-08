@@ -148,6 +148,16 @@ class JeedomChromeCast :
             return True
         return False
 
+    @property
+    def media_current_time(self):
+        ret = 0
+        try :
+            ret = self.gcast.media_controller.status.adjusted_current_time
+            ret = 0 if ret is None else float(ret)
+        except Exception :
+            pass
+        return ret
+
     def getCurrentVolume(self):
         return int(self.gcast.status.volume_level*100)
 
@@ -195,7 +205,7 @@ class JeedomChromeCast :
                 self._internal_trigger_now_playing_update()
 
     def _manage_previous_status(self, new_status):
-        logging.debug("JEEDOMCHROMECAST------ Manage previous status " + str(new_status))
+        #logging.debug("JEEDOMCHROMECAST------ Manage previous status " + str(new_status))
         if self.sessionid_storenext and new_status.session_id is not None :
             self.sessionid_current = new_status.session_id
             self.sessionid_storenext = False
@@ -218,17 +228,21 @@ class JeedomChromeCast :
         self.sessionid_storenext = False
         self.sessionid_current = ''
 
-    def getPreviousPlayerCmd(self):
+    def getPreviousPlayerCmd(self, forceapplaunch=False):
         logging.debug("JEEDOMCHROMECAST------ getPreviousPlayerCmd " + str(self.previous_playercmd))
         ret = None
         beforeTTSappid = (self.previous_playercmd['current_appid'] if 'current_appid' in self.previous_playercmd else None)
         if 'params' in self.previous_playercmd :
             if self.previous_playercmd['appid']==beforeTTSappid :
                 self.previous_playercmd['params']
-                if 'current_time' in self.previous_playercmd :
+                if 'current_time' in self.previous_playercmd and self.previous_playercmd['current_time'] > 0:
                     self.previous_playercmd['params']['offset'] = self.previous_playercmd['current_time']
-                ret = self.previous_playercmd['params']
-        elif beforeTTSappid is not None :
+                playerstate = self.previous_playercmd['current_player_state'] if 'current_player_state' in self.previous_playercmd else 'PLAYING'
+                if playerstate == 'PAUSED' :
+                    ret = [self.previous_playercmd['params'], {'cmd':'pause'}]
+                else :
+                    ret = self.previous_playercmd['params']
+        elif beforeTTSappid is not None and forceapplaunch :
             ret = {'cmd': 'start_app', 'appid' : beforeTTSappid}
         return ret
 
@@ -237,7 +251,8 @@ class JeedomChromeCast :
         try :
             self.previous_playercmd['current_appid'] = self.gcast.status.app_id
             self.previous_playercmd['current_sessionid'] = self.gcast.status.session_id
-            retval = self.gcast.media_controller.status.adjusted_current_time
+            self.previous_playercmd['current_player_state'] = self.gcast.media_controller.status.player_state
+            retval = self.media_current_time
         except Exception :
             pass
         self.previous_playercmd['current_time'] = retval
@@ -862,7 +877,10 @@ def action_handler(message):
                                     time.sleep(duration+(silence/1000)+1)
                                 gcast.quit_app()
                             if resume:
-                                prevcommand = jcast.getPreviousPlayerCmd()
+                                forceapplaunch = False
+                                if 'forceapplaunch' in command :
+                                    forceapplaunch = True
+                                prevcommand = jcast.getPreviousPlayerCmd(forceapplaunch)
                                 if prevcommand is not None :
                                     newMessage = {
                                         'cmd' : 'action',
@@ -909,7 +927,12 @@ def action_handler(message):
                         fallbackMode=False
                     elif cmd == 'seek':
                         logging.debug("ACTION------Seek action")
-                        player.seek(0 if value is None else value)
+                        if value is not None and '+' in value :
+                            player.seek(jcast.media_current_time + float(value.replace('+','')))
+                        elif value is not None and '-' in value :
+                            player.seek(jcast.media_current_time - float(value.replace('-','')))
+                        else :
+                            player.seek(0 if value is None else float(value))
                         fallbackMode=False
                     elif cmd == 'pause':
                         logging.debug("ACTION------Stop action")

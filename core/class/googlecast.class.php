@@ -920,7 +920,7 @@ class googlecast extends eqLogic {
 		self::socket_connection($value);
 	}
 
-	private function helperSendSimpleCmd($command_name, $value=null, $_callback=null, $_source='googlecast', $_app='media', $_appid='CC1AD845') {
+	public function helperSendSimpleCmd($command_name, $value=null, $_callback=null, $_source='googlecast', $_app='media', $_appid='CC1AD845') {
         $fulldata = array(
             'apikey' => jeedom::getApiKey('googlecast'),
             'cmd' => 'action',
@@ -937,7 +937,7 @@ class googlecast extends eqLogic {
             ),
         );
 
-		self::socket_connection( json_encode($fulldata) );
+		return self::socket_connection( json_encode($fulldata) );
     }
 
     public function helperSendCustomCmd($_commands, $_callback=null, $_source='googlecast', $_app='media', $_appid='CC1AD845') {
@@ -986,8 +986,7 @@ class googlecast extends eqLogic {
             'command' => $datalist,
         );
 
-		self::socket_connection( json_encode($fulldata) );
-        return true;
+		return self::socket_connection( json_encode($fulldata) );
 	}
 
     public function helperSendConfigInfoCmd($_commands, $_destLogicalId, $setType=false, $_callback=null, $showError=false) {
@@ -1059,6 +1058,7 @@ class googlecast extends eqLogic {
                     $url = 'http://' . $uri . ':8008/setup/eureka_info?options=detail';
                 }
                 $request_http = new com_http($url);
+
                 if ($isPost) {
                     $request_http->setHeader(array('Connection: close', 'content-type: application/json'));
                     $request_http->setPost('');
@@ -1181,7 +1181,7 @@ class googlecast extends eqLogic {
 
     public function setInfoHttpSimple($cmdLogicalId, $destLogicalId=null) {
         $cmdLogicalId = googlecast_utils::getCmdTranslation($cmdLogicalId);
-        $this->setInfoHttp($cmdLogicalId, false, $destLogicalId);
+        return $this->setInfoHttp($cmdLogicalId, false, $destLogicalId);
     }
 
     public function setInfoHttp($cmdLogicalId, $showError=false, $destLogicalId=null) {
