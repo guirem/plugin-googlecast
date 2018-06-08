@@ -191,10 +191,10 @@ class googlecast_utils {
     public static function getCmdDefinition($eqlogic, $type, $order) {
         if ($type=='googlehome') {
 
-            $cmd = $eqlogic->getCmd(null, 'gh_get_alarm_datenice_0');
+            $cmd = $eqlogic->getCmd(null, 'gh_get_alarm_date_0');
             if (!is_object($cmd)) {
                 $cmd = new googlecastCmd();
-                $cmd->setLogicalId('gh_get_alarm_datenice_0');
+                $cmd->setLogicalId('gh_get_alarm_date_0');
                 $cmd->setName(__('Alarme 1', __FILE__));
                 $cmd->setIsVisible(1);
                 $cmd->setOrder($order++);
