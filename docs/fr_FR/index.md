@@ -72,7 +72,7 @@ Les paramètres de configuration n'ont généralement pas besoin d'être modifi�
 > - PicoTTS ne nécessite pas de connexion internet, l'API Google Translate nécessite un accès web et le rendu est meilleur.
 > - Pour Google Speech API, une clé est nécessaire (voir FAQ). Le rendu est meilleur que Google Translate API.
 > - Un mécanisme de cache permet de ne générer le rendu sonore que s'il n'existe pas déjà en mémoire (RAM). La cache est donc supprimé au redémarrage du serveur.
-> - En cas d'échec sur un des moteurs autre que picotts (ex: problème de connexion internet), la commande sera lancée via picotts
+> - En cas d'échec sur un des moteurs autre que picotts (ex: problème de connexion internet), la commande sera lancée via picotts.
 
 ![Configuration Plugin](../images/configuration_plugin.png "Configuration Plugin")
 
@@ -107,6 +107,13 @@ Liste des commandes non visibles par défaut :
 
 Pour les voir sur le dashboard, il faut activer 'Afficher' dans l'onglet des commandes.
 
+> **Notes sur commande info 'Statut' (*status_text*)**
+> - *status_text* renvoie le statut en cours du Google Cast.    
+> - En cas d'erreur au lancement d'un commande, *status_text* est à
+> 'CMD UNKNOWN' si la commande n'existe pas,
+> 'NOT CONNECTED' si offline ou
+> 'ERROR' pour les autres erreurs
+> - Au repos (pas d'action en cours), *status_text* = `&nbsp;`
 
 ### Afficheur Lecture en cours (widget)
 
@@ -471,8 +478,9 @@ FAQ
 
 - Vérifier que le Google Cast est disponible à partir d'une application permettant la visulisation des appareils compatibles ;
 - Jeedom doit se trouver sur le même réseau que les équipements Google Cast    
-(pour Docker, le container est soit en mode Host, soit est configuré pour être sur le même réseau ; en VM, la machine est en mode bridge) ;
+(pour Docker, le container doit être configuré pour être sur le même réseau ; en VM, la machine est en mode bridge) ;
 - Vérifier qu'il n'y a pas de blocages au niveau du firewall pour la découverte via le protocol 'Zeroconf' ;
+- Pour mettre Docker sur le même réseau, voir https://github.com/guirem/plugin-googlecast/issues/8
 
 #### Aucune commande ne semble fonctionner
 

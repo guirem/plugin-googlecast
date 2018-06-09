@@ -4,6 +4,21 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
+## Version du 09 juin 2018 (stable)
+
+- Passage de la beta en stable (voir les changements beta)
+- Reprise du flux précédant après TTS lorsque lancé via le plugin uniquement
+- Widget 'speak' par défaut
+- Correction de bugs and maj doc
+
+## Version du 09 juin 2018 (beta)
+
+- Fix quand pas de volume
+- Maintenant 'resume' est le comportement par défaut. Il faut utiliser noresume=1 pour le désactiver
+- Pour le resume, un 'play' est forcé
+- Fix pour failover picotts quand pas d'internet
+- En cas d'erreur, 'status_text' est à 'ERROR' , 'CMD UNKNOWN' is la commande n'existe pas ou 'NOT CONNECTED' si offline
+
 ## Version du 08 juin 2018 (beta)
 
 - Implémention fonction 'resume' pour TTS. Dsiponible que pour les applications lancées via le plugin (limitation Google)
