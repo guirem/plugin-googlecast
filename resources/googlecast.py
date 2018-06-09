@@ -242,7 +242,7 @@ class JeedomChromeCast :
                 if playerstate == 'PAUSED' :
                     ret = [self.previous_playercmd['params'], {'cmd':'pause'}]
                 else :
-                    ret = self.previous_playercmd['params']
+                    ret = [self.previous_playercmd['params'], {'cmd':'play'}]
         elif beforeTTSappid is not None and forceapplaunch :
             ret = {'cmd': 'start_app', 'appid' : beforeTTSappid}
         return ret
@@ -843,9 +843,9 @@ def action_handler(message):
                         forcevol = False
                         if 'forcevol' in command :
                             forcevol = True
-                        resume = False
-                        if 'resume' in command :
-                            resume = True
+                        resume = True
+                        if 'noresume' in command :
+                            resume = False
 
                         curvol = jcast.getCurrentVolume()
                         if curvol == vol and not forcevol :
@@ -856,47 +856,53 @@ def action_handler(message):
 
                         if generateonly == False :
                             url,duration,mp3filename=get_tts_data(value, lang, engine, speed, forcetts, need_duration, silence)
-                            if vol is not None :
-                                gcast.set_volume(vol/100)
-                                time.sleep(0.1)
-                            thumb=globals.JEEDOM_WEB + '/plugins/googlecast/desktop/images/tts.png'
-                            jcast.disable_notif = True
-                            if resume:
-                                jcast.prepareTTSplay()
-                            player = jcast.loadPlayer(app, { 'quitapp' : False, 'wait': wait})
-                            player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, add_delay=0.1, stream_type="LIVE");
-                            player.block_until_active(timeout=2);
-                            jcast.disable_notif = False
-                            if vol is not None :
-                                time.sleep(duration+(silence/1000)+1)
-                                if sleep>0 :
-                                    time.sleep(sleep)
-                                    sleep=0
-                                gcast.set_volume(curvol/100)
-                                vol = None
-                            if quit:
-                                if vol is None :
+                            if url is not None :
+                                if vol is not None :
+                                    gcast.set_volume(vol/100)
+                                    time.sleep(0.1)
+                                thumb=globals.JEEDOM_WEB + '/plugins/googlecast/desktop/images/tts.png'
+                                jcast.disable_notif = True
+                                if resume:
+                                    jcast.prepareTTSplay()
+                                player = jcast.loadPlayer(app, { 'quitapp' : False, 'wait': wait})
+                                player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, add_delay=0.1, stream_type="LIVE");
+                                player.block_until_active(timeout=2);
+                                jcast.disable_notif = False
+                                if vol is not None :
                                     time.sleep(duration+(silence/1000)+1)
-                                gcast.quit_app()
-                            if resume:
-                                forceapplaunch = False
-                                if 'forceapplaunch' in command :
-                                    forceapplaunch = True
-                                prevcommand = jcast.getPreviousPlayerCmd(forceapplaunch)
-                                if prevcommand is not None :
-                                    newMessage = {
-                                        'cmd' : 'action',
-                                        'delegated' : True,
-                                        'resume' : True,
-                                        'device' : {'uuid' : uuid, 'source' : message['device']['source'] },
-                                        'command' : prevcommand
-                                    }
-                                    logging.debug("TTS------DELEGATED RESUME AFTER TTS for uuid : " + uuid)
-                                    time.sleep(0.3)
-                                    jcast.resetPreviousPlayerCmd()
-                                    thread.start_new_thread( action_handler, (newMessage,))
+                                    if sleep>0 :
+                                        time.sleep(sleep)
+                                        sleep=0
+                                    gcast.set_volume(curvol/100)
+                                    vol = None
+                                if quit :
+                                    if vol is None :
+                                        time.sleep(duration+(silence/1000)+1)
+                                    gcast.quit_app()
+                                if resume:
+                                    if vol is None :
+                                        time.sleep(duration+(silence/1000)+1)
+                                    forceapplaunch = False
+                                    if 'forceapplaunch' in command :
+                                        forceapplaunch = True
+                                    prevcommand = jcast.getPreviousPlayerCmd(forceapplaunch)
+                                    if prevcommand is not None :
+                                        newMessage = {
+                                            'cmd' : 'action',
+                                            'delegated' : True,
+                                            'resume' : True,
+                                            'device' : {'uuid' : uuid, 'source' : message['device']['source'] },
+                                            'command' : prevcommand
+                                        }
+                                        logging.debug("TTS------DELEGATED RESUME AFTER TTS for uuid : " + uuid)
+                                        time.sleep(0.3)
+                                        jcast.resetPreviousPlayerCmd()
+                                        thread.start_new_thread( action_handler, (newMessage,))
+                                    else :
+                                        logging.debug("TTS------Resume is not possible!")
                                 else :
-                                    logging.debug("TTS------Resume is not possible!")
+                                    logging.debug("TTS------File generation failed !")
+                                    sendErrorDeviceStatus(uuid, 'ERROR')
                         else :
                             logging.error("TTS------Only generating TTS file without playing")
                             get_tts_data(value, lang, engine, speed, forcetts, False, silence)
@@ -907,6 +913,7 @@ def action_handler(message):
                     logging.error("ACTION------Error while playing action " +cmd+ " on low level commands : %s" % str(e))
                     sendErrorDeviceStatus(uuid, 'ERROR')
                     logging.debug(traceback.format_exc())
+                    fallbackMode==False
 
             # media/application controler level Google Cast actions
             if fallbackMode==True :
@@ -956,7 +963,7 @@ def action_handler(message):
 
             if fallbackMode==True :
                 logging.debug("ACTION------Action " + cmd + " not implemented !")
-                sendErrorDeviceStatus(uuid, 'CMD NOT IMPLEMENTED')
+                sendErrorDeviceStatus(uuid, 'CMD UNKNOWN')
 
             if sleep>0 :
                 time.sleep(sleep)
@@ -1045,8 +1052,14 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
             elif engine == 'gttsapi':
                 speed = float(speed) - 0.7
                 ttsurl = globals.tts_gapi_url + 'v1/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&text='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5'
-                r = requests.get(ttsurl)
-                if r.status_code == requests.codes.ok :
+                success=True
+                try :
+                    r = requests.get(ttsurl, timeout=3)
+                    if r.status_code != requests.codes.ok :
+                        success=False
+                except :
+                    success=False
+                if success==True :
                     with open(filenamemp3 , 'wb') as f:
                         f.write(r.content)
                     speech = AudioSegment.from_mp3(filenamemp3)
@@ -1066,8 +1079,14 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
             elif engine == 'gttsapidev':
                 speed = float(speed) - 0.7
                 ttsurl = globals.tts_gapi_url + 'v2/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&text='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5'
-                r = requests.get(ttsurl)
-                if r.status_code == requests.codes.ok :
+                success=True
+                try :
+                    r = requests.get(ttsurl, timeout=3)
+                    if r.status_code != requests.codes.ok :
+                        success=False
+                except :
+                    success=False
+                if success==True :
                     with open(filenamemp3 , 'wb') as f:
                         f.write(r.content)
                     speech = AudioSegment.from_mp3(filenamemp3)
@@ -1127,6 +1146,9 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
     except Exception as e:
         logging.error("CMD-TTS------Exception while generating tts file : %s" % str(e))
         logging.debug(traceback.format_exc())
+        urltoplay=None
+        duration_seconds=0
+        filenamemp3=None
     return urltoplay, duration_seconds, filenamemp3
 
 def logByTTS(text_id):
