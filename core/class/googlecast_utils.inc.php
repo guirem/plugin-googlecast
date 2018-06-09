@@ -3,13 +3,17 @@ class googlecast_utils {
 
     public static function getCmdTranslation($logicalId) {
         $ret = $logicalId;
-        /*
-        if ( strpos($logicalId, 'gh_get_alarm_date_') === 0 ) {
-            $param = str_replace("gh_get_alarm_date_", "", $logicalId);
-            $ret = 'cmd=getconfig|value=assistant/alarms|data=alarm/'.$param.'|format=%02d-%02d-%04d %02d:%02d|reterror=Undefined';
+
+        if ( $logicalId == 'speak' ) {
+            $ret = 'cmd=tts|value=#message#|vol=#volume#';
         }
-        */
-        if ( strpos($logicalId, 'gh_get_alarm_date_') === 0 ) {
+        elseif ( $logicalId == 'speak_noresume' ) {
+            $ret = 'cmd=tts|value=#message#|vol=#volume#|noresume=1';
+        }
+        elseif ( $logicalId == 'speak_forceresume' ) {
+            $ret = 'cmd=tts|value=#message#|vol=#volume#|forceapplaunch=1';
+        }
+        elseif ( strpos($logicalId, 'gh_get_alarm_date_') === 0 ) {
             $param = str_replace("gh_get_alarm_date_", "", $logicalId);
             $ret = 'cmd=getconfig|value=assistant/alarms|data=alarm/'.$param.'/fire_time|fnc=ts2long|reterror=Undefined';
         }
@@ -59,7 +63,7 @@ class googlecast_utils {
             $ret = 'cmd=setconfig|value=assistant/notifications|data={"notifications_enabled":'.$param.'}';
         }
         elseif ( strpos($logicalId, 'gh_set_alarms_volume_') === 0 ) {
-            $param = str_replace("gh_set_alarms_volume_", "", $logicalId);
+            $param = round ( floatval(str_replace("gh_set_alarms_volume_", "", $logicalId))/100 , 2);
             $ret = 'cmd=setconfig|value=assistant/alarms/volume|data={"volume": '.$param.'}';
         }
         elseif ( $logicalId=='gh_get_alarms_volume' ) {
@@ -91,30 +95,7 @@ class googlecast_utils {
         if (is_null($fnc)) {
             return $data;
         }
-        if ($fnc=='datelong') {
-            $ret = '';
-            $date = date_create_from_format('d-m-Y H:i', $data);
-            if ($date==false) {
-                return $data;
-            }
-            $dateTmp = $date;
-            $dateTmp->setTime( 0, 0, 0 );
-            $today = new DateTime();
-            $diff = $today->diff( $dateTmp );
-            $diffDays = (integer)$diff->format( "%R%a" );
-            switch( $diffDays ) {
-                case 0:
-                    $ret = "Aujourd'hui " . date_format($date, "H:i");
-                    break;
-                case +1:
-                    $ret = "Demain " . date_format($date, "H:i");
-                    break;
-                default:
-                    $ret = date_format($date, "d-m-Y H:i");
-            }
-            return $ret;
-        }
-        elseif ($fnc=='ts2longnice') {
+        if ($fnc=='ts2longnice') {
             $ret = '';
             if (!is_numeric($data)) {
                 return $data;
@@ -125,20 +106,22 @@ class googlecast_utils {
                 return $data;
             }
             $date = date_create_from_format('U', $val);
-            if ($date==false) {
+            if (is_null($date) or $date===false) {
                 $date = date_create_from_format('U', 0);
             }
-            $dateTmp = $date;
+            $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
+            $dateTmp = clone $date;
             $dateTmp->setTime( 0, 0, 0 );
-            $today = new DateTime();
+            $today = new DateTime("now", new DateTimeZone(date_default_timezone_get()));
+            $today->setTime( 0, 0, 0 );
             $diff = $today->diff( $dateTmp );
             $diffDays = (integer)$diff->format( "%R%a" );
             switch( $diffDays ) {
                 case 0:
-                    $ret = "Aujourd'hui " . date_format($date, "H:i");
+                    $ret = __("Aujourd'hui", __FILE__). ' ' . date_format($date, "H:i");
                     break;
                 case +1:
-                    $ret = "Demain " . date_format($date, "H:i");
+                    $ret = __("Demain", __FILE__). ' ' . date_format($date, "H:i");
                     break;
                 default:
                     $ret = date_format($date, "d-m-Y H:i");
@@ -156,17 +139,19 @@ class googlecast_utils {
                 return $data;
             }
             $date = date_create_from_format('U', $val);
-            if ($date==false) {
+            if (is_null($date) or $date===false) {
                 $date = date_create_from_format('U', 0);
             }
+            $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
             $ret = date_format($date, "d-m-Y H:i");
             return $ret;
         }
         elseif ($fnc=='time') {
             $date = date_create_from_format('d-m-Y H:i', $data);
-            if ($date==false) {
+            if (is_null($date) or $date===false) {
                 return $data;
             }
+            $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
             return date_format($date, "H:i");
         }
         elseif ($fnc=='2sec') {
@@ -188,9 +173,10 @@ class googlecast_utils {
                 return $data;
             }
             $date = date_create_from_format('U', $val);
-            if ($date==false) {
+            if (is_null($date) or $date===false) {
                 return $data;
             }
+            $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
             $today = new DateTime();
             $diffsec = $date - $today;
             return $diffsec;
