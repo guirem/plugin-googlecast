@@ -292,7 +292,7 @@ ex using token :
 - silence: int (default=300) - add a short silence before the speech to make sure all is audible (in milliseconds)
 - generateonly: 1 - only generate speech file in cache (no action on device)
 - forcevol: 1 - Set volume also if the current volume is the same (useful for TTS synchronisation in multithreading)
-- resume: 1 - try to resume to previous state if possible (only plugin launched application).
+- noresume: 1 - disable recovery of previous state before playing TTS.
 - forceapplaunch: 1 - will try to force launch of previous application even if not lauched by plugin (to be used with 'resume').
 
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
@@ -300,7 +300,7 @@ ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
 ```
 
 > **Notes**   
-> 'resume' will only work when previous application has been launched by the plugin.
+> By default, the plugin will try to resume previous app launched (will only work when previous application has been launched by the plugin).
 > You can try to force resume of any application using 'forceapplaunch=1' but there is a good chance that it will not resume correctly.
 
 #### Séquence de commandes

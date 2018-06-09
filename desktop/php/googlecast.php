@@ -136,7 +136,7 @@ foreach (jeedom::getConfiguration('eqLogic:category') as $key => $value) {
         </div>
       </div>
       <div class="form-group">
-        <label class="col-lg-3 control-label">{{UUDI}}</label>
+        <label class="col-lg-3 control-label">{{UUID}}</label>
         <div class="col-lg-4">
           <input type="text" class="eqLogicAttr form-control" data-l1key="logicalId" placeholder="Logical ID" readonly/>
         </div>

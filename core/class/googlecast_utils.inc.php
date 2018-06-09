@@ -5,13 +5,13 @@ class googlecast_utils {
         $ret = $logicalId;
 
         if ( $logicalId == 'speak' ) {
-            $ret = 'cmd=tts|value=#message#|vol=#volume#|resume=1';
-        }
-        elseif ( $logicalId == 'speak_noresume' ) {
             $ret = 'cmd=tts|value=#message#|vol=#volume#';
         }
+        elseif ( $logicalId == 'speak_noresume' ) {
+            $ret = 'cmd=tts|value=#message#|vol=#volume#|noresume=1';
+        }
         elseif ( $logicalId == 'speak_forceresume' ) {
-            $ret = 'cmd=tts|value=#message#|vol=#volume#|resume=1|forceapplaunch=1';
+            $ret = 'cmd=tts|value=#message#|vol=#volume#|forceapplaunch=1';
         }
         elseif ( strpos($logicalId, 'gh_get_alarm_date_') === 0 ) {
             $param = str_replace("gh_get_alarm_date_", "", $logicalId);
@@ -106,10 +106,10 @@ class googlecast_utils {
                 return $data;
             }
             $date = date_create_from_format('U', $val);
-            $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
-            if (is_null($date)) {
+            if (is_null($date) or $date===false) {
                 $date = date_create_from_format('U', 0);
             }
+            $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
             $dateTmp = clone $date;
             $dateTmp->setTime( 0, 0, 0 );
             $today = new DateTime("now", new DateTimeZone(date_default_timezone_get()));
@@ -139,19 +139,19 @@ class googlecast_utils {
                 return $data;
             }
             $date = date_create_from_format('U', $val);
-            $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
-            if (is_null($date)) {
+            if (is_null($date) or $date===false) {
                 $date = date_create_from_format('U', 0);
             }
+            $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
             $ret = date_format($date, "d-m-Y H:i");
             return $ret;
         }
         elseif ($fnc=='time') {
             $date = date_create_from_format('d-m-Y H:i', $data);
-            $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
-            if (is_null($date)) {
+            if (is_null($date) or $date===false) {
                 return $data;
             }
+            $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
             return date_format($date, "H:i");
         }
         elseif ($fnc=='2sec') {
@@ -173,10 +173,10 @@ class googlecast_utils {
                 return $data;
             }
             $date = date_create_from_format('U', $val);
-            $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
-            if (is_null($date)) {
+            if (is_null($date) or $date===false) {
                 return $data;
             }
+            $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
             $today = new DateTime();
             $diffsec = $date - $today;
             return $diffsec;
