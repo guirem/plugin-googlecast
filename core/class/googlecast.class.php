@@ -127,7 +127,19 @@ class googlecast extends eqLogic {
         $this->_lightsave = false;
     }
 
-	public function postSave() {
+    /*
+    public function postSave() {
+        if ( $this->getIsEnable() ) {
+            $this->allowDevice();
+            try {
+                $this->refreshChromecastConfig();
+            } catch (Exception $e) {}
+        }
+    }
+    */
+
+	//public function postInsert() {
+    public function postSave() {
         if ($this->_lightsave == true) {
             return true;
         }
@@ -343,7 +355,7 @@ class googlecast extends eqLogic {
 			$cmd = new googlecastCmd();
 			$cmd->setLogicalId('display_name');
 			$cmd->setIsVisible(0);
-			$cmd->setName(__('Staut Name', __FILE__));
+			$cmd->setName(__('Statut Name', __FILE__));
 			$cmd->setConfiguration('googlecast_cmd', true);
 			$cmd->setDisplay('showNameOndashboard', false);
 			$cmd->setOrder($order++);
@@ -505,7 +517,22 @@ class googlecast extends eqLogic {
 		$cmd->setEqLogic_id($this->getId());
 		$cmd->save();
 
-		$cmd = $this->getCmd(null, 'customcmd');
+		$cmd = $this->getCmd(null, 'speak');
+		if (!is_object($cmd)) {
+			$cmd = new googlecastCmd();
+			$cmd->setLogicalId('speak');
+			$cmd->setName(__('Parle !', __FILE__));
+			$cmd->setIsVisible(1);
+			$cmd->setOrder($order++);
+			$cmd->setConfiguration('googlecast_cmd', true);
+		}
+        $cmd->setTemplate('dashboard','googlecast_speak');
+		$cmd->setType('action');
+		$cmd->setSubType('message');
+		$cmd->setEqLogic_id($this->getId());
+		$cmd->save();
+
+        $cmd = $this->getCmd(null, 'customcmd');
 		if (!is_object($cmd)) {
 			$cmd = new googlecastCmd();
 			$cmd->setLogicalId('customcmd');
@@ -578,20 +605,6 @@ class googlecast extends eqLogic {
 			$cmd->setEqLogic_id($this->getId());
 			$cmd->save();
 
-            $logid = "cmd=tts|value=bienvenue sur google cast";
-			$cmd = $this->getCmd(null, $logid);
-			if (!is_object($cmd)) {
-				$cmd = new googlecastCmd();
-				$cmd->setLogicalId($logid);
-				$cmd->setName(__('TTS', __FILE__));
-				$cmd->setIsVisible(1);
-				$cmd->setOrder($order++);
-			}
-			$cmd->setType('action');
-			$cmd->setSubType('other');
-			$cmd->setEqLogic_id($this->getId());
-			$cmd->save();
-
             $cmd = $this->getCmd(null, 'cmd=getconfig|data=opencast_pin_code');
     		if (!is_object($cmd)) {
     			$cmd = new googlecastCmd();
@@ -615,12 +628,12 @@ class googlecast extends eqLogic {
 
 		$this->checkAndUpdateCmd('nowplaying', $this->getLogicalId());
 
-		if ( $this->getIsEnable() ) {
-			$this->allowDevice();
+        if ( $this->getIsEnable() ) {
+            $this->allowDevice();
             try {
                 $this->refreshChromecastConfig();
             } catch (Exception $e) {}
-		}
+        }
 	}
 
 	public static function createFromDef($_def) {
@@ -907,7 +920,7 @@ class googlecast extends eqLogic {
 		self::socket_connection($value);
 	}
 
-	private function helperSendSimpleCmd($command_name, $value=null, $_callback=null, $_source='googlecast', $_app='media', $_appid='CC1AD845') {
+	public function helperSendSimpleCmd($command_name, $value=null, $_callback=null, $_source='googlecast', $_app='media', $_appid='CC1AD845') {
         $fulldata = array(
             'apikey' => jeedom::getApiKey('googlecast'),
             'cmd' => 'action',
@@ -924,7 +937,7 @@ class googlecast extends eqLogic {
             ),
         );
 
-		self::socket_connection( json_encode($fulldata) );
+		return self::socket_connection( json_encode($fulldata) );
     }
 
     public function helperSendCustomCmd($_commands, $_callback=null, $_source='googlecast', $_app='media', $_appid='CC1AD845') {
@@ -973,8 +986,7 @@ class googlecast extends eqLogic {
             'command' => $datalist,
         );
 
-		self::socket_connection( json_encode($fulldata) );
-        return true;
+		return self::socket_connection( json_encode($fulldata) );
 	}
 
     public function helperSendConfigInfoCmd($_commands, $_destLogicalId, $setType=false, $_callback=null, $showError=false) {
@@ -1046,6 +1058,7 @@ class googlecast extends eqLogic {
                     $url = 'http://' . $uri . ':8008/setup/eureka_info?options=detail';
                 }
                 $request_http = new com_http($url);
+
                 if ($isPost) {
                     $request_http->setHeader(array('Connection: close', 'content-type: application/json'));
                     $request_http->setPost('');
@@ -1168,7 +1181,7 @@ class googlecast extends eqLogic {
 
     public function setInfoHttpSimple($cmdLogicalId, $destLogicalId=null) {
         $cmdLogicalId = googlecast_utils::getCmdTranslation($cmdLogicalId);
-        $this->setInfoHttp($cmdLogicalId, false, $destLogicalId);
+        return $this->setInfoHttp($cmdLogicalId, false, $destLogicalId);
     }
 
     public function setInfoHttp($cmdLogicalId, $showError=false, $destLogicalId=null) {
@@ -1297,6 +1310,7 @@ class googlecastcmd extends cmd {
     					case 'message':
     						$data[trim($value[0])] = trim(str_replace('#message#', $_options['message'], $value[1]));
     						$data[trim($value[0])] = trim(str_replace('#title#', $_options['title'], $data[trim($value[0])]));
+                            $data[trim($value[0])] = trim(str_replace('#volume#', $_options['volume'], $data[trim($value[0])]));
     						break;
     					default:
     						$data[trim($value[0])] = trim($value[1]);

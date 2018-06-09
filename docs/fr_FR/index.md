@@ -41,6 +41,7 @@ Dashboard
 =======================
 
 ![Visuel du dashboard](../images/dashboard.png "Visuel du dashboard")
+![Visuel du dashboard 2](../images/dashboard2.png "Visuel du dashboard 2")
 
 Configuration du plugin
 =======================
@@ -71,6 +72,7 @@ Les paramètres de configuration n'ont généralement pas besoin d'être modifi�
 > - PicoTTS ne nécessite pas de connexion internet, l'API Google Translate nécessite un accès web et le rendu est meilleur.
 > - Pour Google Speech API, une clé est nécessaire (voir FAQ). Le rendu est meilleur que Google Translate API.
 > - Un mécanisme de cache permet de ne générer le rendu sonore que s'il n'existe pas déjà en mémoire (RAM). La cache est donc supprimé au redémarrage du serveur.
+> - En cas d'échec sur un des moteurs autre que picotts (ex: problème de connexion internet), la commande sera lancée via picotts.
 
 ![Configuration Plugin](../images/configuration_plugin.png "Configuration Plugin")
 
@@ -105,6 +107,13 @@ Liste des commandes non visibles par défaut :
 
 Pour les voir sur le dashboard, il faut activer 'Afficher' dans l'onglet des commandes.
 
+> **Notes sur commande info 'Statut' (*status_text*)**
+> - *status_text* renvoie le statut en cours du Google Cast.    
+> - En cas d'erreur au lancement d'un commande, *status_text* est à
+> 'CMD UNKNOWN' si la commande n'existe pas,
+> 'NOT CONNECTED' si offline ou
+> 'ERROR' pour les autres erreurs
+> - Au repos (pas d'action en cours), *status_text* = `&nbsp;`
 
 ### Afficheur Lecture en cours (widget)
 
@@ -116,7 +125,7 @@ L'afficheur se rafraichit toutes les 20 secondes par défaut.
 
 Installation / configuration :
 - Affiché par défaut après installation. Désactiver l'affichage pour cacher.
-- Pour une utilisation dans un dashboard, iL est possible d'utiliser un virtuel en créant une commande de type *info / autres* avec pour valeur la commande *Display* de l'ampli. Appliquer alors le widget dashboard *googlecast_playing* (via onglet *Affichage* de la configuration avancée de la commande)
+- Pour une utilisation dans un dashboard, iL est possible d'utiliser un virtuel en créant une commande de type *info / autres* avec pour valeur la commande *Playing Widget* (non interne *nowplaying*) du Google Cast. Appliquer alors le widget dashboard *googlecast_playing* (via onglet *Affichage* de la configuration avancée de la commande)
 - Pour une utilisation dans un design, ajouter la commande *Playing Widget* directement dans le design.
 
 paramètres CSS optionnels (via '*Paramètres optionnels widget*'):
@@ -129,6 +138,26 @@ paramètres CSS optionnels (via '*Paramètres optionnels widget*'):
 - *additionalCss* (format css, ex: '.blabla {...}') : pour ajouter/modifier d'autres CSS (utilisateur avancé)
 
 ![Configuration CSS](../images/configuration_css.png "Configuration CSS")
+
+> **Notes**   
+> Non disponible pour mobile pour le moment
+
+### Widget TTS pour saisie de texte et control du volume
+
+Un widget est disponible pour les commandes de type action et sous-type message pour permettre de saisir du texte pour le TTS et régler le volume.
+
+![Speak Widget](../images/widget_speak.png "Speak Widget")
+
+Installation / configuration :
+- Un exemple est affiché par défaut après installation pour tester la fonction TTS.
+- Pour une utilisation dans un dashboard, iL est possible d'utiliser un virtuel en créant une commande de type *action / message* avec pour valeur la commande *Custom Cmd* du Google Cast. Appliquer alors le widget dashboard *googlecast_speak* (via onglet *Affichage* de la configuration avancée de la commande)
+- Le contenu de la commande action (sous-type message) peut contenir les variables *#message#* et *#volume#*
+
+paramètres CSS optionnels (via '*Paramètres optionnels widget*'):
+- *width* (ex: 35px, défaut=150px) : taille du widget
+- *default_volume* (ex: blue, défaut=100) : valume par défaut
+- *default_message* (ex: 'Test') : texte par défaut dans le widget
+- *additionalCss* (format css, ex: '.blabla {...}') : pour ajouter/modifier d'autres CSS (utilisateur avancé)
 
 > **Notes**   
 > Non disponible pour mobile pour le moment
@@ -159,7 +188,7 @@ Elles doivent être séparés par *|*
 - cmd : name of command (dépend of application)
     * tts : text to speech, use value to pass text
     * refresh
-    * reboot
+    * reboot : reboot the Google Cast
     * volume_up
     * volume_down
     * volume_set : use value (0-100)
@@ -169,9 +198,9 @@ Elles doivent être séparés par *|*
     * start_app : use value to pass app id
     * play
     * stop
-    * rewind
-    * skip
-    * seek : use value (seconds)
+    * rewind : go back to media start
+    * skip : got to next media
+    * seek : use value in seconds. Can use +/- to use relative seek (ex: +20 to pass 20 seconds)
     * pause
     For application dependant commands
         * web : load_url
@@ -270,10 +299,16 @@ ex using token :
 - silence: int (default=300) - add a short silence before the speech to make sure all is audible (in milliseconds)
 - generateonly: 1 - only generate speech file in cache (no action on device)
 - forcevol: 1 - Set volume also if the current volume is the same (useful for TTS synchronisation in multithreading)
+- noresume: 1 - disable recovery of previous state before playing TTS.
+- forceapplaunch: 1 - will try to force launch of previous application even if not lauched by plugin (to be used with 'resume').
 
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
 ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
 ```
+
+> **Notes**   
+> By default, the plugin will try to resume previous app launched (will only work when previous application has been launched by the plugin).
+> You can try to force resume of any application using 'forceapplaunch=1' but there is a good chance that it will not resume correctly.
 
 #### Séquence de commandes
 Il est possible de lancer plusieurs commandes à la suite en séparant par *$$*
@@ -283,7 +318,6 @@ ex 1 : cmd=tts|sleep=2|value=Je lance ma vidéo$$app=media|cmd=play_video|value=
 ex 2 : app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name',current_time:148|sleep=10$$cmd=quit_app
 ex Commande TTS sur plusieurs google cast en parallèle en s'assurant que le fichier est déjà en cache :   
     cmd=tts|value=My TTS message|generateonly=1$$uuid=XXXXXXXXXXX|cmd=tts|value=My TTS message$$uuid=YYYYYYYYYYY|cmd=tts|value=My TTS message
-
 ```
 > **Note**   
 > adding 'uuid' parameter will redirect to this uuid device in new thread. This can be used to send a sequence to several device in one command.
@@ -312,15 +346,15 @@ Pour plus d'info voir  https://rithvikvibhu.github.io/GHLocalApi/
 Exemples:
 - Récupération du pincode d'une Google Chromecast :
 cmd=getconfig|data=opencast_pin_code
-- Google Home : Récupération de l'état de la première alarme (-1 en cas de problème ou non existant):
+- Google Home : Récupération de l'état de la première alarme (-1 en cas de problème ou non existant) :
 cmd=getconfig|value=assistant/alarms|data=alarm/0/status|reterror=-1
-- Google Home : Récupération de la date et heure de la première alarme au format JJ-MM-AAAA HH:MM:
-cmd=getconfig|value=assistant/alarms|data=alarm/0|format=%02d-%02d-%04d %02d:%02d|reterror=00-00-0000 00:00
-- Changer le nom du Google cast
+- Google Home : Récupération de la date et heure de la première alarme au format JJ-MM-AAAA HH:MM :
+'cmd=getconfig|value=assistant/alarms|data=alarm/0/fire_time|fnc=ts2long|reterror=00-00-0000 00:00
+- Changer le nom du Google cast :
 cmd=setconfig|data={"name":"Mon nouveau nom"}
-- Google Home : Désactiver le mode nuit
+- Google Home : Désactiver le mode nuit :
 cmd=setconfig|value=assistant/set_night_mode_params|data={"enabled": false}
-- Google Home : Changer luminosité du mode nuit
+- Google Home : Changer luminosité du mode nuit :
 cmd=setconfig|value=assistant/set_night_mode_params|data={"led_brightness": 0.2}
 ```
 
@@ -335,7 +369,7 @@ Voir l'api Google sur ce lien pour ce qui est modifiable : https://rithvikvibhu.
 - data: str - json data.
 
 Exemples:
-- Disable notification on Google home
+- Disable notification on Google home :
 cmd=setconfig|value=assistant/notifications|data={'notifications_enabled': false}
 - Google Home : Volume au plus bas pour alarme :
 cmd=setconfig|value=assistant/alarms/volume|data={'volume': 1}
@@ -345,8 +379,8 @@ cmd=setconfig|value=assistant/alarms/volume|data={'volume': 1}
 
 Les commandes suivantes peuvent être utilisées dans une commande 'info' ou scénario (via fonction *getInfoHttpSimple()*) :
 
-- *gh_get_alarm_date_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme.
-- *gh_get_alarm_datenice_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme.
+- *gh_get_alarm_date_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format dd-mm-yyyy HH:mm.
+- *gh_get_alarm_datenice_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format {'Today'|'Tomorrow'|dd-mm-yyyy} HH:mm.
 - *gh_get_alarm_timestamp_#* (#=numéro, commence par 0) : retourne le timestamp de la prochaine alarme.
 - *gh_get_alarm_status_#* (#=numéro, commence par 0) : statut de l'alarme (1 = configuré,  2 = sonne).
 - *gh_get_timer_timesec_#* (#=numéro, commence par 0) : retourne le nombre de secondes avant déclenchement du timer.
@@ -364,10 +398,18 @@ Les commandes suivantes peuvent être utilisé dans une commande 'action' ou sc�
 - *gh_set_donotdisturb_on* : active la fonction 'Do Not Disturb'.
 - *gh_set_donotdisturb_off* : désactive la fonction 'Do Not Disturb'.
 - *gh_set_donotdisturb_#* (#=true/false) : active/désavtive la fonction 'Do Not Disturb'
-- *gh_set_alarms_volume_#* (# = entre 0 et 1 (eg: 0.4)) : configure le volume des alarmes et timers.
+- *gh_set_alarms_volume_#* (# = entre 0 et 100 (eg: 10)) : configure le volume des alarmes et timers.
 - *bt_connectdefault* : connecte l'équipement bluetooth configuré par défaut.
 - *bt_connect_X* (#=adresse mac au format xx:xx:xx:xx:xx:xx) : connecte l'équipement bluetooth donné en paramètre.
 - *bt_disconnectdefault* : déconnecte l'équipement bluetooth configuré par défaut.
+
+```
+Exemples:
+- Commande de type info
+gh_get_alarm_date_0
+- Commande de type action
+gh_set_alarms_volume_80
+```
 
 ### Utilisation dans un scénario
 
@@ -383,23 +425,51 @@ app=web|cmd=load_url|value='https://google.com',True,10
 
 #### Avec bloc code php
 
-Exemple avec récupération d'info de config en utilisant un bloc code php.
+Exemples en utilisant un bloc code php :
 
-Récupérer le jour de l'alarme pour un Google Home :
-```
-$googlecast = googlecast::byLogicalId('d2fd3db1-bd0f-fe4c-d8dd-XXXXXXXXX', 'googlecast');
-if (!is_object($googlecast)) {
-  	$scenario->setData("_alarm_jour", "00000000");
+```php
+$googlecast = googlecast::byLogicalId('XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXX', 'googlecast');
+if ( !is_object($googlecast) or $googlecast->getIsEnable()==false ) {
+  $scenario->setData("_test", "None");
+  // variable _test contains 'None' if google cast does not exist or is disable
 }
 else {
-  // via commande longue
-  $ret =  $googlecast->getInfoHttpSimple('cmd=getconfig|value=assistant/alarms|data=alarm/0|format=%02d%02d%04d|reterror=00000000');
-  // via commande courte pré-configurée
-  // $ret =  $googlecast->getInfoHttpSimple('gh_get_alarm_date_0');
-  $scenario->setData("_alarm",$ret);
+  // Run a command
+  $ret =  $googlecast->helperSendCustomCmd('cmd=tts|value=Test Scénario PHP|vol=100');
+  $scenario->setData("_test", $ret);
+  // Command launched
+  // $ret = true if command has been ran, false if deamon is not running
+  // variable _test contains 1 if true, 0 if false
+
+  // Configure a Google Home equipement
+  $ret =  $googlecast->setInfoHttpSimple('bt_connect_xx:xx:xx:xx:xx:xx');
+  // or $googlecast->helperSendCustomCmd('bt_connect_xx:xx:xx:xx:xx:xx'); (return false if deamon not running, true otherwise)
+  // Try to connect a bluetooth device (mac=xx:xx:xx:xx:xx:xx) to Google Home
+  // $ret = true if command has been launched, false if failed (Google Home not accessible)
+
+  // Get curent GH alarm time (via long command)
+  $ret =  $googlecast->getInfoHttpSimple('cmd=getconfig|value=assistant/alarms|data=alarm/0/fire_time|fnc=ts2long|reterror=Undefined');
+  $scenario->setData("_test",$ret);
+  // variable _test contains dd-mm-yyyy HH:mm (Undefined if failed)
+
+  // Get curent GH alarm time (via pre-configured command)
+  $ret =  $googlecast->getInfoHttpSimple('gh_get_alarm_date_0');
+  // or $googlecast->helperSendCustomCmd('gh_get_alarm_date_0'); (return false if deamon not running, true otherwise)
+  $scenario->setData("_test",$ret);
+  // variable _test contains dd-mm-yyyy HH:mm (Undefined if failed)
+
+ // Get curent GH alarm date only (via long command with formatting)
+  $ret =  $googlecast->getInfoHttpSimple('cmd=getconfig|value=assistant/alarms|data=alarm/0/date_pattern|format=%02d%02d%04d|reterror=00000000');
+  $scenario->setData("_test",$ret);
+  // variable _test contains JJMMAAAA (00000000 if failed)
 }
-// variable _alarm contient JJMMAAAA (00000000 en cas de problème)
 ```
+
+Limitations et bug connus
+=============================
+
+- Moteur PicoTTS ne gère pas les phrases accentuées (ils sont supprimés)
+
 
 FAQ
 =============================
@@ -408,8 +478,9 @@ FAQ
 
 - Vérifier que le Google Cast est disponible à partir d'une application permettant la visulisation des appareils compatibles ;
 - Jeedom doit se trouver sur le même réseau que les équipements Google Cast    
-(pour Docker, le container est soit en mode Host, soit est configuré pour être sur le même réseau ; en VM, la machine est en mode bridge) ;
+(pour Docker, le container doit être configuré pour être sur le même réseau ; en VM, la machine est en mode bridge) ;
 - Vérifier qu'il n'y a pas de blocages au niveau du firewall pour la découverte via le protocol 'Zeroconf' ;
+- Pour mettre Docker sur le même réseau, voir https://github.com/guirem/plugin-googlecast/issues/8
 
 #### Aucune commande ne semble fonctionner
 
@@ -436,7 +507,7 @@ C'est possible via le mode web. Pour gérer l'authentification automatiquement, 
 
 #### Récupérer une clé API pour Google Speech API
 
-Les étapes pour obtenir cette clé se trouve sur ce lien : http://domotique-home.fr/comment-obtenir-google-speech-api-et-integrer-dans-sarah/
+Les étapes pour obtenir cette clé se trouvent sur ce lien : http://domotique-home.fr/comment-obtenir-google-speech-api-et-integrer-dans-sarah/
 
 Changelog
 =============================
