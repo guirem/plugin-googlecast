@@ -17,7 +17,7 @@ if (config::byKey('include_mode', 'googlecast', 0) == 1) {
 
 ?>
 <div class="row row-overflow">
-  <div class="col-lg-2">
+  <div class="col-lg-2 sidebar-container">
     <div class="bs-sidebar">
       <ul id="ul_eqLogic" class="nav nav-list bs-sidenav">
         <li class="filter" style="margin-bottom: 5px;"><input class="filter form-control input-sm" placeholder="{{Rechercher}}" style="width: 100%"/></li>
@@ -29,8 +29,9 @@ foreach ($eqLogics as $eqLogic) {
      </ul>
    </div>
 </div>
- <div class="col-lg-10 col-md-9 col-sm-8 eqLogicThumbnailDisplay" style="border-left: solid 1px #EEE; padding-left: 25px;">
-   <legend><i class="fa fa-cog"></i>  {{Gestion}}</legend>
+ <div class="col-lg-10 col-md-9 col-sm-8 eqLogicThumbnailDisplay equipement-container" style="border-left: solid 1px #EEE; padding-left: 25px;">
+   <a class="btn btn-default pull-right bt_sidebarToogle"><i class="fa fa-dedent"></i></a>
+   <legend><i class="fa fa-cog" style="height:35px;"></i> &nbsp; {{Gestion}}</legend>
    <div class="eqLogicThumbnailContainer">
 <?php
 if (config::byKey('include_mode', 'googlecast', 0) == 1) {
@@ -62,7 +63,7 @@ if (config::byKey('include_mode', 'googlecast', 0) == 1) {
     <span style="font-size : 1.1em;position:relative; top : 15px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;color:#767676"><center>{{Santé}}</center></span>
   </div>
 </div>
-<legend><i class="icon techno-cable1"></i>  {{Mes équipements GoogleCast}}
+<legend><i class="icon techno-cable1"></i> &nbsp; {{Mes équipements Google Cast}}
 </legend>
 <div class="eqLogicThumbnailContainer">
 <?php
@@ -76,19 +77,19 @@ foreach ($eqLogics as $eqLogic) {
 	echo "<br>";
 	echo '<span style="font-size : 1.1em;position:relative; top : 10px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;">' . $eqLogic->getHumanName(true, true) . '</span>';
 	echo '</div>';
-	$url = network::getNetworkAccess('external') . '/plugins/googlecast/core/php/googlecast.ajax.php?apikey=' . jeedom::getApiKey('googlecast') . '&id=' . $eqLogic->getId();
 }
 ?>
 </div>
 </div>
-<div class="col-lg-10 eqLogic" style="border-left: solid 1px #EEE; padding-left: 25px;display: none;">
+<div class="col-lg-10 eqLogic equipement-container" style="border-left: solid 1px #EEE; padding-left: 25px;display: none;">
+  <a class="btn btn-default pull-right bt_sidebarToogle"><i class="fa fa-dedent"></i></a>
   <a class="btn btn-success eqLogicAction pull-right" data-action="save"><i class="fa fa-check-circle"></i> {{Sauvegarder}}</a>
   <a class="btn btn-danger eqLogicAction pull-right" data-action="remove"><i class="fa fa-minus-circle"></i> {{Supprimer}}</a>
   <a class="btn btn-default eqLogicAction pull-right" data-action="configure"><i class="fa fa-cogs"></i> {{Configuration avancée}}</a>
-  <a class="btn btn-default eqLogicAction pull-right" data-action="copy"><i class="fa fa-copy"></i> {{Dupliquer}}</a>
+  <a class="btn btn-primary pull-right" target="_blank" href="{{https://github.com/guirem/plugin-googlecast/blob/master/docs/fr_FR/index.md#commandes-personnalisées}}"><i class="fa fa-book"></i> Documentation</a>
   <ul class="nav nav-tabs" role="tablist">
     <li role="presentation"><a href="#" class="eqLogicAction" aria-controls="home" role="tab" data-toggle="tab" data-action="returnToThumbnailDisplay"><i class="fa fa-arrow-circle-left"></i></a></li>
-    <li role="presentation" class="active"><a href="#eqlogictab" aria-controls="home" role="tab" data-toggle="tab"><i class="fa fa-tachometer"></i> {{Equipement}}</a></li>
+    <li role="presentation" class="active"><a href="#eqlogictab" aria-controls="home" role="tab" data-toggle="tab"><i class="fa fa-tachometer"></i> {{Google Cast}}</a></li>
     <li role="presentation"><a href="#commandtab" aria-controls="profile" role="tab" data-toggle="tab"><i class="fa fa-list-alt"></i> {{Commandes}}</a></li>
   </ul>
   <div class="tab-content" style="height:calc(100% - 50px);overflow:auto;overflow-x: hidden;">
@@ -182,20 +183,22 @@ foreach (jeedom::getConfiguration('eqLogic:category') as $key => $value) {
   </form>
 </div>
 <div role="tabpanel" class="tab-pane" id="commandtab">
-  <a class="btn btn-success btn-sm cmdAction pull-right" data-action="add" style="margin-top:5px;"><i class="fa fa-plus-circle"></i> {{Ajouter une commande}}</a><br/><br/>
+  <a class="btn btn-success btn-sm cmdAction pull-right" data-action="add" style="margin-top:5px;margin-right:10px;"><i class="fa fa-plus-circle"></i> {{Ajouter une commande}}</a><br/><br/>
   <table id="table_cmd" class="table table-bordered table-condensed">
     <thead>
       <tr>
-        <th style="width: 300px;">{{Nom}}</th>
-        <th style="width: 130px;">Type</th>
-        <th>{{Logical ID (info) ou Commande brute (action)}}</th>
-        <th>{{Paramètres}}</th>
-        <th style="width: 100px;">{{Options}}</th>
-        <th></th>
+        <th style="width: 250px;">{{Nom}}</th>
+        <th style="width: 75px;">Type</th>
+        <th>{{Liste de commandes}}</th>
+        <th style="width: 185px;">{{Paramètres}}</th>
+        <th style="width: 125px;">{{Options}}</th>
+        <th style="width: 92px;">{{Actions}}</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
+   <a class="btn btn-primary btn-sm pull-left" style="margin-top:5px;margin-left:10px;" target="_blank" href="{{https://github.com/guirem/plugin-googlecast/blob/master/docs/fr_FR/index.md#commandes-personnalisées}}"><i class="fa fa-book"></i> Documentation</a>
+   <a class="btn btn-success btn-sm cmdAction pull-right" data-action="add" style="margin-top:5px;margin-right:10px;"><i class="fa fa-plus-circle"></i> {{Ajouter une commande}}</a><br/><br/>
 </div>
 </div>
 </div>
