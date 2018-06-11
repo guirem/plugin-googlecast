@@ -37,8 +37,12 @@ try {
 
     $content = file_get_contents('php://input');
     $json = json_decode($content, true);
+    
+    if ( isset($queryparams['id']) ) {
+        $uuid=$queryparams['id'];
+    }
 
-    $googlecast = googlecast::byLogicalId($uuid);
+    $googlecast = googlecast::byLogicalId($uuid,'googlecast');
     if (!is_object($googlecast)) {
     	echo json_encode(array('text' => __('UUID inconnu : ', __FILE__) . $uuid));
     	die();
