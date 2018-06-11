@@ -1086,13 +1086,22 @@ class googlecast extends eqLogic {
                     return $errorRet;
                 }
 
+                // for test
+                //$httpret = '{"alarm":[{"date_pattern":{"day":15,"month":1,"year":2018},"time_pattern":{"hour":6,"minute":50,"second":0},"fire_time":1515995400000.0,"id":"alarm/xxx","status":1}]}';
+                //$arrayret = json_decode($httpret, true);
+
                 if (isset($data['data'])) {
 
                     $dataItemList = explode (',',$data['data']);
                     $retArray = array();
                     foreach ($dataItemList as $dataItem) {
-                        $pathList = explode ('/',$dataItem);
-                        array_push($retArray, $this->recursePath($arrayret, $pathList, $errorRet));
+                        if ( strpos($dataItem, '$') === 0 ) {   // jsonpath type
+                            array_push($retArray, googlecast_utils::getJsonPathResult($httpret, $dataItem));
+                        }
+                        else {  // legacy using '/' as separator
+                            $pathList = explode ('/',$dataItem);
+                            array_push($retArray, $this->recursePath($arrayret, $pathList, $errorRet));
+                        }
                     }
 					if (isset($data['format'])) {
 						$format = $data['format'];
@@ -1101,11 +1110,9 @@ class googlecast extends eqLogic {
                         $ret = json_encode($retArray);
                     }
                     elseif ( $format=='string' ) {
-                        $ret = '';
-                        foreach ($retArray as $retElem) {
-                            $ret .= $sep . trim($retElem);
-                        }
-                        $ret = substr($ret, 1);
+                        $flattenAr = $this->array_flatten($retArray);
+                        //log::add('googlecast','debug',"getInfoHttp : Debug format string : " . print_r($flattenAr, true));
+                        $ret = join($sep, $flattenAr);
                     }
 					else {
                         $ret = '';
@@ -1154,6 +1161,7 @@ class googlecast extends eqLogic {
         return $return;
     }
 
+    // old version using '/' as path sepearator
     private function recursePath($array, $pathList, $errorRet) {
         $pathItem = array_shift($pathList);
         if ( is_null($pathItem) ) {
@@ -1261,8 +1269,17 @@ class googlecastcmd extends cmd {
 		if ($listCmd == "customcmd") {
 			$listCmd = trim($_options['message']);
 		}
+        # special case of 'action' command with subtype 'list' starting with 'cmdlist_'
+        if ( strpos($listCmd, 'cmdlist_')===0 ) {
+            $listCmd = str_replace('^', '|', trim($_options['select']));    // replace ^ by |
+            if ($listCmd=='') {     // case of default value ('none' selected)
+                $listCmd='quit_app';
+            }
+		}
 
+        // if this is a command 'info' to retrieve google cast device configuration using http
 		if ($this->getType() != 'action') {
+            // command must contains string 'cmd=getconfig'
             if (stristr($listCmd, 'cmd=getconfig')!=false) {
                 $eqLogic->getInfoHttpSimple($listCmd, $this->getLogicalId());
                 log::add('googlecast','debug',"Envoi d'une commande GoogleCast API http depuis Jeedom");
@@ -1272,17 +1289,21 @@ class googlecastcmd extends cmd {
             }
 		}
 
+        // 'refresh' type command
         if ($listCmd == "refreshconfig" || $listCmd == "refresh") {
+            // both refresh commands require refreshing conifguration command refresh
             foreach ($eqLogic->getCmd('info') as $cmd) {
 				$logicalId = googlecast_utils::getCmdTranslation($cmd->getLogicalId());
                 if (stristr($logicalId, 'cmd=getconfig')!=false) {
                     $eqLogic->getInfoHttpSimple($logicalId, $cmd->getLogicalId());
                 }
 			}
+
             if ($listCmd == "refreshconfig") {
-                return;
+                return;     // do not need to go further in that case
             }
         }
+        // if this is a command 'action' to modify google cast device configuration using http
         if (stristr($listCmd, 'cmd=setconfig')!=false) {
             log::add('googlecast','debug',"Envoi d'une commande GoogleCast API http depuis Jeedom (set)");
             $eqLogic->setInfoHttpSimple($listCmd, null);
@@ -1290,14 +1311,14 @@ class googlecastcmd extends cmd {
         }
 
         $datalist=array();
-        $cmdgroups = explode('$$', $listCmd);
+        $cmdgroups = explode('$$', $listCmd);   // split multiple commands (sequences)
         foreach ($cmdgroups as $listCmd) {
             $data = array();
-    		$values = explode('|', $listCmd);
+    		$values = explode('|', $listCmd);     // split commands
     		foreach ($values as $value) {
     			$value = explode('=', $value);
-    			if (count($value) == 2) {
-    				switch ($this->getSubType()) {
+    			if (count($value) == 2) {    // X=Y
+    				switch ($this->getSubType()) {      // manage placeholder replacement
     					case 'slider':
     						$data[trim($value[0])] = trim(str_replace('#slider#', $_options['slider'], $value[1]));
     						break;
@@ -1309,14 +1330,18 @@ class googlecastcmd extends cmd {
     						break;
     					case 'message':
     						$data[trim($value[0])] = trim(str_replace('#message#', $_options['message'], $value[1]));
-    						$data[trim($value[0])] = trim(str_replace('#title#', $_options['title'], $data[trim($value[0])]));
-                            $data[trim($value[0])] = trim(str_replace('#volume#', $_options['volume'], $data[trim($value[0])]));
+                            if ( isset($_options['title']) ) {
+    						    $data[trim($value[0])] = trim(str_replace('#title#', $_options['title'], $data[trim($value[0])]));
+                            }
+                            if ( isset($_options['volume']) ) {
+                                $data[trim($value[0])] = trim(str_replace('#volume#', $_options['volume'], $data[trim($value[0])]));
+                            }
     						break;
     					default:
     						$data[trim($value[0])] = trim($value[1]);
     				}
     			}
-    			elseif (count($value) == 1) {
+    			elseif (count($value) == 1) {    // // X only, then assume this is a command
     				$data['cmd'] = trim($value[0]);
     				switch ($this->getSubType()) {
     					case 'slider':
@@ -1331,12 +1356,13 @@ class googlecastcmd extends cmd {
     				}
     			}
     		}
-    		if (count($data) == 0) {
+    		if (count($data) == 0) {  // something is wrong because no value
     			return;
     		}
-            array_push($datalist, $data);
+            array_push($datalist, $data);   // push in the sequence array (even if only one command)
         }
 
+        // generate the query to be sent
         $fulldata = array(
             'apikey' => jeedom::getApiKey('googlecast'),
             'cmd' => 'action',
@@ -1348,7 +1374,6 @@ class googlecastcmd extends cmd {
         );
 		log::add('googlecast','debug',"Envoi d'une commande depuis Jeedom");
 		googlecast::socket_connection( json_encode($fulldata) );
-
 	}
 
 

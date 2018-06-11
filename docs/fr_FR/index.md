@@ -43,6 +43,18 @@ Dashboard
 ![Visuel du dashboard](../images/dashboard.png "Visuel du dashboard")
 ![Visuel du dashboard 2](../images/dashboard2.png "Visuel du dashboard 2")
 
+Quick Start
+=======================
+
+Le plugin est normalement fonctionnel dès l'installation avec le paramêtrage par défaut.
+
+En quelques étapes :
+1. Installer le plugin du market, les dépendances puis démarrer le démon,
+2. Lancer un scan des Google Cast disponibles sur le réseau,
+3. Sauvegarder les équipements trouvés,
+4. Aller sur le dashboard et tester les boutons 'démo' (media, web...),
+5. Pour changer/adapter le paramètrage, lire le reste de la documentation.
+
 Configuration du plugin
 =======================
 
@@ -114,6 +126,7 @@ Pour les voir sur le dashboard, il faut activer 'Afficher' dans l'onglet des com
 > 'NOT CONNECTED' si offline ou
 > 'ERROR' pour les autres erreurs
 > - Au repos (pas d'action en cours), *status_text* = `&nbsp;`
+
 
 ### Afficheur Lecture en cours (widget)
 
@@ -187,6 +200,7 @@ Elles doivent être séparés par *|*
 - app : name of application (web/backdrop/youtube/media)
 - cmd : name of command (dépend of application)
     * tts : text to speech, use value to pass text
+    * notif : send sound notification based on existing media file (ex: mp3)
     * refresh
     * reboot : reboot the Google Cast
     * volume_up
@@ -203,11 +217,11 @@ Elles doivent être séparés par *|*
     * seek : use value in seconds. Can use +/- to use relative seek (ex: +20 to pass 20 seconds)
     * pause
     For application dependant commands
-        * web : load_url
-        * media : play_media
-        * youtube : play_video/add_to_queue/remove_video/play_next
+        * web : load_url (default)
+        * media : play_media (default)
+        * youtube : play_video (default)/add_to_queue/remove_video/play_next
         * backdrop : no command
-        * plex : play_media/play/stop/pause
+        * plex : play_media  (default)/play/stop/pause
 - value : chain of parameters separated by ',' (depending of command)
 - vol (optional, between 1 et 100) : adjust volume for the command
 - sleep (optional, int/float) : add a break after end of command in seconds (eg: 2, 2.5)
@@ -223,7 +237,7 @@ ex TTS : cmd=tts|vol=100|value=Mon text a dire
 
 #### Paramètres possibles pour *play_media* en mode *media* :
 ```
-- url: str - url of the media.
+- url: str - url of the media (mandatory).
 - content_type: str - mime type. Example: 'video/mp4' (optional).
    Possible values: 'audio/aac', 'audio/mpeg', 'audio/ogg', 'audio/wav', 'image/bmp',
    'image/gif', 'image/jpeg', 'image/png', 'image/webp','video/mp4', 'video/webm'.
@@ -239,6 +253,8 @@ ex TTS : cmd=tts|vol=100|value=Mon text a dire
 - subtitle_id: int - id of subtitle to be loaded (optional, default=1).
 
 ex short : app=media|cmd=play_media|value='http://contentlink','video/mp4','Video name'
+ex short : app=media|cmd=play_media|value='http://contentlink',title:'Video name'
+ex short : app=media|value='http://contentlink','video/mp4','Video name' (implicit play_media command call)
 
 ex long : app=media|cmd=play_media|value='http://contentlink','video/mp4',title:'Video name',
    thumb:'http://imagelink',autoplay:True,
@@ -249,6 +265,7 @@ ex long : app=media|cmd=play_media|value='http://contentlink','video/mp4',title:
 > **Notes**   
 > - Les url et chaînes de caractères sont entourées de guillements simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
 > - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
+> - Un média local situé dans le répertoire */googlecast/localmedia/* peux être utilisé en appelant l'url *local://<nomdufichier>* (ex: local://bigben1.mp3)
 
 #### Paramètres possibles pour *load_url* en mode *web* :
 ```
@@ -258,6 +275,7 @@ ex long : app=media|cmd=play_media|value='http://contentlink','video/mp4',title:
 
 ex 1 : app=web|cmd=load_url|value='http://pictoplasma.sound-creatures.com',True,10
 ex 2 : app=web|cmd=load_url|value='http://mywebsite/index.php?apikey%3Dmyapikey'
+ex 3 : app=web|value='http://mywebsite/index.php?apikey%3Dmyapikey' (implicit load_url command call)
 ```
 
 > **Notes**   
@@ -280,6 +298,8 @@ ex using user & pass :
    app=plex|cmd=play_media|user=XXXXXX|pass=XXXXXXXXXXX|server=MyPlexServer|value=Playlist Jeedom|shuffle=1|type=audio
 ex using token :   
    app=plex|cmd=play_media|token=XXXXXXXXX|server=http://IP:32400|value=Playlist Jeedom
+ex using token with implicit play_media command call :   
+   app=plex|token=XXXXXXXXX|server=http://IP:32400|value=Playlist Jeedom
 ```
 
 > **Notes**   
@@ -289,6 +309,7 @@ ex using token :
 
 #### Paramètres possibles pour cmd *tts* :
 ```
+- value: str - text
 - lang: str - fr-FR/en-US or any compatible language (optional, default is configuration)
 - engine: str - picotts/gtts/gttsapi/gttsapidev. (optional, default is configuration)
 - quit: 0/1 - quit app after tts action.
@@ -296,7 +317,7 @@ ex using token :
 - speed: float (default=1.2) - speed of speech (eg: 0.5, 2).
 - vol: int (default=previous) - set the volume for the time TTS message is broadcast. Previous volume is resumed when done.
 - sleep: float (default=0) - add time in seconds after tts is finished (before volume resume)
-- silence: int (default=300) - add a short silence before the speech to make sure all is audible (in milliseconds)
+- silence: int (default=300, 600 for group cast) - add a short silence before the speech to make sure all is audible (in milliseconds)
 - generateonly: 1 - only generate speech file in cache (no action on device)
 - forcevol: 1 - Set volume also if the current volume is the same (useful for TTS synchronisation in multithreading)
 - noresume: 1 - disable recovery of previous state before playing TTS.
@@ -308,7 +329,24 @@ ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
 
 > **Notes**   
 > By default, the plugin will try to resume previous app launched (will only work when previous application has been launched by the plugin).
-> You can try to force resume of any application using 'forceapplaunch=1' but there is a good chance that it will not resume correctly.
+> You can try to force resume to any application using 'forceapplaunch=1' but there is a good chance that it will not resume correctly.
+
+#### Paramètres possibles pour cmd *notif* :
+```
+- value: str - local media filename (located in '/googlecast/localmedia/' folder)
+- quit: 0/1 - quit app after notif action.
+- vol: int (default=previous) - set the volume for the time notif message is broadcast. Previous volume is resumed when done.
+- sleep: float (default=0) - add time in seconds after notif is finished (before volume resume)
+- forcevol: 1 - Set volume also if the current volume is the same (useful for notif synchronisation in multithreading)
+- noresume: 1 - disable recovery of previous state before playing notif.
+- forceapplaunch: 1 - will try to force launch of previous application even if not lauched by plugin (to be used with 'resume').
+
+ex : cmd=notif|value=bigben1.mp3|vol=100
+```
+
+> **Notes**   
+> By default, the plugin will try to resume previous app launched (will only work when previous application has been launched by the plugin).    
+> You can try to force resume to any application using 'forceapplaunch=1' but there is a good chance that it will not resume correctly.
 
 #### Séquence de commandes
 Il est possible de lancer plusieurs commandes à la suite en séparant par *$$*
@@ -337,7 +375,7 @@ Pour plus d'info voir  https://rithvikvibhu.github.io/GHLocalApi/
 ###### paramètres possibles pour cmd *getconfig* :
 ```
 - value: str - uri base after 'setup/' based on API doc (default is 'eureka_info'). If starts with 'post:', a POST type request will be issued.
-- data: str - json path to be returned separated by '/'. To get several data, separate by ','.
+- data: str - json path to be returned separated by '/'. To get several data, separate by ','. Alternatively, JsonPath format can be used ( http://goessner.net/articles/JsonPath).
 - sep: str - seperator if several data is set (default = ',').
 - format: json/string/custom - output format (default = 'string'). 'custom' follows 'sprintf' php function format (ex: %d, %s).
 - error: 1 - seperator if several data is set (default = ',').
@@ -347,9 +385,11 @@ Exemples:
 - Récupération du pincode d'une Google Chromecast :
 cmd=getconfig|data=opencast_pin_code
 - Google Home : Récupération de l'état de la première alarme (-1 en cas de problème ou non existant) :
-cmd=getconfig|value=assistant/alarms|data=alarm/0/status|reterror=-1
+cmd=getconfig|value=assistant/alarms|data=$.alarm.[0].status|reterror=-1
 - Google Home : Récupération de la date et heure de la première alarme au format JJ-MM-AAAA HH:MM :
-'cmd=getconfig|value=assistant/alarms|data=alarm/0/fire_time|fnc=ts2long|reterror=00-00-0000 00:00
+cmd=getconfig|value=assistant/alarms|data=$.alarm.[0].fire_time|fnc=ts2long|reterror=00-00-0000 00:00
+- Google Home : Récupération de la date et heure de l'alarme avec id connu au format JJ-MM-AAAA HH:MM :
+cmd=getconfig|value=assistant/alarms|data=$.alarm.[?(@.id=alarm/xxxxxx)].fire_time|fnc=ts2long|reterror=00-00-0000 00:00
 - Changer le nom du Google cast :
 cmd=setconfig|data={"name":"Mon nouveau nom"}
 - Google Home : Désactiver le mode nuit :
@@ -379,6 +419,8 @@ cmd=setconfig|value=assistant/alarms/volume|data={'volume': 1}
 
 Les commandes suivantes peuvent être utilisées dans une commande 'info' ou scénario (via fonction *getInfoHttpSimple()*) :
 
+- *gh_get_alarms_date* : retourne la date de toutes les alarmes.
+- *gh_get_alarms_id* : retourne les identifiants uniques de toutes les alarmes et timers.
 - *gh_get_alarm_date_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format dd-mm-yyyy HH:mm.
 - *gh_get_alarm_datenice_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format {'Today'|'Tomorrow'|dd-mm-yyyy} HH:mm.
 - *gh_get_alarm_timestamp_#* (#=numéro, commence par 0) : retourne le timestamp de la prochaine alarme.
@@ -410,6 +452,31 @@ gh_get_alarm_date_0
 - Commande de type action
 gh_set_alarms_volume_80
 ```
+
+### Création dune commande *action* de type *Liste*
+
+Pour créer une commande *action* de type *Liste* dont plusieurs paramètres changent, la commande doit impérativement s'appeler *cmdlist_XXXX* avec XXXX pouvant être remplacé par un nom (example cmdlist_radio).
+
+Le champs *Liste de valeurs* doit contenir la liste de commandes enière et suivre le format `<commandes>|<texte affiché>;<commandes>|<texte affiché>;...`   
+Le séparateur de commande devra être changé de '|' pour '^'.
+
+````
+Exemple site web :
+app=web^cmd=load_url^value='https://google.com'|Google;
+app=web^cmd=load_url^value='https://facebook.com'|Facebook
+
+Exemple pour webradio :
+app=media^value='http://urlFluxRadio1/flux.mp3','audio/mpeg','Radio 1'|Radio 1;
+app=media^value='http://urlFluxRadio2/flux.mp3','audio/mpeg','Radio 2'|Radio 2;
+app=media^value='http://urlFluxRadio3/flux.mp3','audio/mpeg','Radio 3'|Radio 3
+````
+
+![Command action of type list](../images/commands_list.png "Command action of type list")
+
+> **Note**   
+> Pour des commandes plus simples (un seul paramètre change), il est toujours possible d'utiliser le placeholder *#listValue#* dans une commande.    
+> Exemple : `app=web|cmd=load_url|value=#listValue#` avec comme liste de valeurs `https://google.com|Google;https://facebook.com|Facebook`
+
 
 ### Utilisation dans un scénario
 

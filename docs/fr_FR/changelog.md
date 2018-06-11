@@ -4,6 +4,17 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
+## Version du 11 juin 2018 (beta)
+
+- Nettoyage/optimisation de la page de configuration des commandes
+- Compatibilité commande action de type liste
+- Nouvelle commande 'notif' (similaire à tts mais pour jouer un mp3 local)    
+  Tester avec `cmd=notif|value=bigben1.mp3|vol=100`
+- Possiblité de jouer des fichiers en local pour app media
+- fix getconfig (compatiblité jsonpath)
+- fix update des command info title/artist/player_state
+- Correction de bugs and maj doc
+
 ## Version du 09 juin 2018 (stable)
 
 - Passage de la beta en stable (voir les changements beta)
