@@ -10,13 +10,13 @@ Remotely control Google Cast devices directly from Jeedom.
 
 - Plugin [user documentation - french](docs/fr_FR/index.md)
 - Plugin [user documentation - english](docs/en_US/index.md)
-    
+
 
 ##### Base projects
 
-- pychromecast (balloob/pychromecast)
-- pydub (jiaaro/pydub)
-- plexapi (pkkid/python-plexapi)
+- pychromecast (https://github.com/balloob/pychromecast)
+- pydub (https://github.com/jiaaro/pydub)
+- plexapi (https://github.com/pkkid/python-plexapi)
 - Jeedom core (jeedom/core)
 - Jeedom plugins (gcast, blea...)
 - python gtts
