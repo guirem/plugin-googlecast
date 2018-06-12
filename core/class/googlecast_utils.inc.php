@@ -1,4 +1,7 @@
 <?php
+
+require_once dirname(__FILE__) . "/../../3rdparty/JsonPath/JsonStore.php";
+
 class googlecast_utils {
 
     public static function getCmdTranslation($logicalId) {
@@ -13,41 +16,67 @@ class googlecast_utils {
         elseif ( $logicalId == 'speak_forceresume' ) {
             $ret = 'cmd=tts|value=#message#|vol=#volume#|forceapplaunch=1';
         }
+        elseif ( $logicalId == 'gh_get_alarms_date' ) {
+            $ret = 'cmd=getconfig|value=assistant/alarms|data=$.alarm..fire_time|fnc=ts2long|reterror=Undefined';
+        }
+        elseif ( $logicalId == 'gh_get_alarms_id' ) {
+            $ret = 'cmd=getconfig|value=assistant/alarms|data=$..id|fnc=ts2long|reterror=Undefined';
+        }
         elseif ( strpos($logicalId, 'gh_get_alarm_date_') === 0 ) {
             $param = str_replace("gh_get_alarm_date_", "", $logicalId);
-            $ret = 'cmd=getconfig|value=assistant/alarms|data=alarm/'.$param.'/fire_time|fnc=ts2long|reterror=Undefined';
+            if ( is_numeric($param) ) {
+                $ret = 'cmd=getconfig|value=assistant/alarms|data=$.alarm.['.$param.'].fire_time|fnc=ts2long|reterror=Undefined';
+            }
+            else {
+                $ret = 'cmd=getconfig|value=assistant/alarms|data=$..[?(@.id='.$param.')].fire_time|fnc=ts2long|reterror=Undefined';
+            }
         }
         elseif ( strpos($logicalId, 'gh_get_alarm_status_') === 0 ) {
             $param = str_replace("gh_get_alarm_status_", "", $logicalId);
-            $ret = 'cmd=getconfig|value=assistant/alarms|data=alarm/'.$param.'/status|reterror=0';
+            if ( is_numeric($param) ) {
+                $ret = 'cmd=getconfig|value=assistant/alarms|data=$.alarm.['.$param.'].status|reterror=0';
+            }
+            else {
+                $ret = 'cmd=getconfig|value=assistant/alarms|data=$..[?(@.id='.$param.')].fire_time|fnc=ts2long|reterror=Undefined';
+            }
         }
         elseif ( strpos($logicalId, 'gh_get_alarm_datenice_') === 0 ) {
             $param = str_replace("gh_get_alarm_datenice_", "", $logicalId);
-            $ret = 'cmd=getconfig|value=assistant/alarms|data=alarm/'.$param.'/fire_time|fnc=ts2longnice|reterror=Undefined';
+            if ( is_numeric($param) ) {
+                $ret = 'cmd=getconfig|value=assistant/alarms|data=$.alarm.['.$param.'].fire_time|fnc=ts2longnice|reterror=Undefined';
+            }
+            else {
+                $ret = 'cmd=getconfig|value=assistant/alarms|data=$..[?(@.id='.$param.')].fire_time|fnc=ts2long|reterror=Undefined';
+            }
         }
         elseif ( strpos($logicalId, 'gh_get_alarm_timestamp_') === 0 ) {
             $param = str_replace("gh_get_alarm_timestamp_", "", $logicalId);
-            $ret = 'cmd=getconfig|value=assistant/alarms|data=alarm/'.$param.'/fire_time|reterror=Undefined';
+            if ( is_numeric($param) ) {
+                $ret = 'cmd=getconfig|value=assistant/alarms|data=$.alarm.['.$param.'].fire_time|reterror=Undefined';
+            }
+            else {
+                $ret = 'cmd=getconfig|value=assistant/alarms|data=$..[?(@.id='.$param.')].fire_time|fnc=ts2long|reterror=Undefined';
+            }
         }
         elseif ( strpos($logicalId, 'gh_get_timer_timesec_') === 0 ) {
             $param = str_replace("gh_get_timer_time_", "", $logicalId);
-            $ret = 'cmd=getconfig|value=assistant/alarms|data=timer/'.$param.'/fire_time|fnc=ts2sec|reterror=Undefined';
+            $ret = 'cmd=getconfig|value=assistant/alarms|data=$.timer.['.$param.'].fire_time|fnc=ts2sec|reterror=Undefined';
         }
         elseif ( strpos($logicalId, 'gh_get_timer_time_') === 0 ) {
             $param = str_replace("gh_get_timer_timenice_", "", $logicalId);
-            $ret = 'cmd=getconfig|value=assistant/alarms|data=timer/'.$param.'/fire_time|fnc=ts2long|reterror=Undefined';
+            $ret = 'cmd=getconfig|value=assistant/alarms|data=$.timer.['.$param.'].fire_time|fnc=ts2long|reterror=Undefined';
         }
         elseif ( strpos($logicalId, 'gh_get_timer_timestamp_') === 0 ) {
             $param = str_replace("gh_get_timer_timestamp_", "", $logicalId);
-            $ret = 'cmd=getconfig|value=assistant/alarms|data=timer/'.$param.'/fire_time|reterror=Undefined';
+            $ret = 'cmd=getconfig|value=assistant/alarms|data=$.timer.['.$param.'].fire_time|reterror=Undefined';
         }
         elseif ( strpos($logicalId, 'gh_get_timer_duration_') === 0 ) {
             $param = str_replace("gh_get_timer_duration_", "", $logicalId);
-            $ret = 'cmd=getconfig|value=assistant/alarms|data=timer/'.$param.'/original_duration|fnc=2sec|reterror=0';
+            $ret = 'cmd=getconfig|value=assistant/alarms|data=$.timer.['.$param.'].original_duration|fnc=2sec|reterror=0';
         }
         elseif ( strpos($logicalId, 'gh_get_timer_status_') === 0 ) {
             $param = str_replace("gh_get_timer_status_", "", $logicalId);
-            $ret = 'cmd=getconfig|value=assistant/alarms|data=timer/'.$param.'/status|reterror=0';
+            $ret = 'cmd=getconfig|value=assistant/alarms|data=$.timer.['.$param.'].status|reterror=0';
         }
         elseif ($logicalId=='gh_get_donotdisturb') {
             $ret = 'cmd=getconfig|value=post:assistant/notifications';
@@ -70,7 +99,7 @@ class googlecast_utils {
             $ret = 'cmd=getconfig|value=post:assistant/alarms/volume';
         }
         elseif ( $logicalId=='conf_pincode' ) {
-            $ret = 'cmd=getconfig|data=opencast_pin_code';
+            $ret = 'cmd=getconfig|data=$.opencast_pin_code|reterror=Undefined';
         }
         elseif ( $logicalId=='conf_getbonded_bluetooth' ) {
             $ret = 'cmd=getconfig|value=bluetooth/get_bonded';
@@ -89,6 +118,11 @@ class googlecast_utils {
             $ret = 'cmd=setconfig|value=bluetooth/connect|data={"connect":false}';
         }
         return $ret;
+    }
+
+    public static function getJsonPathResult($json, $path) {
+        $store = new JsonStore($json);
+        return $store->get($path);
     }
 
     public static function getFncResult($data, $fnc) {
