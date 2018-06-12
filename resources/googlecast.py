@@ -865,6 +865,9 @@ def action_handler(message):
                         resume = True
                         if 'noresume' in command :
                             resume = False
+                        durationparam = 0
+                        if 'duration' in command :
+                            durationparam = float(command['duration'])
                         curvol = jcast.getCurrentVolume()
                         if curvol == vol and not forcevol :
                             vol = None
@@ -873,7 +876,8 @@ def action_handler(message):
                             need_duration=True
 
                         url,duration,mp3filename=get_notif_data(value, need_duration)
-
+                        if durationparam > 0 :
+                            duration = durationparam
                         if url is not None :
                             thumb=globals.JEEDOM_WEB + '/plugins/googlecast/desktop/images/notif.png'
                             jcast.disable_notif = True
@@ -891,7 +895,7 @@ def action_handler(message):
                                 player.play_media(url, 'video/mp4', 'NOTIF', thumb=thumb, add_delay=0.1, stream_type="LIVE")
                             player.block_until_active(timeout=2);
                             jcast.disable_notif = False
-                            vol_done = False
+                            sleep_done = False
                             if vol is not None :
                                 time.sleep(duration+1)
                                 if sleep>0 :
@@ -899,13 +903,19 @@ def action_handler(message):
                                     sleep=0
                                 gcast.set_volume(curvol/100)
                                 vol = None
-                                vol_done = True
+                                sleep_done = True
+                            if durationparam > 0 :
+                                if sleep_done==False :
+                                    time.sleep(duration)
+                                    sleep_done = True
+                                gcast.media_controller.stop()
                             if quit :
                                 if vol is None :
                                     time.sleep(duration+1)
+                                    sleep_done = True
                                 gcast.quit_app()
                             if resume:
-                                if vol is None and vol_done==False :
+                                if vol is None and sleep_done==False :
                                     time.sleep(duration+1)
                                 forceapplaunch = False
                                 if 'forceapplaunch' in command :

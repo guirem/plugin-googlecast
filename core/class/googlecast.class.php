@@ -605,6 +605,20 @@ class googlecast extends eqLogic {
 			$cmd->setEqLogic_id($this->getId());
 			$cmd->save();
 
+            $logid = "cmd=notif|value=bigben1.mp3|vol=100";
+			$cmd = $this->getCmd(null, $logid);
+			if (!is_object($cmd)) {
+				$cmd = new googlecastCmd();
+				$cmd->setLogicalId($logid);
+				$cmd->setName(__('Notif', __FILE__));
+				$cmd->setIsVisible(1);
+				$cmd->setOrder($order++);
+			}
+			$cmd->setType('action');
+			$cmd->setSubType('other');
+			$cmd->setEqLogic_id($this->getId());
+			$cmd->save();
+
             $cmd = $this->getCmd(null, 'cmd=getconfig|data=opencast_pin_code');
     		if (!is_object($cmd)) {
     			$cmd = new googlecastCmd();
