@@ -361,7 +361,7 @@ ex using token with implicit play_media command call :
 - generateonly: 1 - only generate speech file in cache (no action on device)
 - forcevol: 1 - Set volume also if the current volume is the same (useful for TTS synchronisation in multithreading)
 - noresume: 1 - disable recovery of previous state before playing TTS.
-- forceapplaunch: 1 - will try to force launch of previous application even if not lauched by plugin (to be used with 'resume').
+- forceapplaunch: 1 - will try to force launch of previous application even if not launched by plugin.
 
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
 ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
@@ -380,7 +380,7 @@ ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
 - sleep: float (default=0) - add time in seconds after notif is finished (before volume resume)
 - forcevol: 1 - Set volume also if the current volume is the same (useful for notif synchronisation in multithreading)
 - noresume: 1 - disable recovery of previous state before playing notif.
-- forceapplaunch: 1 - will try to force launch of previous application even if not lauched by plugin (to be used with 'resume').
+- forceapplaunch: 1 - will try to force launch of previous application even if not launched by plugin.
 
 ex : cmd=notif|value=bigben1.mp3|vol=100
 ```
