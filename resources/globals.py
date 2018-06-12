@@ -52,6 +52,8 @@ cycle_factor = 2
 cycle = 0.5
 cycle_main = 2
 
+disable_mediastatus = False
+
 tts_language = 'fr-FR'
 tts_engine = 'picotts'
 tts_cacheenabled = True
@@ -61,6 +63,9 @@ tts_cachefoldertmp = os.path.join('/tmp/jeedom/', 'googlecast_tts')
 tts_gapi_url = 'https://www.google.com/speech-api/'
 tts_gapi_key = 'none'
 tts_gapi_haskey = False
+
+localmedia_folder = 'localmedia'
+localmedia_fullpath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), localmedia_folder))
 
 log_level = "info"
 pidfile = '/tmp/googlecast.pid'

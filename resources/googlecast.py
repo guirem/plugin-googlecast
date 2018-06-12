@@ -106,6 +106,7 @@ class JeedomChromeCast :
             self.previous_playercmd =  {}
             self.sessionid_storenext = False
             self.sessionid_current = ''
+            self.previous_nowplaying = {}
             self.nowplaying_lastupdated = 0
             self.gcast.media_controller.register_status_listener(self)
             self.gcast.register_status_listener(self)
@@ -180,8 +181,11 @@ class JeedomChromeCast :
 
     def new_media_status(self, new_mediastatus):
         #logging.debug("JEEDOMCHROMECAST------ New media status " + str(new_mediastatus))
-        if self.now_playing==True and new_mediastatus.player_state!="BUFFERING" and not self.disable_notif :
-            self._internal_send_now_playing()
+        if new_mediastatus.player_state!="BUFFERING" and not self.disable_notif :
+            if not globals.disable_mediastatus :
+                self._internal_send_now_playing_statusupdate(new_mediastatus)
+            if self.now_playing==True :
+                self._internal_send_now_playing()
 
     def new_connection_status(self, new_status):
         # CONNECTING / CONNECTED / DISCONNECTED / FAILED / LOST
@@ -388,11 +392,11 @@ class JeedomChromeCast :
                 "display_name" : self.gcast.status.display_name if self.gcast.status.display_name is not None else globals.DEFAULT_NODISPLAY,
                 "status_text" : self.gcast.status.status_text if self.gcast.status.status_text!="" else globals.DEFAULT_NOSTATUS,
                 "is_busy" : not self.gcast.is_idle,
-                "title" : "" if playStatus is None else playStatus.title,
-                "artist" : "" if playStatus is None else playStatus.artist,
-                'series_title': "" if playStatus is None else playStatus.series_title,
-                "stream_type" : "" if playStatus is None else playStatus.stream_type,
-                "player_state" : "" if playStatus is None else playStatus.player_state,
+                "title" : "" if playStatus.title is None else playStatus.title,
+                "artist" : "" if playStatus.artist is None else playStatus.artist,
+                'series_title': "" if playStatus.series_title is None else playStatus.series_title,
+                "stream_type" : "" if playStatus.stream_type is None else playStatus.stream_type,
+                "player_state" : "" if playStatus.player_state is None else playStatus.player_state,
             }
             return status
         else :
@@ -424,6 +428,28 @@ class JeedomChromeCast :
         if prev_status['player_state'] != new_status['player_state'] :
             return True
         return False
+
+    def _internal_send_now_playing_statusupdate(self, new_nowplaying):
+        prev_nowplaying = self.previous_nowplaying
+        test_dif = False
+        if 'title' not in prev_nowplaying :
+            test_dif = True
+        elif prev_nowplaying['title'] != new_nowplaying.title :
+            test_dif = True
+        elif prev_nowplaying['player_state'] != new_nowplaying.player_state and new_nowplaying.player_state!=['UNKNOWN'] :
+            test_dif = True
+
+        if test_dif==True :
+            mediastatus = {
+                "uuid" : self.uuid,
+                "title" : '' if new_nowplaying.title is None else new_nowplaying.title,
+                "artist" : '' if new_nowplaying.artist is None else new_nowplaying.artist,
+                'series_title': '' if new_nowplaying.series_title is None else new_nowplaying.series_title,
+                "player_state" : '' if new_nowplaying.player_state is None else new_nowplaying.player_state,
+            }
+            logging.debug("JEEDOMCHROMECAST------ NOW PLAYING STATUS SEND " + str(mediastatus))
+            self.previous_nowplaying = mediastatus
+            globals.JEEDOM_COM.add_changes('devices::'+self.uuid, {'uuid': self.uuid, 'typemsg': 'info', 'status': mediastatus})
 
     def getDefinition(self):
         status = {
@@ -615,11 +641,14 @@ def action_handler(message):
             gcast = jcast.gcast
             try:
                 if app == 'media' :    # app=media|cmd=play_media|value=http://bit.ly/2JzYtfX,video/mp4,Mon film
+                    if cmd == 'NONE' :
+                        cmd = 'play_media'
                     possibleCmd = ['play_media']
                     if cmd in possibleCmd :
                         if 'offset' in command and float(command['offset'])>0 and 'current_time' not in value :
                             value = value + ',current_time:'+ str(command['offset'])
 
+                        value = value.replace('local://', globals.JEEDOM_WEB+'/plugins/googlecast/'+globals.localmedia_folder+'/')
                         fallbackMode=False
                         player = jcast.loadPlayer('media', { 'quitapp' : quit_app_before})
                         eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
@@ -627,6 +656,8 @@ def action_handler(message):
 
                 elif app == 'web':    # app=web|cmd=load_url|value=https://news.google.com,True,5
                     force_register=True
+                    if cmd == 'NONE' :
+                        cmd = 'load_url'
                     possibleCmd = ['load_url']
                     if cmd in possibleCmd :
                         fallbackMode=False
@@ -647,6 +678,8 @@ def action_handler(message):
                             logging.error("ACTION------ YouTube not availble on Google Cast Audio")
 
                 elif app == 'spotify':  # app=spotify|cmd=launch_app|user=XXXXXX|pass=YYYY|value
+                    if cmd == 'NONE' :
+                        cmd = 'play_media'
                     possibleCmd = ['play_media']
                     if cmd == 'play_media' :
                         fallbackMode=False
@@ -695,6 +728,8 @@ def action_handler(message):
 
                 elif app == 'plex':            # app=plex|cmd=pause
                     quit_app_before=False
+                    if cmd == 'NONE' :
+                        cmd = 'play_media'
                     possibleCmd = ['play_media','play', 'stop', 'pause', 'next', 'previous']
                     if cmd in possibleCmd :
                         fallbackMode=False
@@ -818,6 +853,94 @@ def action_handler(message):
                         logging.debug("ACTION------Mute off action")
                         gcast.set_volume_muted(False)
                         fallbackMode=False
+
+                    elif cmd == 'notif':
+                        logging.debug("ACTION------NOTIF action")
+                        forcevol = False
+                        if 'forcevol' in command :
+                            forcevol = True
+                        type = 'audio'
+                        if 'type' in command :
+                            type = command['type']
+                        resume = True
+                        if 'noresume' in command :
+                            resume = False
+                        durationparam = 0
+                        if 'duration' in command :
+                            durationparam = float(command['duration'])
+                        curvol = jcast.getCurrentVolume()
+                        if curvol == vol and not forcevol :
+                            vol = None
+                        need_duration=False
+                        if vol is not None or quit==True or resume==True :
+                            need_duration=True
+
+                        url,duration,mp3filename=get_notif_data(value, need_duration)
+                        if durationparam > 0 :
+                            duration = durationparam
+                        if url is not None :
+                            thumb=globals.JEEDOM_WEB + '/plugins/googlecast/desktop/images/notif.png'
+                            jcast.disable_notif = True
+                            if resume:
+                                jcast.prepareTTSplay()
+                            player = jcast.loadPlayer(app, { 'quitapp' : False, 'wait': wait})
+                            if vol is not None :
+                                gcast.media_controller.pause();
+                                time.sleep(0.1)
+                                gcast.set_volume(vol/100)
+                                time.sleep(0.1)
+                            if type == 'audio' :
+                                player.play_media(url, 'audio/mp3', 'NOTIF', thumb=thumb, add_delay=0.1, stream_type="LIVE")
+                            else :
+                                player.play_media(url, 'video/mp4', 'NOTIF', thumb=thumb, add_delay=0.1, stream_type="LIVE")
+                            player.block_until_active(timeout=2);
+                            jcast.disable_notif = False
+                            sleep_done = False
+                            if vol is not None :
+                                time.sleep(duration+1)
+                                if sleep>0 :
+                                    time.sleep(sleep)
+                                    sleep=0
+                                gcast.set_volume(curvol/100)
+                                vol = None
+                                sleep_done = True
+                            if durationparam > 0 :
+                                if sleep_done==False :
+                                    time.sleep(duration)
+                                    sleep_done = True
+                                gcast.media_controller.stop()
+                            if quit :
+                                if vol is None :
+                                    time.sleep(duration+1)
+                                    sleep_done = True
+                                gcast.quit_app()
+                            if resume:
+                                if vol is None and sleep_done==False :
+                                    time.sleep(duration+1)
+                                forceapplaunch = False
+                                if 'forceapplaunch' in command :
+                                    forceapplaunch = True
+                                prevcommand = jcast.getPreviousPlayerCmd(forceapplaunch)
+                                if prevcommand is not None :
+                                    newMessage = {
+                                        'cmd' : 'action',
+                                        'delegated' : True,
+                                        'resume' : True,
+                                        'device' : {'uuid' : uuid, 'source' : message['device']['source'] },
+                                        'command' : prevcommand
+                                    }
+                                    logging.debug("NOTIF------DELEGATED RESUME AFTER NOTIF for uuid : " + uuid)
+                                    time.sleep(0.3)
+                                    jcast.resetPreviousPlayerCmd()
+                                    thread.start_new_thread( action_handler, (newMessage,))
+                                else :
+                                    logging.debug("NOTIF------Resume is not possible!")
+                        else :
+                            logging.debug("NOTIF------Error while getting local media !")
+                            sendErrorDeviceStatus(uuid, 'ERROR')
+
+                        fallbackMode=False
+
                     elif cmd == 'tts':
                         logging.debug("ACTION------TTS action")
                         lang = globals.tts_language
@@ -857,17 +980,20 @@ def action_handler(message):
                         if generateonly == False :
                             url,duration,mp3filename=get_tts_data(value, lang, engine, speed, forcetts, need_duration, silence)
                             if url is not None :
-                                if vol is not None :
-                                    gcast.set_volume(vol/100)
-                                    time.sleep(0.1)
                                 thumb=globals.JEEDOM_WEB + '/plugins/googlecast/desktop/images/tts.png'
                                 jcast.disable_notif = True
                                 if resume:
                                     jcast.prepareTTSplay()
                                 player = jcast.loadPlayer(app, { 'quitapp' : False, 'wait': wait})
+                                if vol is not None :
+                                    gcast.media_controller.pause();
+                                    time.sleep(0.1)
+                                    gcast.set_volume(vol/100)
+                                    time.sleep(0.1)
                                 player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, add_delay=0.1, stream_type="LIVE");
                                 player.block_until_active(timeout=2);
                                 jcast.disable_notif = False
+                                vol_done = False
                                 if vol is not None :
                                     time.sleep(duration+(silence/1000)+1)
                                     if sleep>0 :
@@ -875,12 +1001,14 @@ def action_handler(message):
                                         sleep=0
                                     gcast.set_volume(curvol/100)
                                     vol = None
+                                    vol_done = True
+
                                 if quit :
                                     if vol is None :
                                         time.sleep(duration+(silence/1000)+1)
                                     gcast.quit_app()
                                 if resume:
-                                    if vol is None :
+                                    if vol is None and vol_done==False :
                                         time.sleep(duration+(silence/1000)+1)
                                     forceapplaunch = False
                                     if 'forceapplaunch' in command :
@@ -900,9 +1028,9 @@ def action_handler(message):
                                         thread.start_new_thread( action_handler, (newMessage,))
                                     else :
                                         logging.debug("TTS------Resume is not possible!")
-                                else :
-                                    logging.debug("TTS------File generation failed !")
-                                    sendErrorDeviceStatus(uuid, 'ERROR')
+                            else :
+                                logging.debug("TTS------File generation failed !")
+                                sendErrorDeviceStatus(uuid, 'ERROR')
                         else :
                             logging.error("TTS------Only generating TTS file without playing")
                             get_tts_data(value, lang, engine, speed, forcetts, False, silence)
@@ -1150,6 +1278,33 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
         duration_seconds=0
         filenamemp3=None
     return urltoplay, duration_seconds, filenamemp3
+
+def get_notif_data(mediafilename, calcduration):
+    try:
+        urltoplay = globals.JEEDOM_WEB+'/plugins/googlecast/'+globals.localmedia_folder+'/'+mediafilename
+        filename = os.path.join(globals.localmedia_fullpath,mediafilename)
+        if os.path.isfile(filename) :
+            if calcduration :
+                extension = os.path.splitext(filename)[1]
+                if extension.lower()=='.mp3' :
+                    notifSound = AudioSegment.from_mp3(filename)
+                else :
+                    notifSound = AudioSegment.from_file(filename,  extension.lower().replace('.',''))
+                duration_seconds = notifSound.duration_seconds
+        else:
+            logging.debug("CMD-NOTIF------File doesn't exist (" + filename + ')')
+            urltoplay=None
+            duration_seconds=0
+            filename=None
+
+    except Exception as e:
+        logging.error("CMD-NOTIF------Error processing file  (%s)" % str(e))
+        logging.debug(traceback.format_exc())
+        urltoplay=None
+        duration_seconds=0
+        filename=None
+    logging.debug("CMD-NOTIF------NOTIF debug : " + urltoplay + ", duration: " + str(duration_seconds))
+    return urltoplay, duration_seconds, filename
 
 def logByTTS(text_id):
     lang = globals.tts_language
@@ -1466,10 +1621,12 @@ def scanner(name):
     globals.SCAN_PENDING = False
 
 def sendErrorDeviceStatus(uuid, message, online=True):
+    # send to plugin
     errorstatus = {
         "uuid" : uuid, "display_name" : message, "status_text" : message
     }
     globals.JEEDOM_COM.add_changes('devices::'+uuid, {'uuid': uuid, 'typemsg': 'error', 'status': errorstatus})
+    # send to now playing widget
     data = {
         "uuid" : uuid, "online" : online,
         "is_active_input" : False, "is_stand_by" : False,
