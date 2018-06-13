@@ -48,7 +48,7 @@ except ImportError:
 
 try:
     import pychromecast.pychromecast.controllers.dashcast as dashcast
-    import pychromecast.pychromecast.controllers.spotify as Spotify
+    import pychromecast.pychromecast.controllers.spotify as spotify
     import pychromecast.pychromecast.controllers.youtube as youtube
 except ImportError:
     logging.error("ERROR: One or several pychromecast controllers are not loaded !")
@@ -72,7 +72,7 @@ except ImportError:
     pass
 
 try:
-    import spotipy.spotify_token as stoken
+    #import spotipy.spotify_token as stoken
     import spotipy
 except ImportError:
     logging.error("ERROR: Spotify API not loaded !")
@@ -684,39 +684,63 @@ def action_handler(message):
                     if cmd == 'play_media' :
                         fallbackMode=False
 
-                        if 'user' in command and 'pass' in command :
-                            username = command['user']
-                            password = command['pass']
-                        token = None
                         if 'token' in command :
                             token = command['token']
-
-                        if username is not None and password is not None and token is None :
-                            data = stoken.start_session(username, password)
-                            token = data[0]
 
                         keepGoing = True
                         if value is None :
                             logging.error("ACTION------ Missing content id for spotify")
                             keepGoing = False
-                        if token is None and (username is None or password is None) :
-                            logging.error("ACTION------ Missing token or user/pass paramaters for spotify")
+                        if token is None :
+                            logging.error("ACTION------ Missing token paramaters for spotify")
                             keepGoing = False
 
                         if keepGoing == True :
                             player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait})
                             player.launch_app(token)
                             spotifyClient = spotipy.Spotify(auth=token)
+                            time.sleep(1);
 
-                            devices_available = spotifyClient.devices()
-                            device_id = None
-                            for device in devices_available['devices']:
-                                if device['name'] == jcast.device.friendly_name :
-                                    device_id = device['id']
-                                    break
-                            if device_id is not None :
-                                out = spotifyClient.start_playback(device_id=device_id, uris=[value])
+                            value = value.replace('spotify:', '')
+
+                            trycount=0;
+                            success=False
+                            devicefound=False
+                            while trycount < 1 :
+                                if devicefound==False :
+                                    devices_available = spotifyClient.devices()
+                                    device_id = None
+                                    for device in devices_available['devices']:
+                                        if device['name'] == jcast.device.friendly_name :
+                                            device_id = device['id']
+                                            break
+
+                                if device_id is not None :
+                                    devicefound=True
+                                    try :
+                                        if 'track' not in value :   # album or playlist
+                                            out = spotifyClient.start_playback(device_id=device_id, context_uri='spotify:'+value)
+                                        else :  # track
+                                            out = spotifyClient.start_playback(device_id=device_id, uris=['spotify:'+value])
+                                        success=True
+                                    except Exception as e:
+                                        trycount = trycount+1
+                                        logging.debug("ACTION------Spotify error : %s" % str(e))
+                                        #logging.debug(traceback.format_exc())
+                                        gcast.media_controller.stop()
+                                        time.sleep(1)
+                                else :
+                                    trycount = trycount+1
+                                    time.sleep(2)
+
+                            if success==True :
                                 jcast.savePreviousPlayerCmd(command)
+                            else :
+                                if devicefound==False :
+                                    logging.error("ACTION------ Spotify : device not found !")
+                                else :
+                                    logging.error("ACTION------ Spotify : Starting spotify failed !")
+                                break
 
                 elif app == 'backdrop':  # also called backdrop
                     if jcast.support_video == True :

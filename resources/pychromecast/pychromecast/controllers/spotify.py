@@ -24,7 +24,6 @@ class SpotifyController(BaseController):
 
         self.logger = logging.getLogger(__name__)
         self.session_started = False
-        self.access_token = access_token
         self.is_launched = False
     # pylint: enable=useless-super-delegation
 

@@ -1021,13 +1021,13 @@ class googlecast extends eqLogic {
         return $this->getInfoHttp($cmdLogicalIdTranslate, false, false, 'string', ',', null, $destLogicalId);
     }
 
-    public function getInfoHttp($cmdLogicalId, $showError=false, $errorRet=false, $format='string', $sep=',', $fnc=null, $destLogicalId=null) {
+    public function getInfoHttp($cmdLogicalId, $showError=false, $errorRet=false, $format='string', $sep=',', $fnc=null, $destLogicalId=null, $updatecmd=true) {
         log::add('googlecast','debug',"getInfoHttp : " . $cmdLogicalId);
         $uri = $this->getChromecastIP();
         $cmd = $this->getCmd(null, (!is_null($destLogicalId)?$destLogicalId:$cmdLogicalId));
-        $returnData = false;
-		if (!is_object($cmd)) {
-            $returnData = true;
+        $has_cmd = false;
+		if (is_object($cmd)) {
+            $has_cmd = true;
         }
         $listCmd = $cmdLogicalId;
 
@@ -1059,6 +1059,12 @@ class googlecast extends eqLogic {
                 if (isset($data['fnc'])) {
                     $fnc = $data['fnc'];
                 }
+                if (isset($data['noupdatecmd'])) {
+                    $updatecmd = false;
+                }
+                if (isset($data['format'])) {
+                    $format = $data['format'];
+                }
                 $isPost = false;
                 if (isset($data['value'])) {
                     $uripath = $data['value'];
@@ -1073,6 +1079,7 @@ class googlecast extends eqLogic {
                 }
                 $request_http = new com_http($url);
 
+                $has_error = false;
                 if ($isPost) {
                     $request_http->setHeader(array('Connection: close', 'content-type: application/json'));
                     $request_http->setPost('');
@@ -1081,28 +1088,43 @@ class googlecast extends eqLogic {
                     $httpret = $request_http->exec($_timeout=1, $_maxRetry=1);
                     $arrayret = json_decode($httpret, true);
                 } catch (Exception $e) {
-                    if ( $showError==true) {
-                        log::add('googlecast','error',__('Configuration non accessible', __FILE__));
-                    }
-                    if ($returnData==false) {
-                        if ($errorRet==false) {
-                            $ret = $cmd->execCmd();
-                            log::add('googlecast','debug',"getInfoHttp : Result error (no default) : " . $ret);
-                            $cmd->event($ret);
-                            return $ret;
-                        }
-                        else {
-                            $errorRet = googlecast_utils::getFncResult($errorRet, $fnc);
-                            log::add('googlecast','debug',"getInfoHttp : Result error (with default) : " . $errorRet);
-                            $cmd->event($errorRet);
-                        }
-                    }
-                    return $errorRet;
+                    $has_error = true;
                 }
 
                 // for test
-                //$httpret = '{"alarm":[{"date_pattern":{"day":15,"month":1,"year":2018},"time_pattern":{"hour":6,"minute":50,"second":0},"fire_time":1515995400000.0,"id":"alarm/xxx","status":1}]}';
+                //$httpret = '{"alarm":[{"date_pattern":{"day":13,"month":6,"year":2018},"fire_time":1528909200000.0,"id":"alarm/5b205564-0000-27be-9e26-089e082ee87c","status":1,"time_pattern":{"hour":13,"minute":0,"second":0}}],"timer":[]}';
                 //$arrayret = json_decode($httpret, true);
+
+                if ($has_error===true or count($arrayret)==0) {
+                    if ( $showError==true) {
+                        log::add('googlecast','error',__('Configuration non accessible', __FILE__));
+                    }
+                    if ( $has_error===true) {
+                        log::add('googlecast','debug',"getInfoHttp : Error while accessing device (offline ?)");
+                    }
+                    else {
+                        log::add('googlecast','debug',"getInfoHttp : Result is empty (device compatible ?)");
+                    }
+                    if ($has_cmd===true and $errorRet===false) {
+                        $ret = $cmd->execCmd();
+                        log::add('googlecast','debug',"getInfoHttp : Result error (previous result) : " . $ret);
+                    }
+                    if ($errorRet!==false) {
+                        $ret = $errorRet;
+                    }
+                    $retSave = $ret;
+                    $ret = googlecast_utils::getFncResult($ret, $fnc);
+                    log::add('googlecast','debug',"getInfoHttp : Result error (with default) : " . $retSave . " => " . $ret);
+
+                    if ( $format=='json' ) {
+                        $ret = json_encode($ret);
+                    }
+                    if ($has_cmd===true and $updatecmd===true) {
+                        $cmd->event($ret);
+                    }
+
+                    return $ret;
+                }
 
                 if (isset($data['data'])) {
 
@@ -1117,11 +1139,12 @@ class googlecast extends eqLogic {
                             array_push($retArray, $this->recursePath($arrayret, $pathList, $errorRet));
                         }
                     }
-					if (isset($data['format'])) {
-						$format = $data['format'];
-					}
+
                     if ( $format=='json' ) {
                         $ret = json_encode($retArray);
+                    }
+                    elseif ( $format=='php' ) {
+                        return $retArray;
                     }
                     elseif ( $format=='string' ) {
                         $flattenAr = $this->array_flatten($retArray);
@@ -1135,19 +1158,19 @@ class googlecast extends eqLogic {
                         }
                         $ret = substr($ret, 1);
                     }
+                    $retsave = $ret;
                     $ret = googlecast_utils::getFncResult($ret, $fnc);
-                    log::add('googlecast','debug',"getInfoHttp : Result success : " . $ret);
+                    log::add('googlecast','debug',"getInfoHttp : Result success : " . $retsave . " => " . $ret);
 
-                    if ($returnData==false) {
+                    if ($has_cmd===true and $updatecmd===true) {
                         $cmd->event($ret);
                     }
-                    return $ret;
                 }
                 else {
                     $ret = json_encode($arrayret);
-                }
-                if ($returnData==false) {
-                    $cmd->event($ret);
+                    if ($has_cmd===true) {
+                        $cmd->event($ret);
+                    }
                 }
                 return $ret;
             }
