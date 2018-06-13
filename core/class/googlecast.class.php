@@ -1126,6 +1126,10 @@ class googlecast extends eqLogic {
                     return $ret;
                 }
 
+                // for test
+                //$httpret = '{"alarm":[{"date_pattern":{"day":15,"month":1,"year":2018},"time_pattern":{"hour":6,"minute":50,"second":0},"fire_time":1515995400000.0,"id":"alarm/xxx","status":1}]}';
+                //$arrayret = json_decode($httpret, true);
+
                 if (isset($data['data'])) {
 
                     $dataItemList = explode (',',$data['data']);

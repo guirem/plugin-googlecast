@@ -643,7 +643,7 @@ FAQ
 - Jeedom doit se trouver sur le même réseau que les équipements Google Cast    
 (pour Docker, le container doit être configuré pour être sur le même réseau ; en VM, la machine est en mode bridge) ;
 - Vérifier qu'il n'y a pas de blocages au niveau du firewall pour la découverte via le protocol 'Zeroconf' ;
-- Pour mettre Docker sur le même réseau, voir https://github.com/guirem/plugin-googlecast/issues/8
+- Pour mettre Docker sur le même réseau, voir #8
 
 #### Aucune commande ne semble fonctionner
 
