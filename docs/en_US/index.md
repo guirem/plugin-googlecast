@@ -1,11 +1,7 @@
 GoogleCast plugin (googlecast)
 =============================
 
-<<<<<<< HEAD
 ![Logo plugin](../images/logoplugin.png "Logo plugin")
-=======
-![Logo plugin] (../images/logoplugin.png "Logo plugin")
->>>>>>> 8c0c0736f731929e372ee6bb18ed53e981351c01
 
 Plugin to control Google Cast enabled devices.
 
