@@ -16,6 +16,17 @@ class googlecast_utils {
         elseif ( $logicalId == 'speak_forceresume' ) {
             $ret = 'cmd=tts|value=#message#|vol=#volume#|forceapplaunch=1';
         }
+        elseif ( strpos($logicalId, 'radio_') === 0 ) {
+            try {
+                $radioname = strtolower(str_replace("radio_", "", $logicalId));
+                $radioArray = json_decode(file_get_contents(dirname(__FILE__) . "/../webradios/radiolist.json"), true);
+                if ( isset($radioArray[$radioname]) ) {
+
+                    $radio = $radioArray[$radioname];
+                    $ret = "app=media|value='".$radio['location']."','audio/mpeg',title:'".$radio['title']."',thumb:'".$radio['image']."'";
+                }
+            } catch (Exception $e) {}
+        }
         elseif ( $logicalId == 'gh_get_alarms_date' ) {
             $ret = 'cmd=getconfig|value=assistant/alarms|data=$.alarm..fire_time|fnc=ts2long|reterror=Undefined';
         }

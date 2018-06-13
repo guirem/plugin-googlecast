@@ -1,7 +1,7 @@
 GoogleCast plugin (googlecast)
 =============================
 
-! [Logo plugin] (../ images / logoplugin.png "Logo plugin")
+![Logo plugin](../images/logoplugin.png "Logo plugin")
 
 Plugin to control Google Cast enabled devices.
 
@@ -9,20 +9,20 @@ Plugin to control Google Cast enabled devices.
 **Features:**
 
 - Sound control (mute, +/-)
-- Media control (play / pause / stop ...)
+- Media control (play/pause/stop ...)
 - Stop app in progress, reboot
 - Broadcast a web page on a screen
 - Play audio and video files via url
 - Return of status on the main functionalities
 - Display of the current reading
 - Text To Speech (TTS)
-- Recovery / modification of equipment configuration
+- Recovery/modification of equipment configuration
 
 
-![Logo plugin](../ images / chromecast.png "Chromecast")
+![Logo plugin](../images/chromecast.png "Chromecast")
 
 **Google Cast compatible models**
-- Chromecast Audio / Video
+- Chromecast Audio/Video
 - Android TV, Nexus Player, TV (Vizio, Sharp, Sony, Toshiba, Philips)
 - Google Home
 - Soundbars and speakers (Vizio, Sony, LG, Philips
@@ -53,7 +53,7 @@ In a few steps:
 2. Start a scan of Google Cast available on the network,
 3. Save the equipment found,
 4. Go to the dashboard and test the 'demo' buttons (media, web ...),
-5. To change / adapt the setting, read the rest of the documentation.
+5. To change/adapt the setting, read the rest of the documentation.
 
 Toble of Content
 =======================
@@ -151,7 +151,7 @@ You can also add new commands (see section below).
 ![Alt text](../images/commands.png "Custom command")
 
 List of non-visible commands by default:
-- *Player Status*: info displaying the media playback status (eg PLAYING / PAUSED);
+- *Player Status*: info displaying the media playback status (eg PLAYING/PAUSED);
 - *Title*: Title of the current media;
 - *Artist*: Artist of the current media;
 - *Custom Cmd*: This component is intended to be used via a scenario or for testing (see section [Use in a scenario] (# use-in-a-scenario));
@@ -176,9 +176,9 @@ The display refreshes every 20 seconds by default.
 
 ![Display 1](../images/display1.png "Display 1")
 
-Installation / configuration:
+Installation/configuration:
 - Displayed by default after installation. Disable the display to hide.
-- For use in a dashboard, it is possible to use a virtual by creating a command of the type *info / others* with the command *Playing Widget* (not internal *nowplaying*) of the Google Cast. Then apply the dashboard widget *googlecast_playing* (via tab *View* of the advanced configuration of the command)
+- For use in a dashboard, it is possible to use a virtual by creating a command of the type *info/others* with the command *Playing Widget* (not internal *nowplaying*) of the Google Cast. Then apply the dashboard widget *googlecast_playing* (via tab *View* of the advanced configuration of the command)
 - For use in a design, add the *Playing Widget* command directly into the design.
 
 optional CSS settings (via '*Optional Widget Settings'):
@@ -188,7 +188,7 @@ optional CSS settings (via '*Optional Widget Settings'):
 - *backColor* (ex: blue, default = black): color of the bottom of the display
 - *playingSize* (ex: 300px, default 250px): width and height of the current playback picture
 - *contentSize* (ex: 70px, default 50px): height of the textual part
-- *additionalCss* (css format, ex: '.blabla {...}'): to add / modify other CSS (advanced user)
+- *additionalCss* (css format, ex: '.blabla {...}'): to add/modify other CSS (advanced user)
 
 ![Configuration CSS](../images/configuration_css.png "Configuration CSS")
 
@@ -201,16 +201,16 @@ A widget is available for action type and message subtype commands to allow you 
 
 ![Speak Widget](../images/widget_speak.png "Speak Widget")
 
-Installation / configuration:
+Installation/configuration:
 - An example is displayed by default after installation to test the TTS function.
-- For use in a dashboard, it is possible to use a virtual one by creating a command of the type *action / message* with value the command *Custom Cmd* of Google Cast. Then apply the dashboard widget *googlecast_speak* (via tab *View* of the advanced configuration of the command)
+- For use in a dashboard, it is possible to use a virtual one by creating a command of the type *action/message* with value the command *Custom Cmd* of Google Cast. Then apply the dashboard widget *googlecast_speak* (via tab *View* of the advanced configuration of the command)
 - The contents of the action command (subtype message) can contain the variables *#message#* and *#volume#*
 
 optional CSS settings (via '*Optional Widget Settings'):
 - *width* (ex: 35px, default = 150px): size of the widget
 - *default_volume* (ex: blue, default = 100): default valume
 - *default_message* (ex: 'Test'): default text in the widget
-- *additionalCss* (css format, ex: '.blabla {...}'): to add / modify other CSS (advanced user)
+- *additionalCss* (css format, ex: '.blabla {...}'): to add/modify other CSS (advanced user)
 
 > **Notes**   
 > Not available for mobile
@@ -361,7 +361,7 @@ ex using token with implicit play_media command call :
 - generateonly: 1 - only generate speech file in cache (no action on device)
 - forcevol: 1 - Set volume also if the current volume is the same (useful for TTS synchronisation in multithreading)
 - noresume: 1 - disable recovery of previous state before playing TTS.
-- forceapplaunch: 1 - will try to force launch of previous application even if not lauched by plugin (to be used with 'resume').
+- forceapplaunch: 1 - will try to force launch of previous application even if not launched by plugin.
 
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
 ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
@@ -380,7 +380,7 @@ ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
 - sleep: float (default=0) - add time in seconds after notif is finished (before volume resume)
 - forcevol: 1 - Set volume also if the current volume is the same (useful for notif synchronisation in multithreading)
 - noresume: 1 - disable recovery of previous state before playing notif.
-- forceapplaunch: 1 - will try to force launch of previous application even if not lauched by plugin (to be used with 'resume').
+- forceapplaunch: 1 - will try to force launch of previous application even if not launched by plugin.
 
 ex : cmd=notif|value=bigben1.mp3|vol=100
 ```

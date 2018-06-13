@@ -25,11 +25,11 @@ except ImportError:
 PORT = 8907
 
 # spotify data
-SPOTIPY_CLIENT_ID = 'a892ad6e71a54b2d8bce6b6e2d9c8dd6'
-SPOTIPY_CLIENT_SECRET = '73500b1b128040598a3a47f81defd023'
+SPOTIPY_CLIENT_ID = 'XXXXXXXXXXXXXXXXXXXXXXXXX'
+SPOTIPY_CLIENT_SECRET = 'XXXXXXXXXXXXXXXXXXXXXXXX'
 SPOTIPY_REDIRECT_URI = 'http://127.0.0.1:' + str(PORT)
-#SCOPE = 'user-library-read playlist-read-private playlist-read-public streaming user-modify-playback-state user-read-currently-playing user-read-playback-state'
-SCOPE = 'user-library-read,playlist-read-private'
+SCOPE = 'user-library-read playlist-read-private playlist-read-public streaming user-read-currently-playing user-read-playback-state'
+#SCOPE = 'user-library-read,playlist-read-private'
 CACHE = '.spotipyoauthcache'
 
 
