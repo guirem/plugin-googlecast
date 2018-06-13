@@ -4,6 +4,7 @@ Plugin for Jeedom Open Source domotic solution.
 
 Remotely control Google Cast devices directly from Jeedom.
 
+<br>
 ![Logo Jeedom](docs/assets/images/logo.png "Logo Jeedom")
 ![Logo plugin](docs/images/logoplugin.png "Logo plugin")
 
