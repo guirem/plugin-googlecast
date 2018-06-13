@@ -84,6 +84,7 @@ Table des matières
           + [paramètres possibles pour cmd *setconfig* :](#param-tres-possibles-pour-cmd--setconfig---)
         * [Commande configuration pré-définies](#commande-configuration-pr--d-finies)
     + [Création dune commande *action* de type *Liste*](#cr-ation-dune-commande--action--de-type--liste-)
+    + [Création d'une commande *action* pour un webradio pré-enregistrées](#cr-ation-d-une-commande--action--pour-un-webradio-pr--enregistr-es)
     + [Utilisation dans un scénario](#utilisation-dans-un-sc-nario)
       - [Avec commande dédiée *Custom Cmd*](#avec-commande-d-di-e--custom-cmd-)
       - [Avec bloc code php](#avec-bloc-code-php)
@@ -261,6 +262,7 @@ Elles doivent être séparés par *|*
         * youtube : play_video (default)/add_to_queue/remove_video/play_next
         * backdrop : no command
         * plex : play_media  (default)/play/stop/pause
+        * spotify : play_media (default) - Experimental
 - value : chain of parameters separated by ',' (depending of command)
 - vol (optional, between 1 et 100) : adjust volume for the command
 - sleep (optional, int/float) : add a break after end of command in seconds (eg: 2, 2.5)
@@ -346,6 +348,24 @@ ex using token with implicit play_media command call :
 > - Token value is displayed in logs (debug) when user & pass has been used the first time
 > - you can simulate result of search query (value) in main search field of Plex web UI
 
+
+#### Paramètres possibles pour *play_media* en mode *spotify* (experimental) :
+
+!! Le plus dur est de récupérer un token valable !!    
+Pas de support sur cette fonctionnalité
+
+```
+- value: str - media id. Format : 'track:<id>', 'album:<id>', 'playlist:<id>'.
+- token: str - token (required).
+
+ex using valid token :   
+   app=spotify|token=XXXXXX|value=track:3Zwu2K0Qa5sT6teCCHPShP
+```
+
+> **Notes**   
+> - Token is too long to be passed through regular command. Use *CustomCmd*.
+> - For test, you can use a web token (open spotify in browser, log in and look for 'wp_access_token' value to use as token).
+
 #### Paramètres possibles pour cmd *tts* :
 ```
 - value: str - text
@@ -418,9 +438,10 @@ Pour plus d'info voir  https://rithvikvibhu.github.io/GHLocalApi/
 - value: str - uri base after 'setup/' based on API doc (default is 'eureka_info'). If starts with 'post:', a POST type request will be issued.
 - data: str - json path to be returned separated by '/'. To get several data, separate by ','. Alternatively, JsonPath format can be used ( http://goessner.net/articles/JsonPath).
 - sep: str - seperator if several data is set (default = ',').
-- format: json/string/custom - output format (default = 'string'). 'custom' follows 'sprintf' php function format (ex: %d, %s).
-- error: 1 - seperator if several data is set (default = ',').
+- format: json/string/custom/php - output format (default = 'string'). 'custom' follows 'sprintf' php function format (ex: %d, %s). 'php' return php array.
+- error: 1 - will generate error if failing.
 - reterror: str - value to be returned if connection fails. Default will not change previous state.
+- noupdatecmd: 1 - update command result if exist even if failed.
 
 Exemples:
 - Récupération du pincode d'une Google Chromecast :
@@ -463,7 +484,7 @@ Les commandes suivantes peuvent être utilisées dans une commande 'info' ou sc�
 - *gh_get_alarms_date* : retourne la date de toutes les alarmes.
 - *gh_get_alarms_id* : retourne les identifiants uniques de toutes les alarmes et timers.
 - *gh_get_alarm_date_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format dd-mm-yyyy HH:mm.
-- *gh_get_alarm_datenice_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format {'Today'|'Tomorrow'|dd-mm-yyyy} HH:mm.
+- *gh_get_alarm_datenice_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format {'Aujourdhui'|'Demain'|dd-mm-yyyy} HH:mm.
 - *gh_get_alarm_timestamp_#* (#=numéro, commence par 0) : retourne le timestamp de la prochaine alarme.
 - *gh_get_alarm_status_#* (#=numéro, commence par 0) : statut de l'alarme (1 = configuré,  2 = sonne).
 - *gh_get_timer_timesec_#* (#=numéro, commence par 0) : retourne le nombre de secondes avant déclenchement du timer.
@@ -517,6 +538,17 @@ app=media^value='http://urlFluxRadio3/flux.mp3','audio/mpeg','Radio 3'|Radio 3
 > **Note**   
 > Pour des commandes plus simples (un seul paramètre change), il est toujours possible d'utiliser le placeholder *#listValue#* dans une commande.    
 > Exemple : `app=web|cmd=load_url|value=#listValue#` avec comme liste de valeurs `https://google.com|Google;https://facebook.com|Facebook`
+
+### Création d'une commande *action* pour un webradio pré-enregistrées
+
+Pour créer une commande *action* qui lance une webradio pré-enregistrée (avec logo), la commande doit impérativement s'appeler *radio_XXXX* avec XXXX pouvant être remplacé par un nom de radio existante.
+
+Liste des webradios pré-enregistrées :    
+france_inter, africa_n1_paris, europe_1, france_bleue, radio_classique, rfi_monde, fip, jazz, voltage_lounge, rtl, fip_nouveaute, fip_jazz, fip_monde, france_culture, radio_suisse_classique, nippon_blue_heron, chinese_classical_music, jazz_ladies_crooners, pulsradio_trance, PulsRadio_Lounge, pulsradio_dance, pulsradio_club, pulsradio_hits, pulsradio_80, pulsradio_90, pulsradio_2000, mix_x_fm, sweet_fm, rtl_2, hotmix_80, hotmix_90, hotmix_2000, hotmix_dance, hotmix_frenchy, hotmix_funky, hotmix_game, hotmix-golds, hotmix_hiphop, hotmix_Hits, hotmix_hot, hotmix_lounge, Hotmix_metal, hotmix_new, hotmix_rock, hotmix_sunny, hotmix_vip
+
+````
+Exemple : commande appelée 'radio_rtl'
+````
 
 
 ### Utilisation dans un scénario
