@@ -959,6 +959,38 @@ class googlecast extends eqLogic {
 		return self::socket_connection( json_encode($fulldata) );
     }
 
+    static public function helperSendNotifandWait_static($uuid, $_commands, $maxwait=30, $retrydelay=500, $initialdelay=2) {
+        $googlecast = googlecast::byLogicalId($uuid, 'googlecast');
+        if ( !is_object($googlecast) ) {
+            return false;
+        }
+        else {
+            return $googlecast->helperSendNotifandWait($_commands, $maxwait, $retrydelay, $initialdelay);
+        }
+    }
+
+	public function helperSendNotifandWait($_commands, $maxwait=30, $retrydelay=500, $initialdelay=2) {
+        $retrydelay = $retrydelay*1000;
+
+        if ( $this->getIsEnable()==false or $this->isOnline()==false ) {
+            return false;
+        }
+        else {
+            $this->helperSendCustomCmd($_commands);
+            sleep($initialdelay); // make sure command has started
+            $status = $this->getInfoValue('status_text');
+            $starttime = time();
+            while ($status=='Casting: TTS' or $status=='Casting: NOTIF' ) {
+                usleep($retrydelay);    // or sleep(1);	// 1 sec
+                $status = $this->getInfoValue('status_text');
+                if ( (time()-$starttime)>$maxwait ) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
     // send commands as php array of by sequence (seperated by $$)
     public function helperSendCustomCmd($_commands, $_callback=null, $_source='googlecast', $_app='media', $_appid='CC1AD845') {
         $datalist = array();
