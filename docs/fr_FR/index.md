@@ -268,9 +268,11 @@ Elles doivent être séparés par *|*
 - sleep (optional, int/float) : add a break after end of command in seconds (eg: 2, 2.5)
 - uuid (optional) : redirect to other google cast uuid in new thread (parallel processing). Useful when using sequences on several device.
 - nothread (optional) : if uuid provided, disable use of thread for parallel processing. (eg: nothread=1)
+- brodcast (optional) : 'all' to broadcast to all connected devices or <uuid> seperated by ',' (ex: 'uuid1,uuid2')
 
 ex web : app=web|cmd=load_url|vol=90|value='http://pictoplasma.sound-creatures.com',True,10
 ex TTS : cmd=tts|vol=100|value=Mon text a dire
+ex broadcast : cmd=quit_app|broadcast=all
 ```
 
 > **Notes**     
@@ -574,7 +576,7 @@ if ( !is_object($googlecast) or $googlecast->getIsEnable()==false ) {
   // variable _test contains 'None' if google cast does not exist or is disable
 }
 else {
-  // Run a command
+  // Run a command as single command or sequence (seperated by $$) or by sending a php array of commands
   $ret =  $googlecast->helperSendCustomCmd('cmd=tts|value=Test Scénario PHP|vol=100');
   $scenario->setData("_test", $ret);
   // Command launched
@@ -602,6 +604,34 @@ else {
   $ret =  $googlecast->getInfoHttpSimple('cmd=getconfig|value=assistant/alarms|data=$.alarm.[0].date_pattern|format=%02d%02d%04d|reterror=00000000');
   $scenario->setData("_test",$ret);
   // variable _test contains JJMMAAAA (00000000 if failed)
+}
+```
+
+Exemple d'attente de fin de commande TTS ou NOTIF :
+
+```php
+$uuid = 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXX';
+$maxwait = 30;	// 30 sec of max waiting
+$retrydelay = 500*1000;	// will retry every 500 ms
+
+$googlecast = googlecast::byLogicalId($uuid, 'googlecast');
+if ( !is_object($googlecast) or $googlecast->getIsEnable()==false or $googlecast->isOnline()==false ) {
+  	return;
+}
+else {
+  $command_string = 'cmd=tts|value=Test Scénario PHP pour gérer le délai !|vol=100';
+  $googlecast->helperSendCustomCmd($command_string);
+  sleep(2); // make sure command has started
+  $status = $googlecast->getInfoValue('status_text');
+  $starttime = time();
+  while ($status=='Casting: TTS' or $status=='Casting: NOTIF' ) {
+    usleep($retrydelay);    // or sleep(1);	// 1 sec
+    $status = $googlecast->getInfoValue('status_text');
+    if ( (time()-$starttime)>$maxwait ) {
+      break;
+    }
+  }
+  return;
 }
 ```
 
