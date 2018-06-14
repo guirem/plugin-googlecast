@@ -4,6 +4,12 @@ Version list of googlecast plugin.
 
 *[Back to documentation] (index.md)*
 
+## Version of June 14, 2018
+
+- Added broadcast option
+- fix sequences
+- bug fix and doc update
+
 ## Version of June 12 juin, 2018 (stable)
 
 - Beta to stable (see below)

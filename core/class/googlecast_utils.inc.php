@@ -4,7 +4,7 @@ require_once dirname(__FILE__) . "/../../3rdparty/JsonPath/JsonStore.php";
 
 class googlecast_utils {
 
-    public static function getCmdTranslation($logicalId) {
+    public static function getFullCmdTranslation($logicalId) {
         $ret = $logicalId;
 
         if ( $logicalId == 'speak' ) {
@@ -21,7 +21,6 @@ class googlecast_utils {
                 $radioname = strtolower(str_replace("radio_", "", $logicalId));
                 $radioArray = json_decode(file_get_contents(dirname(__FILE__) . "/../webradios/radiolist.json"), true);
                 if ( isset($radioArray[$radioname]) ) {
-
                     $radio = $radioArray[$radioname];
                     $ret = "app=media|value='".$radio['location']."','audio/mpeg',title:'".$radio['title']."',thumb:'".$radio['image']."'";
                 }
@@ -129,6 +128,11 @@ class googlecast_utils {
             $ret = 'cmd=setconfig|value=bluetooth/connect|data={"connect":false}';
         }
         return $ret;
+    }
+
+
+    public static function getCmdTranslation($cmd) {
+        return $cmd;
     }
 
     public static function getJsonPathResult($json, $path) {
