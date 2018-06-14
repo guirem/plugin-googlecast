@@ -927,7 +927,7 @@ def action_handler(message):
                             jcast.disable_notif = True
                             if resume:
                                 jcast.prepareTTSplay()
-                            player = jcast.loadPlayer(app, { 'quitapp' : False, 'wait': wait})
+                            player = jcast.loadPlayer('media', { 'quitapp' : False, 'wait': 0})
                             if vol is not None :
                                 gcast.media_controller.pause();
                                 time.sleep(0.1)
@@ -1016,7 +1016,7 @@ def action_handler(message):
                                 jcast.disable_notif = True
                                 if resume:
                                     jcast.prepareTTSplay()
-                                player = jcast.loadPlayer(app, { 'quitapp' : False, 'wait': wait})
+                                player = jcast.loadPlayer('media', { 'quitapp' : False, 'wait': 0})
                                 if vol is not None :
                                     gcast.media_controller.pause();
                                     time.sleep(0.1)
@@ -1106,6 +1106,17 @@ def action_handler(message):
                             logging.debug("ACTION------Resume is not possible!")
                         else :
                             logging.debug("ACTION------Resume OK")
+                        fallbackMode=False
+                    elif cmd == "warmupnotif" :
+                        url,duration,mp3filename=get_tts_data('.', 'fr-FR', 'picotts', 1, False, False, silence=300)
+                        if url is not None :
+                            jcast.disable_notif = True
+                            player = jcast.loadPlayer('media', { 'quitapp' : False, 'wait': 0})
+                            player.play_media(url, 'audio/mp3', 'WARMUP', stream_type="LIVE")
+                            player.block_until_active(timeout=3);
+                            time.sleep(0.3)
+                            #gcast.quit_app()
+                            jcast.disable_notif = False
                         fallbackMode=False
                     elif cmd == 'sleep':
                         logging.debug("ACTION------Sleep")

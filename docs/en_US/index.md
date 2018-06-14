@@ -574,6 +574,50 @@ else {
 }
 ```
 
+Example of TTS or NOTIF command waiting until finished :
+
+```php
+// -----------------------
+// entire code
+$uuid = 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXX';
+$maxwait = 30;	// 30 sec of max waiting
+$retrydelay = 500*1000;	// will retry every 500 ms
+$command_string = 'cmd=tts|value=Test Scénario PHP pour gérer le délai !|vol=100';
+
+$googlecast = googlecast::byLogicalId($uuid, 'googlecast');
+if ( !is_object($googlecast) or $googlecast->getIsEnable()==false or $googlecast->isOnline()==false ) {
+  	return;
+}
+else {
+  $googlecast->helperSendCustomCmd($command_string);
+  sleep(2); // make sure command has started
+  $status = $googlecast->getInfoValue('status_text');
+  $starttime = time();
+  while ($status=='Casting: TTS' or $status=='Casting: NOTIF' ) {
+    usleep($retrydelay);    // or sleep(1);	// 1 sec
+    $status = $googlecast->getInfoValue('status_text');
+    if ( (time()-$starttime)>$maxwait ) {
+      break;
+    }
+  }
+  return;
+}
+
+// -----------------------
+// using helper static method
+// params: uuid, command, time in second before failing (default 30), retry delay in ms (default 500), initial delay in seconds (default 2)
+// return true if success, false if uuid is wrong, disable, offline or delay has passed.
+$ret = googlecast::helperSendNotifandWait_static('XXXXXXXX', 'cmd=tts|value=Test Scénario PHP pour gérer le délai', 30, 500);
+// with default values : $ret = googlecast::helperSendNotifandWait_static('XXXXXXXX', 'cmd=tts|value=Test Scénario PHP')
+
+// -----------------------
+// or using helper instance method
+$googlecast = googlecast::byLogicalId($uuid, 'googlecast');
+// params: uuid, command, time in second before failing, retry delay in ms, initial delay in seconds (default 2)
+// return true if success, false if disable, offline or delay has passed.
+$ret = $googlecast->helperSendNotifandWait('XXXXXXXX', 'cmd=tts|value=Test Scénario PHP pour gérer le délai')
+```
+
 ### Use with interactions and IFTTT
 
 #### Interactions
