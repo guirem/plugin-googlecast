@@ -573,6 +573,26 @@ def action_handler(message):
 
         for command in commandlist :
             uuid = srcuuid
+
+            if 'broadcast' in command :
+                broadcastList = command['broadcast']
+                if broadcastList == 'all' :
+                    uuidlist = list(globals.GCAST_DEVICES.keys())
+                else :
+                    uuidlist = broadcastList.split(',')
+                for newUuid in uuidlist :
+                    newcmd = command.copy()
+                    del newcmd['broadcast']
+                    newMessage = {
+                        'cmd' : 'action',
+                        'delegated' : True,
+                        'device' : {'uuid' : newUuid, 'source' : message['device']['source'] },
+                        'command' : newcmd
+                    }
+                    logging.debug("ACTION------DELEGATED command to other uuid : " + newUuid)
+                    thread.start_new_thread( action_handler, (newMessage,))
+                continue
+
             if 'uuid' in command :
                 if 'nothread' in command and command['uuid'] in globals.GCAST_DEVICES:
                     uuid = command['uuid']
@@ -944,20 +964,8 @@ def action_handler(message):
                                 forceapplaunch = False
                                 if 'forceapplaunch' in command :
                                     forceapplaunch = True
-                                prevcommand = jcast.getPreviousPlayerCmd(forceapplaunch)
-                                if prevcommand is not None :
-                                    newMessage = {
-                                        'cmd' : 'action',
-                                        'delegated' : True,
-                                        'resume' : True,
-                                        'device' : {'uuid' : uuid, 'source' : message['device']['source'] },
-                                        'command' : prevcommand
-                                    }
-                                    logging.debug("NOTIF------DELEGATED RESUME AFTER NOTIF for uuid : " + uuid)
-                                    time.sleep(0.3)
-                                    jcast.resetPreviousPlayerCmd()
-                                    thread.start_new_thread( action_handler, (newMessage,))
-                                else :
+                                resumeOk = manage_resume(uuid, message['device']['source'], forceapplaunch, 'NOTIF')
+                                if resumeOk==False :
                                     logging.debug("NOTIF------Resume is not possible!")
                         else :
                             logging.debug("NOTIF------Error while getting local media !")
@@ -1037,20 +1045,9 @@ def action_handler(message):
                                     forceapplaunch = False
                                     if 'forceapplaunch' in command :
                                         forceapplaunch = True
-                                    prevcommand = jcast.getPreviousPlayerCmd(forceapplaunch)
-                                    if prevcommand is not None :
-                                        newMessage = {
-                                            'cmd' : 'action',
-                                            'delegated' : True,
-                                            'resume' : True,
-                                            'device' : {'uuid' : uuid, 'source' : message['device']['source'] },
-                                            'command' : prevcommand
-                                        }
-                                        logging.debug("TTS------DELEGATED RESUME AFTER TTS for uuid : " + uuid)
-                                        time.sleep(0.3)
-                                        jcast.resetPreviousPlayerCmd()
-                                        thread.start_new_thread( action_handler, (newMessage,))
-                                    else :
+
+                                    resumeOk = manage_resume(uuid, message['device']['source'], forceapplaunch, 'TTS')
+                                    if resumeOk==False :
                                         logging.debug("TTS------Resume is not possible!")
                             else :
                                 logging.debug("TTS------File generation failed !")
@@ -1100,6 +1097,16 @@ def action_handler(message):
                         logging.debug("ACTION------Stop action")
                         player.pause()
                         fallbackMode=False
+                    elif cmd == 'resume':
+                        forceapplaunch = False
+                        if 'forceapplaunch' in command :
+                            forceapplaunch = True
+                        resumeOk = manage_resume(uuid, message['device']['source'], forceapplaunch, 'ACTION')
+                        if resumeOk==False :
+                            logging.debug("ACTION------Resume is not possible!")
+                        else :
+                            logging.debug("ACTION------Resume OK")
+                        fallbackMode=False
                     elif cmd == 'sleep':
                         logging.debug("ACTION------Sleep")
                         time.sleep(float(value))
@@ -1139,6 +1146,24 @@ def action_handler(message):
 def manage_callback(uuid, callback_type):
     # todo things for callback before returning value
     return True
+
+def manage_resume(uuid, source='googlecast', forceapplaunch=False, origin='TTS'):
+    jcast = globals.GCAST_DEVICES[uuid]
+    prevcommand = jcast.getPreviousPlayerCmd(forceapplaunch)
+    if prevcommand is not None :
+        newMessage = {
+            'cmd' : 'action',
+            'delegated' : True,
+            'resume' : True,
+            'device' : {'uuid' : uuid, 'source' : source },
+            'command' : prevcommand
+        }
+        logging.debug("RESUME------DELEGATED RESUME AFTER "+origin+" for uuid : " + uuid)
+        time.sleep(0.3)
+        jcast.resetPreviousPlayerCmd()
+        thread.start_new_thread( action_handler, (newMessage,))
+        return True
+    return False
 
 def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=300):
     srclanguage = language
