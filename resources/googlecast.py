@@ -240,11 +240,13 @@ class JeedomChromeCast :
             if self.previous_playercmd['appid']==beforeTTSappid :
                 self.previous_playercmd['params']
                 if 'current_time' in self.previous_playercmd and self.previous_playercmd['current_time'] > 0 :
-                    if 'stream_type' in self.previous_playercmd and self.previous_playercmd['stream_type'] != 'LIVE' :
+                    if 'current_stream_type' in self.previous_playercmd and self.previous_playercmd['current_stream_type'] != 'LIVE' :
                         self.previous_playercmd['params']['offset'] = self.previous_playercmd['current_time']
                 playerstate = self.previous_playercmd['current_player_state'] if 'current_player_state' in self.previous_playercmd else 'PLAYING'
                 if playerstate == 'PAUSED' :
                     ret = [self.previous_playercmd['params'], {'cmd':'pause'}]
+                elif playerstate == 'IDLE' :
+                    ret = [self.previous_playercmd['params'], {'cmd':'stop'}]
                 else :
                     ret = [self.previous_playercmd['params'], {'cmd':'play'}]
         elif beforeTTSappid is not None and forceapplaunch :
@@ -957,10 +959,16 @@ def action_handler(message):
                                 if vol is None :
                                     time.sleep(duration+1)
                                     sleep_done = True
+                                if sleep>0 :
+                                    time.sleep(sleep)
+                                    sleep=0
                                 gcast.quit_app()
                             if resume:
                                 if vol is None and sleep_done==False :
                                     time.sleep(duration+1)
+                                if sleep>0 :
+                                    time.sleep(sleep)
+                                    sleep=0
                                 forceapplaunch = False
                                 if 'forceapplaunch' in command :
                                     forceapplaunch = True
@@ -1038,10 +1046,16 @@ def action_handler(message):
                                 if quit :
                                     if vol is None :
                                         time.sleep(duration+(silence/1000)+1)
+                                    if sleep>0 :
+                                        time.sleep(sleep)
+                                        sleep=0
                                     gcast.quit_app()
                                 if resume:
                                     if vol is None and vol_done==False :
                                         time.sleep(duration+(silence/1000)+1)
+                                    if sleep>0 :
+                                        time.sleep(sleep)
+                                        sleep=0
                                     forceapplaunch = False
                                     if 'forceapplaunch' in command :
                                         forceapplaunch = True
@@ -1176,7 +1190,7 @@ def manage_resume(uuid, source='googlecast', forceapplaunch=False, origin='TTS')
         return True
     return False
 
-def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=300):
+def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=300, quality='128k'):
     srclanguage = language
     if not globals.tts_gapi_haskey and (engine=='gttsapi' or engine=='gttsapidev') :
         logging.error("CMD-TTS------No key provided, fallback to picotts engine")
@@ -1226,7 +1240,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     if silence > 0 :
                         start_silence = AudioSegment.silent(duration=silence)
                         speech = start_silence + speech
-                    speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                    speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
                     duration_seconds = speech.duration_seconds
                 except Exception as e:
                     logging.error("CMD-TTS------Google Translate API : Cannot connect to API - failover to picotts  (%s)" % str(e))
@@ -1254,7 +1268,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     if silence > 0 :
                         start_silence = AudioSegment.silent(duration=silence)
                         speech = start_silence + speech
-                    speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                    speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
                     duration_seconds = speech.duration_seconds
                 else :
                     logging.debug("CMD-TTS------Google Speech API : Cannot connect to API - failover to picotts")
@@ -1281,7 +1295,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     if silence > 0 :
                         start_silence = AudioSegment.silent(duration=silence)
                         speech = start_silence + speech
-                    speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                    speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
                     duration_seconds = speech.duration_seconds
                 else :
                     logging.debug("CMD-TTS------Google Speech API : Cannot connect to API - failover to picotts")
@@ -1301,7 +1315,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                 if silence > 0 :
                     start_silence = AudioSegment.silent(duration=silence)
                     speech = start_silence + speech
-                speech.export(filenamemp3, format="mp3", bitrate="128k", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
                 duration_seconds = speech.duration_seconds
                 if speed!=1:
                     try:
