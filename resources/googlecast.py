@@ -745,6 +745,7 @@ def action_handler(message):
                                         else :  # track
                                             out = spotifyClient.start_playback(device_id=device_id, uris=['spotify:'+value])
                                         success=True
+                                        break
                                     except Exception as e:
                                         trycount = trycount+1
                                         logging.debug("ACTION------Spotify error : %s" % str(e))
