@@ -1206,6 +1206,9 @@ class googlecast extends eqLogic {
                     }
                     $retsave = $ret;
                     $ret = googlecast_utils::getFncResult($ret, $fnc);
+                    if ($ret=='' && $errorRet!==false) {
+                        $ret = $errorRet;
+                    }
                     log::add('googlecast','debug',"getInfoHttp : Result success : " . $retsave . " => " . $ret);
 
                     if ($has_cmd===true and $updatecmd===true) {
