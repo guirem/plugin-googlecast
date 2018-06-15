@@ -728,7 +728,7 @@ def action_handler(message):
                             trycount=0;
                             success=False
                             devicefound=False
-                            while trycount < 1 :
+                            while trycount < 3 :
                                 if devicefound==False :
                                     devices_available = spotifyClient.devices()
                                     device_id = None
