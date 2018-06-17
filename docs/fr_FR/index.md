@@ -383,9 +383,14 @@ ex using valid token :
 - forcevol: 1 - Set volume also if the current volume is the same (useful for TTS synchronisation in multithreading)
 - noresume: 1 - disable recovery of previous state before playing TTS.
 - forceapplaunch: 1 - will try to force launch of previous application even if not launched by plugin.
+- highquality: 1 - increase tts sound file bitrate and sample rate. Use this setting for test as it should not improve much audio quality.
+- buffered: 1 - stream to google cast as buffered stream instead of live. Use this setting for test.
+- voice (gttsapi/gttsapidev only): male/female - chose a male or female voice
+- usessml (gttsapi/gttsapidev only): 1 - use ssml format insteaf of text. See https://cloud.google.com/text-to-speech/docs/ssml ('=' symbols must be replace by '^')
 
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
 ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
+ex voice/ssml : cmd=tts|engine=gttsapi|voice=male|value=<speak>Etape 1<break time^"3s"/>Etape 2</speak>
 ```
 
 > **Notes**   
@@ -691,7 +696,7 @@ FAQ
 - Jeedom doit se trouver sur le même réseau que les équipements Google Cast    
 (pour Docker, le container doit être configuré pour être sur le même réseau ; en VM, la machine est en mode bridge) ;
 - Vérifier qu'il n'y a pas de blocages au niveau du firewall pour la découverte via le protocol 'Zeroconf' ;
-- Pour mettre Docker sur le même réseau, voir #8
+- Pour mettre Docker sur le même réseau, voir https://github.com/guirem/plugin-googlecast/issues/8
 
 #### Aucune commande ne semble fonctionner
 
@@ -711,6 +716,13 @@ FAQ
 - Essayer avec les paramètres suivants : 'Utiliser l'adresse Jeedom externe' ou 'Ne pas utiliser le cache'
 - Si Jeedom n'a pas d'accès web, utiliser le moteur picoTTS
 - Vérifier dans les logs la nature de l'erreur
+
+#### Le Text To Speech (TTS) fonctionne mais a des coupures pendant le message ou se termine trop tôt
+
+Le type d'équipements utilisé (wifi, serveur Jeedom) ou la longueur du message peut avoir un impact sur le rendu TTS.
+- Ajouter le paramêtre 'sleep' pour ajouter un délai supplémentaire à la fin du message (ex: |sleep=0.8 pour 0.8 seconde).
+- Tester avec le paramêtre 'buffered=1' pour voir si cela règle le problème.
+- Utiliser le paramêtre 'forcetts' durant les tests pour être certain que le câche n'est pas utilisé.
 
 #### Diffuser Jeedom sans authentification sur un Google Cast
 

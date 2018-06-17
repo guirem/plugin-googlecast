@@ -362,9 +362,14 @@ ex using token with implicit play_media command call :
 - forcevol: 1 - Set volume also if the current volume is the same (useful for TTS synchronisation in multithreading)
 - noresume: 1 - disable recovery of previous state before playing TTS.
 - forceapplaunch: 1 - will try to force launch of previous application even if not launched by plugin.
+- highquality: 1 - increase tts sound file bitrate and sample rate. Use this setting for test.
+- buffered: 1 - stream to google cast as buffered stream instead of live. Use this setting for test.
+- voice (gttsapi/gttsapidev only): male/female - chose a male or female voice (default is female)
+- usessml (gttsapi/gttsapidev only): 1 - use ssml format insteaf of text. See https://cloud.google.com/text-to-speech/docs/ssml ('=' symbols must be replace by '^')
 
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
 ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
+ex voice/ssml : cmd=tts|engine=gttsapi|voice=male|value=<speak>Etape 1<break time^"3s"/>Etape 2</speak>
 ```
 
 > **Notes**   
