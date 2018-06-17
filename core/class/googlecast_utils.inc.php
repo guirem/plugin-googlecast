@@ -157,7 +157,7 @@ class googlecast_utils {
                 return $data;
             }
             try {
-                $val = intval($data)/1000;
+                $val = intval(substr(trim($data),0,10));
             } catch (Exception $e) {
                 return $data;
             }
@@ -190,7 +190,7 @@ class googlecast_utils {
                 return $data;
             }
             try {
-                $val = intval($data)/1000;
+                $val = intval(substr(trim($data),0,10));
             } catch (Exception $e) {
                 return $data;
             }
@@ -212,11 +212,11 @@ class googlecast_utils {
         }
         elseif ($fnc=='2sec') {
             try {
-                $ret = intval($data)/1000;
+                $ret = intval(substr(trim($data),0,10));
             } catch (Exception $e) {
                 $ret = 0;
             }
-            return "";
+            return $ret;
         }
         elseif ($fnc=='ts2sec') {
             $ret = '';
@@ -224,7 +224,7 @@ class googlecast_utils {
                 return $data;
             }
             try {
-                $val = intval($data);
+                $val = intval(substr(trim($data),0,10));
             } catch (Exception $e) {
                 return $data;
             }

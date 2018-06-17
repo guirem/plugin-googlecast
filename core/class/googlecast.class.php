@@ -1136,6 +1136,7 @@ class googlecast extends eqLogic {
                 //$httpret = '{"alarm":[{"date_pattern":{"day":13,"month":6,"year":2018},"fire_time":1528909200000.0,"id":"alarm/5b205564-0000-27be-9e26-089e082ee87c","status":1,"time_pattern":{"hour":13,"minute":0,"second":0}}],"timer":[]}';
                 //$arrayret = json_decode($httpret, true);
 
+                log::add('googlecast','debug','Request content : ' . print_r($arrayret,true));
                 if ($has_error===true or count($arrayret)==0) {
                     if ( $showError==true) {
                         log::add('googlecast','error',__('Configuration non accessible', __FILE__));
@@ -1205,6 +1206,9 @@ class googlecast extends eqLogic {
                     }
                     $retsave = $ret;
                     $ret = googlecast_utils::getFncResult($ret, $fnc);
+                    if ($ret=='' && $errorRet!==false) {
+                        $ret = $errorRet;
+                    }
                     log::add('googlecast','debug',"getInfoHttp : Result success : " . $retsave . " => " . $ret);
 
                     if ($has_cmd===true and $updatecmd===true) {
