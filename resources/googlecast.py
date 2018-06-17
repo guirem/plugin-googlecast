@@ -35,6 +35,7 @@ import resource
 from pydub import AudioSegment
 import hashlib
 from gtts import gTTS
+import urllib.parse
 
 import globals
 
@@ -912,6 +913,9 @@ def action_handler(message):
                         resume = True
                         if 'noresume' in command :
                             resume = False
+                        streamtype = 'LIVE'
+                        if 'buffered' in command and command['buffered']=='1':
+                            streamtype = 'BUFFERED'
                         durationparam = 0
                         if 'duration' in command :
                             durationparam = float(command['duration'])
@@ -937,9 +941,9 @@ def action_handler(message):
                                 gcast.set_volume(vol/100)
                                 time.sleep(0.1)
                             if type == 'audio' :
-                                player.play_media(url, 'audio/mp3', 'NOTIF', thumb=thumb, add_delay=0.1, stream_type="LIVE")
+                                player.play_media(url, 'audio/mp3', 'NOTIF', thumb=thumb, add_delay=0.1, stream_type=streamtype)
                             else :
-                                player.play_media(url, 'video/mp4', 'NOTIF', thumb=thumb, add_delay=0.1, stream_type="LIVE")
+                                player.play_media(url, 'video/mp4', 'NOTIF', thumb=thumb, add_delay=0.1, stream_type=streamtype)
                             player.block_until_active(timeout=2);
                             jcast.disable_notif = False
                             sleep_done = False
@@ -1004,12 +1008,25 @@ def action_handler(message):
                         generateonly = False
                         if 'generateonly' in command :
                             generateonly = True
+                        quality = '32k'
+                        if 'highquality' in command and command['highquality']=='1' :
+                            quality = '64k'
+                        streamtype = 'LIVE'
+                        if 'buffered' in command and command['buffered']=='1':
+                            streamtype = 'BUFFERED'
                         forcevol = False
                         if 'forcevol' in command :
                             forcevol = True
                         resume = True
                         if 'noresume' in command :
                             resume = False
+                        ttsparams = None
+                        if 'voice' in command or 'usessml' in command :
+                            ttsparams = {}
+                            if 'voice' in command :
+                                ttsparams['voice'] = command['voice']
+                            if 'usessml' in command :
+                                ttsparams['usessml'] = command['usessml']
 
                         curvol = jcast.getCurrentVolume()
                         if curvol == vol and not forcevol :
@@ -1019,7 +1036,7 @@ def action_handler(message):
                             need_duration=True
 
                         if generateonly == False :
-                            url,duration,mp3filename=get_tts_data(value, lang, engine, speed, forcetts, need_duration, silence)
+                            url,duration,mp3filename=get_tts_data(value, lang, engine, speed, forcetts, need_duration, silence, quality, ttsparams)
                             if url is not None :
                                 thumb=globals.JEEDOM_WEB + '/plugins/googlecast/desktop/images/tts.png'
                                 jcast.disable_notif = True
@@ -1031,7 +1048,7 @@ def action_handler(message):
                                     time.sleep(0.1)
                                     gcast.set_volume(vol/100)
                                     time.sleep(0.1)
-                                player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, add_delay=0.1, stream_type="LIVE");
+                                player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, add_delay=0.1, stream_type=streamtype);
                                 player.block_until_active(timeout=2);
                                 jcast.disable_notif = False
                                 vol_done = False
@@ -1191,7 +1208,7 @@ def manage_resume(uuid, source='googlecast', forceapplaunch=False, origin='TTS')
         return True
     return False
 
-def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=300, quality='128k'):
+def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=300, quality='32k', ttsparams=None):
     srclanguage = language
     if not globals.tts_gapi_haskey and (engine=='gttsapi' or engine=='gttsapidev') :
         logging.error("CMD-TTS------No key provided, fallback to picotts engine")
@@ -1223,7 +1240,9 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
         logging.debug("CMD-TTS------TTS Filename hexdigest : " + file + "  ("+rawfilename+")")
         if not os.path.isfile(filenamemp3) or forcetts==True :
             logging.debug("CMD-TTS------Generating file")
-
+            samplerate = '24000'
+            if quality != '32k' :
+                samplerate = '44100'
             if engine == 'gtts':
                 speed = float(speed)
                 language=language.split('-')[0]
@@ -1241,7 +1260,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     if silence > 0 :
                         start_silence = AudioSegment.silent(duration=silence)
                         speech = start_silence + speech
-                    speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                    speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ac", "1", "-ar", samplerate,"-vol", "200"])
                     duration_seconds = speech.duration_seconds
                 except Exception as e:
                     logging.error("CMD-TTS------Google Translate API : Cannot connect to API - failover to picotts  (%s)" % str(e))
@@ -1253,8 +1272,17 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     speed = 1.2
 
             elif engine == 'gttsapi':
+                ttsformat = 'text'
+                voice = 'female'
+                if ttsparams is not None :
+                    if 'voice' in ttsparams :
+                        voice = ttsparams['voice']
+                    if 'usessml' in ttsparams :
+                        ttsformat = 'ssml'
+                        ttstext = ttstext.replace('^', '=')
+                        ttstext = urllib.parse.quote_plus(ttstext)
                 speed = float(speed) - 0.7
-                ttsurl = globals.tts_gapi_url + 'v1/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&text='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5'
+                ttsurl = globals.tts_gapi_url + 'v1/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&'+ttsformat+'='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5&gender='+voice
                 success=True
                 try :
                     r = requests.get(ttsurl, timeout=3)
@@ -1269,7 +1297,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     if silence > 0 :
                         start_silence = AudioSegment.silent(duration=silence)
                         speech = start_silence + speech
-                    speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                    speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ac", "1", "-ar", samplerate,"-vol", "200"])
                     duration_seconds = speech.duration_seconds
                 else :
                     logging.debug("CMD-TTS------Google Speech API : Cannot connect to API - failover to picotts")
@@ -1280,8 +1308,17 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     speed = 1.2
 
             elif engine == 'gttsapidev':
+                ttsformat = 'text'
+                voice = 'female'
+                if ttsparams is not None :
+                    if 'voice' in ttsparams :
+                        voice = ttsparams['voice']
+                    if 'usessml' in ttsparams :
+                        ttsformat = 'ssml'
+                        ttstext = ttstext.replace('^', '=')
+                        ttstext = urllib.parse.quote_plus(ttstext)
                 speed = float(speed) - 0.7
-                ttsurl = globals.tts_gapi_url + 'v2/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&text='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5'
+                ttsurl = globals.tts_gapi_url + 'v2/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&'+ttsformat+'='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5&gender='+voice
                 success=True
                 try :
                     r = requests.get(ttsurl, timeout=3)
@@ -1296,7 +1333,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     if silence > 0 :
                         start_silence = AudioSegment.silent(duration=silence)
                         speech = start_silence + speech
-                    speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                    speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ac", "1", "-ar", samplerate,"-vol", "200"])
                     duration_seconds = speech.duration_seconds
                 else :
                     logging.debug("CMD-TTS------Google Speech API : Cannot connect to API - failover to picotts")
@@ -1316,7 +1353,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                 if silence > 0 :
                     start_silence = AudioSegment.silent(duration=silence)
                     speech = start_silence + speech
-                speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ar", "44100","-vol", "200"])
+                speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ac", "1", "-ar", samplerate,"-vol", "200"])
                 duration_seconds = speech.duration_seconds
                 if speed!=1:
                     try:
