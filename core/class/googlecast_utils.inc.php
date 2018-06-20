@@ -18,17 +18,21 @@ class googlecast_utils {
         }
         elseif ( strpos($logicalId, 'radio_') === 0 ) {
             try {
+                $streamtype='LIVE';
+                if ( substr($logicalId, -1)=='*' ) {
+                    $streamtype = 'BUFFERED';
+                }
                 $radioname = strtolower(str_replace("radio_", "", $logicalId));
                 $radioArray = json_decode(file_get_contents(dirname(__FILE__) . "/../webradios/radiolist.json"), true);
                 if ( isset($radioArray[$radioname]) ) {
                     $radio = $radioArray[$radioname];
-                    $ret = "app=media|value='".$radio['location']."','audio/mpeg',title:'".$radio['title']."',thumb:'".$radio['image']."'";
+                    $ret = "app=media|live=1|value='".$radio['location']."','audio/mpeg',title:'".$radio['title']."',thumb:'".$radio['image']."',stream_type:'".$streamtype."'";
                 }
                 if ( file_exists(dirname(__FILE__) . "/../webradios/custom.json") ) {
                     $radioArray = json_decode(file_get_contents(dirname(__FILE__) . "/../webradios/custom.json"), true);
                     if ( isset($radioArray[$radioname]) ) {
                         $radio = $radioArray[$radioname];
-                        $ret = "app=media|value='".$radio['location']."','audio/mpeg',title:'".$radio['title']."',thumb:'".$radio['image']."'";
+                        $ret = "app=media|live=1|value='".$radio['location']."','audio/mpeg',title:'".$radio['title']."',thumb:'".$radio['image']."',stream_type:'".$streamtype."'";
                     }
                 }
             } catch (Exception $e) {}
