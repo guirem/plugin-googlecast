@@ -1370,27 +1370,32 @@ class googlecastcmd extends cmd {
 	public function execute($_options = null) {
         $originalLogicalId = $this->getLogicalId();
 
-        $originalLogicalId = googlecast_utils::getFullCmdTranslation($originalLogicalId);
+        $translatedLogicalId = googlecast_utils::getFullCmdTranslation($originalLogicalId);
 
         if ( $this->getType() == 'action' ) {
-            # special case of custom command
+            // special case of custom command
     		if ($originalLogicalId == "customcmd") {
-    			$originalLogicalId = trim($_options['message']);
+    			$translatedLogicalId = trim($_options['message']);
     		}
 
-            # special case of 'action' command with subtype 'list' starting with 'cmdlist_'
+            // special case of 'action' command with subtype 'list' starting with 'cmdlist_'
             elseif ( strpos($originalLogicalId, 'cmdlist_')===0 ) {
-                $originalLogicalId = str_replace('^', '|', trim($_options['select']));    // replace ^ by |
-                if ($originalLogicalId=='') {     // case of default value ('none' selected)
-                    $originalLogicalId='quit_app';
+                $translatedLogicalId = str_replace('^', '|', trim($_options['select']));    // replace ^ by |
+                if ($translatedLogicalId=='') {     // case of default value ('none' selected)
+                    $translatedLogicalId='quit_app';
                 }
     		}
 
-            if ($originalLogicalId=='') {
+			// if speak command is used in scenario
+			if ( $originalLogicalId=='speak' && isset($_options['title']) && is_numeric($_options['title']) ) {
+				$_options['volume'] = $_options['title'];
+			}
+
+            if ($translatedLogicalId=='') {
                 return;
             }
         }
-        $listCmd = $originalLogicalId;
+        $listCmd = $translatedLogicalId;
 
         $eqLogic = $this->getEqLogic();
 
