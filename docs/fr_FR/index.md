@@ -241,6 +241,7 @@ Elles doivent être séparés par *|*
 - cmd : name of command (dépend of application)
     * tts : text to speech, use value to pass text
     * notif : send sound notification based on existing media file (ex: mp3)
+    * warmupnotif : prepare device before receiving 'tts' or 'notif' commands (useful for group broadcast)
     * refresh
     * reboot : reboot the Google Cast
     * volume_up
@@ -268,7 +269,7 @@ Elles doivent être séparés par *|*
 - sleep (optional, int/float) : add a break after end of command in seconds (eg: 2, 2.5)
 - uuid (optional) : redirect to other google cast uuid in new thread (parallel processing). Useful when using sequences on several device.
 - nothread (optional) : if uuid provided, disable use of thread for parallel processing. (eg: nothread=1)
-- brodcast (optional) : 'all' to broadcast to all connected devices or <uuid> seperated by ',' (ex: 'uuid1,uuid2')
+- brodcast (optional) : 'all' to broadcast to all connected devices (except group cast) or <uuid> seperated by ',' (ex: 'uuid1,uuid2')
 
 ex web : app=web|cmd=load_url|vol=90|value='http://pictoplasma.sound-creatures.com',True,10
 ex TTS : cmd=tts|vol=100|value=Mon text a dire
@@ -280,24 +281,27 @@ ex broadcast : cmd=quit_app|broadcast=all
 
 #### Paramètres possibles pour *play_media* en mode *media* :
 ```
-- url: str - url of the media (mandatory).
-- content_type: str - mime type. Example: 'video/mp4' (optional).
-   Possible values: 'audio/aac', 'audio/mpeg', 'audio/ogg', 'audio/wav', 'image/bmp',
-   'image/gif', 'image/jpeg', 'image/png', 'image/webp','video/mp4', 'video/webm'.
-- title: str - title of the media (optional).
-- thumb: str - thumbnail image url (optional, default=None).
-- current_time: float - seconds from the beginning of the media to start playback (optional, default=0).
-- autoplay: bool - whether the media will automatically play (optional, default=True).
-- stream_type: str - describes the type of media artifact as one of the following: "NONE", "BUFFERED", "LIVE" (optional, default='BUFFERED').
-- subtitles: str - url of subtitle file to be shown on chromecast (optional, default=None).
-- subtitles_lang: str - language for subtitles (optional, default='en-US').
-- subtitles_mime: str - mimetype of subtitles (optional, default='text/vtt').
-   Possible values: 'application/xml+ttml', 'text/vtt'.
-- subtitle_id: int - id of subtitle to be loaded (optional, default=1).
+- value: str - seperated by ',' (see notes)
+    * url: str - url of the media (mandatory).
+    * content_type: str - mime type. Example: 'video/mp4' (optional).
+       Possible values: 'audio/aac', 'audio/mpeg', 'audio/ogg', 'audio/wav', 'image/bmp',
+       'image/gif', 'image/jpeg', 'image/png', 'image/webp','video/mp4', 'video/webm'.
+    * title: str - title of the media (optional).
+    * thumb: str - thumbnail image url (optional, default=None).
+    * current_time: float - seconds from the beginning of the media to start playback (optional, default=0).
+    * autoplay: bool - whether the media will automatically play (optional, default=True).
+    * stream_type: str - describes the type of media artifact as one of the following: "NONE", "BUFFERED", "LIVE" (optional, default='BUFFERED').
+    * subtitles: str - url of subtitle file to be shown on chromecast (optional, default=None).
+    * subtitles_lang: str - language for subtitles (optional, default='en-US').
+    * subtitles_mime: str - mimetype of subtitles (optional, default='text/vtt').
+       Possible values: 'application/xml+ttml', 'text/vtt'.
+    * subtitle_id: int - id of subtitle to be loaded (optional, default=1).
+- live: 1 (optional) - To be specified if this is a live stream such as online radio.
 
 ex short : app=media|cmd=play_media|value='http://contentlink','video/mp4','Video name'
 ex short : app=media|cmd=play_media|value='http://contentlink',title:'Video name'
 ex short : app=media|value='http://contentlink','video/mp4','Video name' (implicit play_media command call)
+ex live stream : app=media|value='http://liveradiostream','audio/mpeg','Video name'|live=1
 
 ex long : app=media|cmd=play_media|value='http://contentlink','video/mp4',title:'Video name',
    thumb:'http://imagelink',autoplay:True,
@@ -386,7 +390,7 @@ ex using valid token :
 - highquality: 1 - increase tts sound file bitrate and sample rate. Use this setting for test as it should not improve much audio quality.
 - buffered: 1 - stream to google cast as buffered stream instead of live. Use this setting for test.
 - voice (gttsapi/gttsapidev only): male/female - chose a male or female voice
-- usessml (gttsapi/gttsapidev only): 1 - use ssml format insteaf of text. See https://cloud.google.com/text-to-speech/docs/ssml ('=' symbols must be replace by '^')
+- usessml (gttsapi/gttsapidev only): 1 - use ssml format insteaf of text in 'value' field. See https://cloud.google.com/text-to-speech/docs/ssml ('=' symbols must be replace by '^')
 
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
 ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1

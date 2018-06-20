@@ -959,7 +959,7 @@ class googlecast extends eqLogic {
 		return self::socket_connection( json_encode($fulldata) );
     }
 
-    static public function helperSendNotifandWait_static($uuid, $_commands, $maxwait=30, $retrydelay=500, $initialdelay=2) {
+    public static function helperSendNotifandWait_static($uuid, $_commands, $maxwait=30, $retrydelay=500, $initialdelay=2) {
         $googlecast = googlecast::byLogicalId($uuid, 'googlecast');
         if ( !is_object($googlecast) ) {
             return false;

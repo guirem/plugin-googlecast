@@ -73,7 +73,7 @@ except ImportError:
     pass
 
 try:
-    #import spotipy.spotify_token as stoken
+    import spotipy.spotify_token as stoken
     import spotipy
 except ImportError:
     logging.error("ERROR: Spotify API not loaded !")
@@ -108,6 +108,7 @@ class JeedomChromeCast :
             self.sessionid_storenext = False
             self.sessionid_current = ''
             self.previous_nowplaying = {}
+            self.previous_usewarmup = False
             self.nowplaying_lastupdated = 0
             self.gcast.media_controller.register_status_listener(self)
             self.gcast.register_status_listener(self)
@@ -226,6 +227,7 @@ class JeedomChromeCast :
         self.previous_playercmd['appid'] = self.getAppId(params['app'] if 'app' in params else None)
         self.previous_playercmd['appname'] = params['app'] if 'app' in params else None
         self.sessionid_storenext = True
+        self.previous_usewarmup = False
         self.sessionid_current = ''
 
     def resetPreviousPlayerCmd(self):
@@ -243,6 +245,8 @@ class JeedomChromeCast :
                 if 'current_time' in self.previous_playercmd and self.previous_playercmd['current_time'] > 0 :
                     if 'current_stream_type' in self.previous_playercmd and self.previous_playercmd['current_stream_type'] != 'LIVE' :
                         self.previous_playercmd['params']['offset'] = self.previous_playercmd['current_time']
+                    if 'live' in self.previous_playercmd['params'] :
+                        self.previous_playercmd['params']['offset'] = 0
                 playerstate = self.previous_playercmd['current_player_state'] if 'current_player_state' in self.previous_playercmd else 'PLAYING'
                 if playerstate == 'PAUSED' :
                     ret = [self.previous_playercmd['params'], {'cmd':'pause'}]
@@ -256,7 +260,24 @@ class JeedomChromeCast :
 
     def prepareTTSplay(self):
         retval = 0
+        if self.previous_usewarmup == False :
+            try :
+                self.previous_playercmd['current_appid'] = self.gcast.status.app_id
+                self.previous_playercmd['current_sessionid'] = self.gcast.status.session_id
+                self.previous_playercmd['current_player_state'] = self.gcast.media_controller.status.player_state
+                self.previous_playercmd['current_stream_type'] = self.gcast.media_controller.status.stream_type
+                retval = self.media_current_time
+            except Exception :
+                pass
+            self.previous_playercmd['current_time'] = retval
+        else :
+            self.previous_usewarmup = False
+        return retval
+
+    def prepareWarumplay(self):
+        retval = 0
         try :
+            self.previous_usewarmup = True
             self.previous_playercmd['current_appid'] = self.gcast.status.app_id
             self.previous_playercmd['current_sessionid'] = self.gcast.status.session_id
             self.previous_playercmd['current_player_state'] = self.gcast.media_controller.status.player_state
@@ -580,7 +601,10 @@ def action_handler(message):
             if 'broadcast' in command :
                 broadcastList = command['broadcast']
                 if broadcastList == 'all' :
-                    uuidlist = list(globals.GCAST_DEVICES.keys())
+                    uuidlist = []
+                    for broadcastuuid in globals.GCAST_DEVICES :
+                        if not globals.GCAST_DEVICES[broadcastuuid].is_castgroup :
+                            uuidlist.append(broadcastuuid)
                 else :
                     uuidlist = broadcastList.split(',')
                 for newUuid in uuidlist :
@@ -670,6 +694,11 @@ def action_handler(message):
                     if cmd in possibleCmd :
                         if 'offset' in command and float(command['offset'])>0 and 'current_time' not in value :
                             value = value + ',current_time:'+ str(command['offset'])
+                        if 'live' in command and 'stream_type' not in value :
+                            if int(command['live'])==1 :
+                                value = value + ",stream_type:'LIVE'"
+                            else :
+                                del command['live']
 
                         value = value.replace('local://', globals.JEEDOM_WEB+'/plugins/googlecast/'+globals.localmedia_folder+'/')
                         fallbackMode=False
@@ -707,6 +736,12 @@ def action_handler(message):
                     if cmd == 'play_media' :
                         fallbackMode=False
 
+                        wptoken = None
+                        if 'user' in command and 'pass' in command :
+                            username = command['user']
+                            password = command['pass']
+                            wptoken = stoken.SpotifyWpToken(username, password)
+
                         if 'token' in command :
                             token = command['token']
 
@@ -720,20 +755,25 @@ def action_handler(message):
 
                         if keepGoing == True :
                             player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait})
-                            player.launch_app(token)
+                            if wptoken is None :
+                                player.launch_app(token)
+                            else :
+                                time.sleep(1)
+                                player.launch_app(wptoken.value)
+
                             spotifyClient = spotipy.Spotify(auth=token)
                             time.sleep(1);
 
                             value = value.replace('spotify:', '')
-
                             trycount=0;
                             success=False
                             devicefound=False
-                            while trycount < 3 :
+                            while trycount < 4 :
                                 if devicefound==False :
                                     devices_available = spotifyClient.devices()
                                     device_id = None
                                     for device in devices_available['devices']:
+                                        logging.debug("ACTION------Spotify registered device : " + str(device['name']))
                                         if device['name'] == jcast.device.friendly_name :
                                             device_id = device['id']
                                             break
@@ -741,7 +781,16 @@ def action_handler(message):
                                 if device_id is not None :
                                     devicefound=True
                                     try :
-                                        if 'track' not in value :   # album or playlist
+                                        logging.debug("ACTION------Spotify device found !")
+
+                                        if value == 'recent' :
+                                            recentlyPlayed = spotifyClient.current_user_recently_played(limit=1)
+                                            if len(recentlyPlayed['items'])>0 :
+                                                value = recentlyPlayed['items'][0]['track']['uri']
+                                                value = value.replace('spotify:', '')
+                                                logging.debug("ACTION------Spotify recently played : " + value)
+                                            #logging.debug("ACTION------Spotify recently played : " + str(recentlyPlayed))
+                                        elif 'track' not in value :   # album or playlist
                                             out = spotifyClient.start_playback(device_id=device_id, context_uri='spotify:'+value)
                                         else :  # track
                                             out = spotifyClient.start_playback(device_id=device_id, uris=['spotify:'+value])
@@ -754,14 +803,16 @@ def action_handler(message):
                                         gcast.media_controller.stop()
                                         time.sleep(1)
                                 else :
+                                    logging.debug("ACTION------Spotify : device not found, wait for spotify to set an id...")
+                                    device_id = player.wait()
+                                    logging.debug("ACTION------Spotify : device not found, returned this new id : " + str(device_id))
                                     trycount = trycount+1
-                                    time.sleep(2)
 
                             if success==True :
                                 jcast.savePreviousPlayerCmd(command)
                             else :
                                 if devicefound==False :
-                                    logging.error("ACTION------ Spotify : device not found !")
+                                    logging.error("ACTION------ Spotify : device not found ! Have you added the cast device using Spotify phone application ?")
                                 else :
                                     logging.error("ACTION------ Spotify : Starting spotify failed !")
                                 break
@@ -1140,7 +1191,8 @@ def action_handler(message):
                             logging.debug("ACTION------Resume OK")
                         fallbackMode=False
                     elif cmd == "warmupnotif" :
-                        url,duration,mp3filename=get_tts_data('.', 'fr-FR', 'picotts', 1, False, False, silence=300)
+                        jcast.prepareWarumplay()
+                        url = generate_warmupnotif()
                         if url is not None :
                             jcast.disable_notif = True
                             player = jcast.loadPlayer('media', { 'quitapp' : False, 'wait': 0})
@@ -1189,6 +1241,35 @@ def action_handler(message):
 def manage_callback(uuid, callback_type):
     # todo things for callback before returning value
     return True
+
+def generate_warmupnotif():
+    logging.debug("WARMUPNOTIF------ Checking file generation...")
+    cachepath=globals.tts_cachefolderweb
+    symlinkpath=globals.tts_cachefoldertmp
+    try:
+        os.stat(symlinkpath)
+    except:
+        os.mkdir(symlinkpath)
+    try:
+        os.stat(cachepath)
+    except:
+        os.symlink(symlinkpath, cachepath)
+    try:
+        file = hashlib.md5('WARMUPNOTIF'.encode('utf-8')).hexdigest()
+        filenamemp3=os.path.join(cachepath,file+'.mp3')
+        if not os.path.isfile(filenamemp3) :
+            warmup = AudioSegment.silent(duration=80)
+            warmup.export(filenamemp3, format="mp3", bitrate='32k', tags={'albumartist': 'Jeedom', 'title': 'WARMUPNOTIF', 'artist':'Jeedom'}, parameters=["-ac", "1", "-ar", "24000"])
+        else :
+            try :   # touch file so cleaning can be done later based on date
+                os.utime(filenamemp3, None)
+            except :
+                pass
+        urltoplay=globals.JEEDOM_WEB+'/plugins/googlecast/tmp/'+file+'.mp3'
+    except Exception as e:
+        logging.error("WARMUPNOTIF------Exception while generating warmupnotif file : %s" % str(e))
+        urltoplay=None
+    return urltoplay
 
 def manage_resume(uuid, source='googlecast', forceapplaunch=False, origin='TTS'):
     jcast = globals.GCAST_DEVICES[uuid]
@@ -1471,6 +1552,10 @@ def start(cycle=2):
     logging.info("GLOBAL------Waiting for messages...")
     thread.start_new_thread( read_socket, (globals.cycle,))
     globals.JEEDOM_COM.send_change_immediate({'started' : 1,'source' : globals.daemonname});
+    try:
+        generate_warmupnotif()
+    except:
+        pass
 
     try:
         while True :
@@ -1777,6 +1862,7 @@ def cleanCache(nbDays=0):
         try:
             if os.path.exists(globals.tts_cachefoldertmp):
                 shutil.rmtree(globals.tts_cachefoldertmp)
+            generate_warmupnotif()
         except:
             pass
     else :              # clean only files older than X days
@@ -1787,6 +1873,7 @@ def cleanCache(nbDays=0):
                 if os.stat(os.path.join(path,f)).st_mtime < now - nbDays * 86400 :
                     if os.path.isfile(f):
                         os.remove(os.path.join(path, f))
+            generate_warmupnotif()
         except:
             pass
 
