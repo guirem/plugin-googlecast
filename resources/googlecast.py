@@ -98,6 +98,7 @@ class JeedomChromeCast :
         self.now_playing = False
         self.online = True
         self.scan_mode = scan_mode
+        self.error_count = 0
         if scan_mode == False :
             self.being_shutdown = False
             self.is_recovering = False
@@ -161,6 +162,12 @@ class JeedomChromeCast :
             pass
         return ret
 
+    def manage_exceptions(self):
+        self.error_count = self.error_count + 1
+        if self.error_count >= 3 :
+            logging.debug("JEEDOMCHROMECAST------ Forced disconnection after 3 exceptions of " + self.uuid)
+            self.disconnect()
+
     def getCurrentVolume(self):
         return int(self.gcast.status.volume_level*100)
 
@@ -203,6 +210,7 @@ class JeedomChromeCast :
             self.is_recovering = True
         if new_status.status == "CONNECTED" :    # is reborn...
             self.online = True
+            self.error_count = 0
             self.is_recovering = False
             if self.uuid not in globals.GCAST_DEVICES :
                 globals.GCAST_DEVICES[self.uuid] = self
@@ -666,6 +674,9 @@ def action_handler(message):
             sleep=0
             if 'sleep' in command :
                 sleep = float(command['sleep'])
+            sleepbefore=0
+            if 'sleepbefore' in command :
+                sleepbefore = float(command['sleepbefore'])
             vol = None
             if 'vol' in command :
                 try:
@@ -696,6 +707,9 @@ def action_handler(message):
             needSendStatus = True
             fallbackMode = True
             logging.debug("ACTION------ " + rootcmd + " - " + cmd + ' - ' + uuid + ' - ' + str(value)+ ' - ' + app)
+
+            if sleepbefore > 0 :
+                time.sleep(sleepbefore)
 
             jcast = globals.GCAST_DEVICES[uuid]
             gcast = jcast.gcast
@@ -921,6 +935,7 @@ def action_handler(message):
             except Exception as e:
                 logging.error("ACTION------Error while playing action " +cmd+ " on app " +app+" : %s" % str(e))
                 logging.debug(traceback.format_exc())
+                gcast.manage_exceptions()
 
             # low level google cast actions
             if fallbackMode==True :
@@ -1159,6 +1174,7 @@ def action_handler(message):
                     logging.error("ACTION------Error while playing action " +cmd+ " on low level commands : %s" % str(e))
                     sendErrorDeviceStatus(uuid, 'ERROR')
                     logging.debug(traceback.format_exc())
+                    gcast.manage_exceptions()
                     fallbackMode==False
 
             # media/application controler level Google Cast actions
@@ -1223,11 +1239,16 @@ def action_handler(message):
                 except Exception as e:
                     logging.error("ACTION------Error while playing action " +cmd+ " on default media controler : %s" % str(e))
                     logging.debug(traceback.format_exc())
+                    gcast.manage_exceptions()
 
             if vol is not None :
                 logging.debug("ACTION------SET VOLUME OPTION")
                 time.sleep(0.1)
-                gcast.set_volume(vol/100)
+                try :
+                    gcast.set_volume(vol/100)
+                except Exception as e:
+                    logging.error("ACTION------SET VOLUME OPTION ERROR : %s" % str(e))
+                    gcast.manage_exceptions()
 
             if fallbackMode==True :
                 logging.debug("ACTION------Action " + cmd + " not implemented !")
