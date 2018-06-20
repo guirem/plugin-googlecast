@@ -637,7 +637,20 @@ def action_handler(message):
                     thread.start_new_thread( action_handler, (newMessage,))
                     continue
 
-            app = 'media'
+            if 'storecmd' in command :
+                storecmd = command.copy()
+                del storecmd['storecmd']
+                jcast = globals.GCAST_DEVICES[uuid]
+                if jcast.is_castgroup == False :
+                    if 'app' in command and command['app'] in ['media', 'plex', 'web', 'backdrop', 'spotify', 'youtube'] :
+                        jcast.savePreviousPlayerCmd(storecmd)
+                        logging.debug("ACTION STORECMD------Storing command for later resume.")
+                    else :
+                        logging.debug("ACTION STORECMD------Not possible for this kind of action !")
+                else :
+                    logging.debug("ACTION STORECMD------Not possible for cast group !:")
+                continue
+
             cmd = 'NONE'
             if 'cmd' in command :
                 cmd = command['cmd']
@@ -725,7 +738,8 @@ def action_handler(message):
                         if jcast.support_video == True :
                             player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait})
                             eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
-                            jcast.savePreviousPlayerCmd(command)
+                            if cmd == 'play_video' :
+                                jcast.savePreviousPlayerCmd(command)
                         else :
                             logging.error("ACTION------ YouTube not availble on Google Cast Audio")
 
