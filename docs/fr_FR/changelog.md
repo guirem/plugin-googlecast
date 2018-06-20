@@ -4,6 +4,14 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
+## Version du 20 juin 2018 (beta/stable)
+
+- Ajout option 'live' pour les streams de type radio en ligne (fix problème de resume de stream)
+- Ajout compatibilité ssml pour moteur tts gttsapi/gttsapidev (permet de faire du tts avancé - voir https://cloud.google.com/text-to-speech/docs/ssml)
+- Ajout option de voix masculine pour moteur tts gttsapi/gttsapidev (avec option voice=male)
+- Ajout cmd 'warmupnotif' pour préparer les équipements au tts (synchro des google cast)
+- bug fix et maj doc
+
 ## Version du 14 juin 2018
 
 - Ajout option broadcast
