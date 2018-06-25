@@ -36,6 +36,9 @@ B&O Play, Grundig, Polk Audio, Bang & Olufsen, Onkyo, Pioneer ...)
 - Wikipedia <a target="_blank" href="https://en.wikipedia.org/wiki/Google_Cast">GoogleCast</a>
 - List of <a target="_blank" href="https://en.wikipedia.org/wiki/List_of_apps_with_Google_Cast_support">Google Cast enabled applications</a>
 
+**What is it for ?**
+
+![Summary](../images/summary.png "Summary")
 
 Dashboard
 =======================
