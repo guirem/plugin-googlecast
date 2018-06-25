@@ -36,6 +36,9 @@ B&O Play, Grundig, Polk Audio, Bang & Olufsen, Onkyo, Pioneer...)
 - Wikipedia <a target="_blank" href="https://en.wikipedia.org/wiki/Google_Cast">GoogleCast</a>
 - <a target="_blank" href="https://en.wikipedia.org/wiki/List_of_apps_with_Google_Cast_support">Applications</a> pouvant diffuser sur un équipement GoogleCast
 
+**A quoi ça sert ?**
+
+![Summary](../images/summary.png "Summary")
 
 Dashboard
 =======================
@@ -242,6 +245,7 @@ Elles doivent être séparés par *|*
     * tts : text to speech, use value to pass text
     * notif : send sound notification based on existing media file (ex: mp3)
     * warmupnotif : prepare device before receiving 'tts' or 'notif' commands (useful for group broadcast)
+    * resume : force a resume of previous command (compatible with storecmd, notif and tts)
     * refresh
     * reboot : reboot the Google Cast
     * volume_up
@@ -267,13 +271,17 @@ Elles doivent être séparés par *|*
 - value : chain of parameters separated by ',' (depending of command)
 - vol (optional, between 1 et 100) : adjust volume for the command
 - sleep (optional, int/float) : add a break after end of command in seconds (eg: 2, 2.5)
+- sleepbefore (optional, int/float) : add a break before command execution in seconds (eg: 2, 2.5)
 - uuid (optional) : redirect to other google cast uuid in new thread (parallel processing). Useful when using sequences on several device.
 - nothread (optional) : if uuid provided, disable use of thread for parallel processing. (eg: nothread=1)
 - brodcast (optional) : 'all' to broadcast to all connected devices (except group cast) or <uuid> seperated by ',' (ex: 'uuid1,uuid2')
+- storecmd (optional, 1): just store a command for later resume (compatible with notif, tts and resume)
 
 ex web : app=web|cmd=load_url|vol=90|value='http://pictoplasma.sound-creatures.com',True,10
 ex TTS : cmd=tts|vol=100|value=Mon text a dire
 ex broadcast : cmd=quit_app|broadcast=all
+
+ex storecmd and resume : app=web|cmd=load_url|vol=90|value='http://pictoplasma.sound-creatures.com'|storecmd=1$$cmd=sleep|value=10$$cmd=resume
 ```
 
 > **Notes**     
@@ -413,6 +421,7 @@ ex voice/ssml : cmd=tts|engine=gttsapi|voice=male|value=<speak>Etape 1<break tim
 - forceapplaunch: 1 - will try to force launch of previous application even if not launched by plugin.
 
 ex : cmd=notif|value=bigben1.mp3|vol=100
+ex : cmd=notif|value=tornado_siren.mp3|vol=100|duration=11
 ```
 
 > **Notes**  

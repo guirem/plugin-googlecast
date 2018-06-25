@@ -59,7 +59,9 @@ if (!isConnect('admin')) {
 	    <div class="col-lg-2">
             <select class="configKey form-control" data-l1key="tts_language">
                 <option value="fr-FR">{{Français}}</option>
-                <option value="en-US">{{Anglais}}</option>
+                <option value="fr-CA">{{Français - Canada}}</option>
+                <option value="en-US">{{Anglais - US}}</option>
+                <option value="en-GB">{{Anglais - GB}}</option>
                 <option value="es-ES">{{Espagnol}}</option>
                 <option value="de-DE">{{Allemand}}</option>
                 <option value="it-IT">{{Italien}}</option>

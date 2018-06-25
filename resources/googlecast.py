@@ -98,6 +98,7 @@ class JeedomChromeCast :
         self.now_playing = False
         self.online = True
         self.scan_mode = scan_mode
+        self.error_count = 0
         if scan_mode == False :
             self.being_shutdown = False
             self.is_recovering = False
@@ -161,6 +162,17 @@ class JeedomChromeCast :
             pass
         return ret
 
+    def manage_exceptions(self, message_string=''):
+        self.error_count = self.error_count + 1
+        if self.error_count >= 3 :
+            logging.debug("JEEDOMCHROMECAST------ Forced disconnection after 3 exceptions for " + self.uuid)
+            self.disconnect()
+        elif 'Chromecast is connecting...' in message_string :
+            logging.debug("JEEDOMCHROMECAST------ Forced disconnection due to connection fatal error for " + self.uuid)
+            self.disconnect()
+        else :
+            logging.debug("JEEDOMCHROMECAST------ Managed exception but no forced disconnection for " + self.uuid)
+
     def getCurrentVolume(self):
         return int(self.gcast.status.volume_level*100)
 
@@ -203,6 +215,7 @@ class JeedomChromeCast :
             self.is_recovering = True
         if new_status.status == "CONNECTED" :    # is reborn...
             self.online = True
+            self.error_count = 0
             self.is_recovering = False
             if self.uuid not in globals.GCAST_DEVICES :
                 globals.GCAST_DEVICES[self.uuid] = self
@@ -235,12 +248,12 @@ class JeedomChromeCast :
         self.sessionid_storenext = False
         self.sessionid_current = ''
 
-    def getPreviousPlayerCmd(self, forceapplaunch=False):
+    def getPreviousPlayerCmd(self, forceapplaunch=False, notifMode=True):
         logging.debug("JEEDOMCHROMECAST------ getPreviousPlayerCmd " + str(self.previous_playercmd))
         ret = None
         beforeTTSappid = (self.previous_playercmd['current_appid'] if 'current_appid' in self.previous_playercmd else None)
         if 'params' in self.previous_playercmd :
-            if self.previous_playercmd['appid']==beforeTTSappid :
+            if self.previous_playercmd['appid']==beforeTTSappid or notifMode==False :
                 self.previous_playercmd['params']
                 if 'current_time' in self.previous_playercmd and self.previous_playercmd['current_time'] > 0 :
                     if 'current_stream_type' in self.previous_playercmd and self.previous_playercmd['current_stream_type'] != 'LIVE' :
@@ -254,6 +267,7 @@ class JeedomChromeCast :
                     ret = [self.previous_playercmd['params'], {'cmd':'stop'}]
                 else :
                     ret = [self.previous_playercmd['params'], {'cmd':'play'}]
+
         elif beforeTTSappid is not None and forceapplaunch :
             ret = {'cmd': 'start_app', 'appid' : beforeTTSappid}
         return ret
@@ -273,6 +287,12 @@ class JeedomChromeCast :
         else :
             self.previous_usewarmup = False
         return retval
+
+    def prepareForceResume(self, player_state, current_time):
+        if player_state is not None :
+            self.previous_playercmd['current_player_state'] = player_state
+        if current_time is not None :
+            self.previous_playercmd['current_time'] = current_time
 
     def prepareWarumplay(self):
         retval = 0
@@ -637,11 +657,24 @@ def action_handler(message):
                     thread.start_new_thread( action_handler, (newMessage,))
                     continue
 
-            app = 'media'
+            if 'storecmd' in command :
+                storecmd = command.copy()
+                del storecmd['storecmd']
+                jcast = globals.GCAST_DEVICES[uuid]
+                if jcast.is_castgroup == False :
+                    if 'app' in command and command['app'] in ['media', 'plex', 'web', 'backdrop', 'spotify', 'youtube'] :
+                        jcast.savePreviousPlayerCmd(storecmd)
+                        logging.debug("ACTION STORECMD------Storing command for later resume.")
+                    else :
+                        logging.debug("ACTION STORECMD------Not possible for this kind of action !")
+                else :
+                    logging.debug("ACTION STORECMD------Not possible for cast group !:")
+                continue
+
             cmd = 'NONE'
             if 'cmd' in command :
                 cmd = command['cmd']
-            app = 'media'
+            app = 'none'
             if 'app' in command :
                 app = command['app']
             appid = ''
@@ -653,6 +686,9 @@ def action_handler(message):
             sleep=0
             if 'sleep' in command :
                 sleep = float(command['sleep'])
+            sleepbefore=0
+            if 'sleepbefore' in command :
+                sleepbefore = float(command['sleepbefore'])
             vol = None
             if 'vol' in command :
                 try:
@@ -683,6 +719,9 @@ def action_handler(message):
             needSendStatus = True
             fallbackMode = True
             logging.debug("ACTION------ " + rootcmd + " - " + cmd + ' - ' + uuid + ' - ' + str(value)+ ' - ' + app)
+
+            if sleepbefore > 0 :
+                time.sleep(sleepbefore)
 
             jcast = globals.GCAST_DEVICES[uuid]
             gcast = jcast.gcast
@@ -725,7 +764,8 @@ def action_handler(message):
                         if jcast.support_video == True :
                             player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before, 'wait': wait})
                             eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
-                            jcast.savePreviousPlayerCmd(command)
+                            if cmd == 'play_video' :
+                                jcast.savePreviousPlayerCmd(command)
                         else :
                             logging.error("ACTION------ YouTube not availble on Google Cast Audio")
 
@@ -907,6 +947,7 @@ def action_handler(message):
             except Exception as e:
                 logging.error("ACTION------Error while playing action " +cmd+ " on app " +app+" : %s" % str(e))
                 logging.debug(traceback.format_exc())
+                jcast.manage_exceptions(str(e))
 
             # low level google cast actions
             if fallbackMode==True :
@@ -1145,6 +1186,7 @@ def action_handler(message):
                     logging.error("ACTION------Error while playing action " +cmd+ " on low level commands : %s" % str(e))
                     sendErrorDeviceStatus(uuid, 'ERROR')
                     logging.debug(traceback.format_exc())
+                    jcast.manage_exceptions(str(e))
                     fallbackMode==False
 
             # media/application controler level Google Cast actions
@@ -1184,6 +1226,13 @@ def action_handler(message):
                         forceapplaunch = False
                         if 'forceapplaunch' in command :
                             forceapplaunch = True
+                        offset = None
+                        if 'offset' in command :
+                            offset = command['offset']
+                        status = None
+                        if 'status' in command :
+                            status = command['status']
+                        jcast.prepareForceResume(status, offset)
                         resumeOk = manage_resume(uuid, message['device']['source'], forceapplaunch, 'ACTION')
                         if resumeOk==False :
                             logging.debug("ACTION------Resume is not possible!")
@@ -1209,11 +1258,16 @@ def action_handler(message):
                 except Exception as e:
                     logging.error("ACTION------Error while playing action " +cmd+ " on default media controler : %s" % str(e))
                     logging.debug(traceback.format_exc())
+                    jcast.manage_exceptions(str(e))
 
             if vol is not None :
                 logging.debug("ACTION------SET VOLUME OPTION")
                 time.sleep(0.1)
-                gcast.set_volume(vol/100)
+                try :
+                    gcast.set_volume(vol/100)
+                except Exception as e:
+                    logging.error("ACTION------SET VOLUME OPTION ERROR : %s" % str(e))
+                    jcast.manage_exceptions(str(e))
 
             if fallbackMode==True :
                 logging.debug("ACTION------Action " + cmd + " not implemented !")
@@ -1273,7 +1327,7 @@ def generate_warmupnotif():
 
 def manage_resume(uuid, source='googlecast', forceapplaunch=False, origin='TTS'):
     jcast = globals.GCAST_DEVICES[uuid]
-    prevcommand = jcast.getPreviousPlayerCmd(forceapplaunch)
+    prevcommand = jcast.getPreviousPlayerCmd(forceapplaunch, True if origin!='ACTION' else False)
     if prevcommand is not None :
         newMessage = {
             'cmd' : 'action',
