@@ -111,7 +111,10 @@ class JeedomChromeCast :
             self.previous_nowplaying = {}
             self.previous_usewarmup = False
             self.nowplaying_lastupdated = 0
+            self.has_apperror = False
+            self.apperror_type = 'NONE'
             self.gcast.media_controller.register_status_listener(self)
+            self.gcast.register_launch_error_listener(self)
             self.gcast.register_status_listener(self)
             self.gcast.register_connection_listener(self)
             self.options = options
@@ -173,6 +176,16 @@ class JeedomChromeCast :
         else :
             logging.debug("JEEDOMCHROMECAST------ Managed exception but no forced disconnection for " + self.uuid)
 
+    def applaunch_callback_reset(self):
+        self.has_apperror = False
+        self.apperror_type = 'NONE'
+
+    def applaunch_callback_haserror(self):
+        retbol = self.has_apperror
+        rettype = self.apperror_type
+        self.manage_callback_reset()
+        return retbol, rettype
+
     def getCurrentVolume(self):
         return int(self.gcast.status.volume_level*100)
 
@@ -200,6 +213,18 @@ class JeedomChromeCast :
                 self._internal_send_now_playing_statusupdate(new_mediastatus)
             if self.now_playing==True :
                 self._internal_send_now_playing()
+
+    def new_launch_error(self, launch_failure):
+        logging.debug("JEEDOMCHROMECAST------ New launch error " + str(launch_failure))
+        if launch_failure.reason=="CANCELLED" :
+            self.manage_exceptions('Launch error : CANCELLED')
+            try :
+                self.gcast.quit_app()
+            except Exception :
+                pass
+        self.has_apperror = True
+        self.apperror_type = launch_failure.reason
+        sendErrorDeviceStatus(self.uuid, 'APP ERROR')
 
     def new_connection_status(self, new_status):
         # CONNECTING / CONNECTED / DISCONNECTED / FAILED / LOST
@@ -342,7 +367,10 @@ class JeedomChromeCast :
             if self.uuid in globals.GCAST_DEVICES :
                 del globals.GCAST_DEVICES[self.uuid]
             logging.debug("JEEDOMCHROMECAST------ Chromecast disconnected : " + self.friendly_name)
-        self.gcast.disconnect()
+        try :
+            self.gcast.disconnect()
+        except Exception :
+            pass
         self.free_memory()
 
     def free_memory(self):
@@ -726,6 +754,7 @@ def action_handler(message):
             jcast = globals.GCAST_DEVICES[uuid]
             gcast = jcast.gcast
             try:
+                gcast.applaunch_callback_reset()
                 if app == 'media' :    # app=media|cmd=play_media|value=http://bit.ly/2JzYtfX,video/mp4,Mon film
                     if cmd == 'NONE' :
                         cmd = 'play_media'
@@ -1260,7 +1289,7 @@ def action_handler(message):
                     logging.debug(traceback.format_exc())
                     jcast.manage_exceptions(str(e))
 
-            if vol is not None :
+            if vol is not None and uuid in globals.GCAST_DEVICES :
                 logging.debug("ACTION------SET VOLUME OPTION")
                 time.sleep(0.1)
                 try :
@@ -1276,9 +1305,9 @@ def action_handler(message):
             if sleep>0 :
                 time.sleep(sleep)
 
-            if needSendStatus :
+            if needSendStatus and uuid in globals.GCAST_DEVICES :
                 time.sleep(0.1)
-                globals.GCAST_DEVICES[uuid].sendDeviceStatus()
+                jcast.sendDeviceStatus()
 
         if hascallback :
             callbackret=manage_callback(uuid, callback)

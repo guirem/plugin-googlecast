@@ -679,9 +679,9 @@ Compatibilité avec interaction IFTTT en utilisant l'url suivant dans la configu
 http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=#GCAST_UUID#&query=<<{{TextField}}>>
 Optional :   
   &vol=X (between 1 and 100)    
-  &noresume    
-  &quit
-  &silence=X (between 1 and 100)
+  &noresume    (will not try to resume previous app)
+  &quit        
+  &silence=X (in milliseconds, ex: 1000 for 1 sec)
 ```
 Documentation Jeedom et IFTTT : https://jeedom.github.io/plugin-gcast
 
@@ -722,7 +722,16 @@ FAQ
 
 #### Les dépendances ne s'installent pas
 
-- Vérifier dans les logs la provenance de l'erreur. Le plugin nécessite l'installation de python3 et pip3.
+- Vérifier dans les logs la provenance de l'erreur. Le plugin nécessite l'installation de python3 et pip3.    
+Tenter de lancer les lignes de commandes en ssh :
+- `python3 -V` doit retourner la version de python 3 installée.
+- `compgen -ac | grep -E '^pip-?3' | sort -r | head -1` doit retourner une ligne (ex: pip3)
+- Si aucun retour sur le ligne précédante tenter une réinstallation    
+```
+sudo apt-get remove python3-pip
+sudo apt-get -y install python3-pip
+```
+- Relancer l'installation des dépendances
 
 #### Le Text To Speech (TTS) ne fonctionne pas
 

@@ -1,3 +1,4 @@
+#!/bin/bash
 if ! python3 -V 2>&1 | grep -q "Python 3"; then
     echo "nok"
     exit 0

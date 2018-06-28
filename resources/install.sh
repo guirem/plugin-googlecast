@@ -1,3 +1,4 @@
+#!/bin/bash
 touch /tmp/dependancy_googlecast_in_progress
 echo 0 > /tmp/dependancy_googlecast_in_progress
 echo "Launch install of googlecast dependancies"
@@ -58,7 +59,7 @@ if [[ !  -z  $pip3cmd  ]]; then     # pip3 found
     rm -f /tmp/dependancy_googlecast
 else
     echo ""
-    echo "Error: Cound not found pip3 program to install python dependencies !"
+    echo "Error: Cound not found pip3 program to install python dependencies ! Check doc FAQ for possible resolution."
 fi
 echo 100 > /tmp/dependancy_googlecast_in_progress
 rm /tmp/dependancy_googlecast_in_progress
