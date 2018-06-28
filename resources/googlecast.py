@@ -165,6 +165,9 @@ class JeedomChromeCast :
             pass
         return ret
 
+    def reset_exceptioncount(self):
+        self.error_count = 0
+
     def manage_exceptions(self, message_string=''):
         self.error_count = self.error_count + 1
         if self.error_count >= 3 :
@@ -217,10 +220,11 @@ class JeedomChromeCast :
     def new_launch_error(self, launch_failure):
         logging.debug("JEEDOMCHROMECAST------ New launch error " + str(launch_failure))
         if launch_failure.reason=="CANCELLED" :
-            self.manage_exceptions('Launch error : CANCELLED')
+            #self.manage_exceptions('Launch error : CANCELLED')
             try :
                 self.gcast.quit_app()
             except Exception :
+                self.manage_exceptions('Launch error : CANCELLED')
                 pass
         self.has_apperror = True
         self.apperror_type = launch_failure.reason
@@ -754,7 +758,7 @@ def action_handler(message):
             jcast = globals.GCAST_DEVICES[uuid]
             gcast = jcast.gcast
             try:
-                gcast.applaunch_callback_reset()
+                jcast.applaunch_callback_reset()
                 if app == 'media' :    # app=media|cmd=play_media|value=http://bit.ly/2JzYtfX,video/mp4,Mon film
                     if cmd == 'NONE' :
                         cmd = 'play_media'
