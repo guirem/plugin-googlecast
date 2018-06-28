@@ -4,6 +4,11 @@ Version list of googlecast plugin.
 
 *[Back to documentation] (index.md)*
 
+## Version of June 28, 2018 (beta/stable)
+
+- exception management optimization
+- bug fix and doc update
+
 ## Version of June 20, 2018 (beta/stable)
 
 - Added option 'live' for live stream type such as online radio (fix stream resume issue)
