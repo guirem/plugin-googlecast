@@ -23,11 +23,8 @@ require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 
 try {
 
-    //if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    //    $content = file_get_contents('php://input');
-    //}
-
     if (!jeedom::apiAccess(init('apikey'), 'googlecast')) {
+        log::add('googlecast', 'error', 'IFTTT API : Incorrect API key !');
     	echo json_encode(array('text' => 'Incorrect API key !'));
     	die();
     }
@@ -36,6 +33,7 @@ try {
         $uuid=init('uuid');
     }
     else {
+        log::add('googlecast', 'error', 'IFTTT API : No UUID provided !');
     	echo json_encode(array('text' => 'No UUID provided'));
     	die();
     }
@@ -48,10 +46,12 @@ try {
     if ( !($uuid=='any' and $action=='askreply') ) {
         $googlecast = googlecast::byLogicalId($uuid,'googlecast');
         if (!is_object($googlecast)) {
+            log::add('googlecast', 'error', 'IFTTT API : Unkown UUID : ' . $uuid);
             echo json_encode(array('text' => 'Unkown UUID : ' . $uuid));
             die();
         }
         if ( $googlecast->getIsEnable() == 0) {
+            log::add('googlecast', 'error', 'IFTTT API : Google Cast is disabled !');
             echo json_encode(array('text' => 'Google Cast is disabled !'));
             die();
         }
@@ -63,19 +63,20 @@ try {
     }
 
     if ( is_null($query) ) {
+        log::add('googlecast', 'error', 'IFTTT API : No query provided !');
         echo json_encode(array('text' => 'No query provided !'));
     	die();
     }
 
 
     if ( $action == 'interact' ) {
-        log::add('googlecast', 'debug', 'IFTTT Query received ' . $query);
+        log::add('googlecast', 'debug', 'IFTTT API : Query received ' . $query);
 
         $customcmd = $googlecast->getCmd(null, 'customcmd');
 
         $parameters['plugin'] = 'googlecast';
         $reply = interactQuery::tryToReply(trim($query), $parameters);
-        log::add('googlecast', 'debug', 'IFTTT Interaction ' . print_r($reply, true));
+        log::add('googlecast', 'debug', 'IFTTT API : Interaction ' . print_r($reply, true));
 
         $queryTransform = str_replace(array('[',']') , ' ', $reply['reply']);
         $cmd = "cmd=tts|value=".$queryTransform;
@@ -91,13 +92,13 @@ try {
         if ( init('silence') != '' ) {
             $cmd .= '|silence=' . $silence;
         }
-        log::add('googlecast', 'debug', 'IFTTT Interaction reply cmd : ' . $cmd);
+        log::add('googlecast', 'debug', 'IFTTT API : Interaction reply cmd : ' . $cmd);
         $customcmd->execCmd(array('message' => $cmd));
         //echo json_encode(array('text' => 'OK !'));
         die();
     }
     if ( $action == 'askreply' ) {
-        log::add('googlecast', 'debug', 'IFTTT Ask response received ' . $query);
+        log::add('googlecast', 'debug', 'IFTTT API : Ask response received ' . $query);
 
         // uuid is set to any to try all devices
         if ($uuid=='any') {
@@ -113,29 +114,29 @@ try {
                 }
             }
             if ($askdone===true) {
-                log::add('googlecast', 'debug', 'Replied to pending ask query found on one device');
+                log::add('googlecast', 'debug', 'IFTTT API : Replied to pending ask query found on one device');
             }
             else {
-                log::add('googlecast', 'debug', 'No pending ask query found in any google cast devices !');
+                log::add('googlecast', 'debug', 'IFTTT API : No pending ask query found in any google cast devices !');
             }
             die();
         }
         // uuid is specified
         else {
-            $cmd = $googlecast->getCmd(null, 'customcmd');
-            if (is_object($cmd) && $cmd->askResponse($query)) {
-            	log::add('googlecast', 'debug', 'Replied to pending ask query (using customcmd)');
-            	die();
+            if ($googlecast->getCmd(null, 'customcmd')->askResponse($query)) {
+            	log::add('googlecast', 'debug', 'IFTTT API : Replied to pending ask query (using customcmd)');
             }
-            $cmd = $googlecast->getCmd(null, 'speak');
-            if (is_object($cmd) && $cmd->askResponse($query)) {
-            	log::add('googlecast', 'debug', 'Replied to pending ask query (using speak)');
-            	die();
+            elseif ($googlecast->getCmd(null, 'speak')->askResponse($query)) {
+            	log::add('googlecast', 'debug', 'IFTTT API : Replied to pending ask query (using speak)');
             }
+            else {
+                log::add('googlecast', 'debug', 'IFTTT API : No pending ask query found !');
+            }
+            die();
         }
     }
     elseif ( $action == 'customcmd' ) {
-        log::add('googlecast', 'debug', 'IFTTT Custom action : ' . $query);
+        log::add('googlecast', 'debug', 'IFTTT API : Custom action : ' . $query);
         $googlecast->helperSendCustomCmd($query, null, 'ifttt', null, null);
         //echo json_encode(array('text' => 'OK !'));
         die();
@@ -146,7 +147,7 @@ try {
     }
     /*     * *********Catch exeption*************** */
 } catch (Exception $e) {
-    log::add('googlecast', 'error', 'Exception on ifttt api call : ' . $e->getMessage());
+    log::add('googlecast', 'error', 'IFTTT API : Exception on ifttt api call : ' . $e->getMessage());
     echo json_encode(array('text' => 'Exception on ifttt api call !'));
     die();
 }
