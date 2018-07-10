@@ -4,6 +4,11 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
+## Version du 10 juillet 2018 (beta)
+
+- compatibility ifttt/ask pour google assistants
+- maj doc partie IFTTT
+
 ## Version du 28 juin 2018 (beta/stable)
 
 - optimisation de la gestion des exceptions
