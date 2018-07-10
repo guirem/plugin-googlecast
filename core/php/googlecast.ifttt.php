@@ -23,97 +23,116 @@ require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 
 try {
 
-    $querystr = parse_url(urldecode($_SERVER["REQUEST_URI"]));
-    parse_str($querystr['query'], $queryparams);
+    //if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    //    $content = file_get_contents('php://input');
+    //}
 
-    $apikey=null;
-    if ( isset($queryparams['apikey']) ) {
-        $apikey=$queryparams['apikey'];
-    }
-
-    if ($apikey!==null && !jeedom::apiAccess($apikey, 'googlecast')) {
-    	echo json_encode(array('text' => 'No API Key provided !'));
+    if (!jeedom::apiAccess(init('apikey'), 'googlecast')) {
+    	echo json_encode(array('text' => 'Incorrect API key !'));
     	die();
     }
 
-    $content = file_get_contents('php://input');
-    $json = json_decode($content, true);
-
-    if ( isset($queryparams['uuid']) ) {
-        $uuid=$queryparams['uuid'];
+    if ( init('uuid') != '' ) {
+        $uuid=init('uuid');
     }
     else {
     	echo json_encode(array('text' => 'No UUID provided'));
     	die();
     }
 
-    $googlecast = googlecast::byLogicalId($uuid,'googlecast');
-    if (!is_object($googlecast)) {
-    	echo json_encode(array('text' => 'Unkown UUID : '));
-    	die();
-    }
-    if ( $googlecast->getIsEnable() == 0) {
-    	echo json_encode(array('text' => 'Google Cast is disabled !'));
-    	die();
-    }
-
     $action = 'interact';
-    if ( isset($queryparams['action']) ) {
-        $action = $queryparams['action'];
+    if ( init('action') != '' ) {
+        $action = init('action');
     }
 
-    if ( isset($queryparams['query']) ) {
-        $query = $queryparams['query'];
+    if ( !($uuid=='any' and $action=='askreply') ) {
+        $googlecast = googlecast::byLogicalId($uuid,'googlecast');
+        if (!is_object($googlecast)) {
+            echo json_encode(array('text' => 'Unkown UUID : ' . $uuid));
+            die();
+        }
+        if ( $googlecast->getIsEnable() == 0) {
+            echo json_encode(array('text' => 'Google Cast is disabled !'));
+            die();
+        }
     }
-    else {
+
+    $query = null;
+    if ( init('query') != '' ) {
+        $query = urldecode( init('query') );
+    }
+
+    if ( is_null($query) ) {
         echo json_encode(array('text' => 'No query provided !'));
     	die();
     }
 
+
     if ( $action == 'interact' ) {
         log::add('googlecast', 'debug', 'IFTTT Query received ' . $query);
 
-        $parameters['plugin'] = 'googlecast';
         $customcmd = $googlecast->getCmd(null, 'customcmd');
-        if (is_object($cmd) && $customcmd->askResponse($query)) {
-        	log::add('googlecast', 'debug', 'Répondu à un ask en cours');
-        	die();
-        }
 
+        $parameters['plugin'] = 'googlecast';
         $reply = interactQuery::tryToReply(trim($query), $parameters);
         log::add('googlecast', 'debug', 'IFTTT Interaction ' . print_r($reply, true));
 
-        if ( isset($queryparams['vol']) ) {
-            $vol=$queryparams['vol'];
-        }
-        if ( isset($queryparams['noresume']) ) {
-            $has_noresume=true;
-        }
-        if ( isset($queryparams['quit']) ) {
-            $has_quit=true;
-        }
-        if ( isset($queryparams['silence']) ) {
-            $silence=$queryparams['silence'];
-        }
-
         $queryTransform = str_replace(array('[',']') , ' ', $reply['reply']);
         $cmd = "cmd=tts|value=".$queryTransform;
-        if ( isset($vol) ) {
+        if ( init('vol') != '' ) {
             $cmd .= '|vol=' . $vol;
         }
-        if ( isset($has_noresume) ) {
+        if ( init('noresume') != '' ) {
             $cmd .= '|noresume=1';
         }
-        if ( isset($has_quit) ) {
+        if ( init('quit') != '' ) {
             $cmd .= '|quit=1';
         }
-        if ( isset($silence) ) {
+        if ( init('silence') != '' ) {
             $cmd .= '|silence=' . $silence;
         }
         log::add('googlecast', 'debug', 'IFTTT Interaction reply cmd : ' . $cmd);
         $customcmd->execCmd(array('message' => $cmd));
         //echo json_encode(array('text' => 'OK !'));
         die();
+    }
+    if ( $action == 'askreply' ) {
+        log::add('googlecast', 'debug', 'IFTTT Ask response received ' . $query);
+
+        // uuid is set to any to try all devices
+        if ($uuid=='any') {
+            $askdone = false;
+            foreach (googlecast::byType('googlecast') as $eqLogic) {
+                if ($eqLogic->getCmd(null, 'customcmd')->askResponse($query)) {
+                    $askdone = true;
+                    break;
+                }
+                if ($eqLogic->getCmd(null, 'speak')->askResponse($query)) {
+                    $askdone = true;
+                    break;
+                }
+            }
+            if ($askdone===true) {
+                log::add('googlecast', 'debug', 'Replied to pending ask query found on one device');
+            }
+            else {
+                log::add('googlecast', 'debug', 'No pending ask query found in any google cast devices !');
+            }
+            die();
+        }
+        // uuid is specified
+        else {
+            $cmd = $googlecast->getCmd(null, 'customcmd');
+            if (is_object($cmd) && $cmd->askResponse($query)) {
+            	log::add('googlecast', 'debug', 'Replied to pending ask query (using customcmd)');
+            	die();
+            }
+            $cmd = $googlecast->getCmd(null, 'speak');
+            if (is_object($cmd) && $cmd->askResponse($query)) {
+            	log::add('googlecast', 'debug', 'Replied to pending ask query (using speak)');
+            	die();
+            }
+        }
     }
     elseif ( $action == 'customcmd' ) {
         log::add('googlecast', 'debug', 'IFTTT Custom action : ' . $query);
@@ -127,5 +146,7 @@ try {
     }
     /*     * *********Catch exeption*************** */
 } catch (Exception $e) {
-    ajax::error(displayException($e), $e->getCode());
+    log::add('googlecast', 'error', 'Exception on ifttt api call : ' . $e->getMessage());
+    echo json_encode(array('text' => 'Exception on ifttt api call !'));
+    die();
 }
