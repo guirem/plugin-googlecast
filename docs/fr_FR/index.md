@@ -93,6 +93,7 @@ Table des matières
       - [Avec bloc code php](#avec-bloc-code-php)
     + [Utilisation avec interactions et IFTTT](#utilisation-avec-interactions-et-ifttt)
       - [Interactions](#interactions)
+      - [Réponse type ask](#r-ponse-type--ask-)
       - [Custom CMD](#custom-cmd)
 - [Limitations et bug connus](#limitations-et-bug-connus)
 - [FAQ](#faq)
@@ -324,9 +325,10 @@ ex long : app=media|cmd=play_media|value='http://contentlink','video/mp4',title:
 
 #### Paramètres possibles pour *load_url* en mode *web* :
 ```
-- url: str - website url.
-- force: bool - force mode. To be used if default is not working. (optional, default False).
-- reload: int - reload time in seconds. 0 = no reload. (optional, default 0)
+- value: str - seperated by ',' (see notes)
+    * url: str - website url.
+    * force: bool - force mode. To be used if default is not working. (optional, default False).
+    * reload: int - reload time in seconds. 0 = no reload. (optional, default 0)
 
 ex 1 : app=web|cmd=load_url|value='http://pictoplasma.sound-creatures.com',True,10
 ex 2 : app=web|cmd=load_url|value='http://mywebsite/index.php?apikey%3Dmyapikey'
@@ -673,8 +675,13 @@ $ret = $googlecast->helperSendNotifandWait('XXXXXXXX', 'cmd=tts|value=Test Scén
 
 ### Utilisation avec interactions et IFTTT
 
+Trois type d'actions sont possibles :
+- Intéraction TTS (Text To Speech)
+- Réponse à action de type ask
+- Lancer une commande personnalisée
+
 #### Interactions
-Compatibilité avec interaction IFTTT en utilisant l'url suivant dans la configuration :
+Compatibilité avec interaction IFTTT de type *TTS* en utilisant l'url suivant dans la configuration (GET ou POST) :
 ```
 http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=#GCAST_UUID#&query=<<{{TextField}}>>
 Optional :   
@@ -685,8 +692,18 @@ Optional :
 ```
 Documentation Jeedom et IFTTT : https://jeedom.github.io/plugin-gcast
 
+#### Réponse type *ask*
+Compatibilité avec IFTTT et réponse à une requête de type *ask* (scénarios) en utilisant l'url suivant dans la configuration (GET ou POST) :
+```
+http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=#GCAST_UUID#&action=askreply&query=<<{{TextField}}>>
+```
+
+> **Notes**   
+> - uuid peut avoir la valeur *any* pour tester tous les équipements google cast en attente potentielle de réponse.
+> - l'action ask du scénario peut utiliser soit la commande *Custom Cmd* (ex: cmd=tts|value="Confirmer commande ?"|vol=60) soit la commande *Parle !*.
+
 #### Custom CMD
-Envoyer une commande à partir d'un webhook
+Envoyer une commande à partir d'un webhook (GET ou POST)
 ```
 http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=#GCAST_UUID#&action=customcmd&query=#CUSTOM_CMD#
 Notes :   
@@ -713,7 +730,7 @@ FAQ
 
 #### Aucune commande ne semble fonctionner
 
-- Vérifier que le Google Cast fonctionne avec d'autres équipements ;
+- Vérifier que le Google Cast fonctionne avec d'autres équipements (appli mobile) ;
 - Vérifier que rien n'a changé depuis le scan ;
 
 #### Certaines commandes ne fonctionnent pas
@@ -722,11 +739,12 @@ FAQ
 
 #### Les dépendances ne s'installent pas
 
-- Vérifier dans les logs la provenance de l'erreur. Le plugin nécessite l'installation de python3 et pip3.    
-Tenter de lancer les lignes de commandes en ssh :
+Vérifier dans les logs (*Googlecast_update*) la provenance de l'erreur. Le plugin nécessite l'installation de python3, pip3.
+
+Si le log contient le message *Error: Cound not found pip3 program to install python dependencies !*, tenter de lancer les lignes de commandes en ssh :
 - `python3 -V` doit retourner la version de python 3 installée.
 - `compgen -ac | grep -E '^pip-?3' | sort -r | head -1` doit retourner une ligne (ex: pip3)
-- Si aucun retour sur le ligne précédante tenter une réinstallation    
+- Si aucun retour sur le ligne précédante tenter une réinstallation de pip3   
 ```
 sudo apt-get remove python3-pip
 sudo apt-get -y install python3-pip
