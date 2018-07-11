@@ -92,6 +92,7 @@ Toble of Content
       - [With php bloc code](#with-php-bloc-code)
     + [Use with interactions and IFTTT](#use-with-interactions-and-ifttt)
       - [Interactions](#interactions)
+      - [ask type reply](#-ask--type-reply)
       - [Custom CMD](#custom-cmd)
 - [Known limitations and bugs](#known-limitations-and-bugs)
 - [FAQ](#faq)
@@ -632,20 +633,35 @@ $ret = $googlecast->helperSendNotifandWait('XXXXXXXX', 'cmd=tts|value=Test Scén
 
 ### Use with interactions and IFTTT
 
+Three type of actions possible :
+- TTS interactions (Text To Speech)
+- Ask type reply
+- Run a custom command
+
 #### Interactions
-Compatibility with IFTTT using the following url in the configuration:
+Compatibility with IFTTT de type *TTS* using the following url in the configuration (GET or POST) :
 ```
 http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=#GCAST_UUID#&query=<<{{TextField}}>>
 Optional :   
   &vol=X (between 1 and 100)    
   &noresume    
   &quit
-  &silence=X (between 1 and 100)
+  &silence=X (in milliseconds, ex: 1000 for 1 sec)
 ```
 Documentation Jeedom et IFTTT : https://jeedom.github.io/plugin-gcast
 
+#### *ask* type reply
+Compatibility with IFTTT and *ask* type reply (scenarios) using the following url in the configuration (GET or POST) :
+```
+http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=#GCAST_UUID#&action=askreply&query=<<{{TextField}}>>
+```
+
+> **Notes**   
+> - uuid can have value *any* to test all google cast devices potentially waiting for answers.
+> - Action ask of a scenario can either use *Custom Cmd* command (ex: cmd=tts|value="Confirmer commande ?"|vol=60) or *Speak !* command.
+
 #### Custom CMD
-Send a custom command using webhooks
+Send a custom command using webhooks (GET or POST)
 ```
 http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=#GCAST_UUID#&action=customcmd&query=#CUSTOM_CMD#
 Notes :   

@@ -93,7 +93,7 @@ Table des matières
       - [Avec bloc code php](#avec-bloc-code-php)
     + [Utilisation avec interactions et IFTTT](#utilisation-avec-interactions-et-ifttt)
       - [Interactions](#interactions)
-      - [Réponse type ask](#r-ponse-type-ask--)
+      - [Réponse type ask](#r-ponse-type--ask-)
       - [Custom CMD](#custom-cmd)
 - [Limitations et bug connus](#limitations-et-bug-connus)
 - [FAQ](#faq)
@@ -700,7 +700,7 @@ http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#
 
 > **Notes**   
 > - uuid peut avoir la valeur *any* pour tester tous les équipements google cast en attente potentielle de réponse.
-> - l'action ask du scénario peut utiliser soit la commande *Custom Cmd* (ex: cmd=tts|value="Confirmer commande ?"|vol=60) soit la commande *Parle !*
+> - l'action ask du scénario peut utiliser soit la commande *Custom Cmd* (ex: cmd=tts|value="Confirmer commande ?"|vol=60) soit la commande *Parle !*.
 
 #### Custom CMD
 Envoyer une commande à partir d'un webhook (GET ou POST)
