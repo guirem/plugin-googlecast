@@ -49,14 +49,14 @@ Dashboard
 Quick Start
 =======================
 
-Le plugin est normalement fonctionnel dès l'installation avec le paramêtrage par défaut.
+Le plugin est normalement fonctionnel dès l'installation avec le paramétrage par défaut.
 
 En quelques étapes :
 1. Installer le plugin du market, les dépendances puis démarrer le démon,
 2. Lancer un scan des Google Cast disponibles sur le réseau,
 3. Sauvegarder les équipements trouvés,
 4. Aller sur le dashboard et tester les boutons 'démo' (media, web...),
-5. Pour changer/adapter le paramètrage, lire le reste de la documentation.
+5. Pour changer/adapter le paramétrage, lire le reste de la documentation.
 
 Table des matières
 =======================
@@ -112,14 +112,14 @@ Les paramètres de configuration n'ont généralement pas besoin d'être modifi�
 - **Démon**
   - Port du socket interne de communication. Ne modifier que si nécessaire (ex: s'il est déjà pris par un autres plugin)
   - Configuration spéciale (eg: Docker, VM). Ne modifier que si ça ne fonctionne pas sans l'option.
-  - Fréquence de rafraîchissement. A ne modifier uniquement si la fréquence normale à un impact important sur les performances globales
+  - Fréquence de rafraîchissement. A ne modifier uniquement si la fréquence normale a un impact important sur les performances globales
 - **TTS**
-  - Utiliser l'adresse Jeedom externe : par défaut utilise l'addresse web Jeedom interne
+  - Utiliser l'adresse Jeedom externe : par défaut utilise l'adresse web Jeedom interne
   - Langue par défaut : langue du moteur TTS utilisé par défaut
   - Moteur par défaut : le moteur TTS utilisé (PicoTTS, Google Translate, Google Speach API, Google Speach API dev)
   - Vitesse de parole : rapidité de prononciation du texte
   - Ne pas utiliser le cache : désactive l'utilisation du cache Jeedom (déconseillé)
-  - Nettoyer cache : nettoie le repertoire temporaire de géneration des fichiers son
+  - Nettoyer cache : nettoie le répertoire temporaire de géneration des fichiers son
   - Suppression automatique du cache de plus de X jours : supprime les fichiers son TTS non utilisés depuis X jours (cron journalier). 0 supprime tout le cache.
 - **Notifications**
   - Désactiver notifs pour nouveaux Google Cast : ce sont des notifications lors de la découverte de nouveaux Google Cast non configurés
@@ -165,7 +165,7 @@ Pour les voir sur le dashboard, il faut activer 'Afficher' dans l'onglet des com
 
 > **Notes sur commande info 'Statut' (*status_text*)**
 > - *status_text* renvoie le statut en cours du Google Cast.    
-> - En cas d'erreur au lancement d'un commande, *status_text* est à
+> - En cas d'erreur au lancement d'une commande, *status_text* est à
 > 'CMD UNKNOWN' si la commande n'existe pas,
 > 'NOT CONNECTED' si offline ou
 > 'ERROR' pour les autres erreurs
@@ -212,7 +212,7 @@ Installation / configuration :
 
 paramètres CSS optionnels (via '*Paramètres optionnels widget*'):
 - *width* (ex: 35px, défaut=150px) : taille du widget
-- *default_volume* (ex: blue, défaut=100) : valume par défaut
+- *default_volume* (ex: blue, défaut=100) : volume par défaut
 - *default_message* (ex: 'Test') : texte par défaut dans le widget
 - *additionalCss* (format css, ex: '.blabla {...}') : pour ajouter/modifier d'autres CSS (utilisateur avancé)
 
@@ -227,7 +227,7 @@ Commandes personnalisées
 
 - *Web* : afficher une page web sur un Google Cast. Les paramètres disponibles sont l'url, forcer, et le délai de rechargement (ex: value='https://google.com',False,0 pour charger Google sans forcer (nécessaire pour certains sites) et sans rechargement)
 - *Media* : lire un fichier audio ou vidéo à partir d'une URL
-- *YouTube* : afficher une vidéo à artir d'un ID de vidéo (en fin d'url) => Ne fonctionne pas pour le moment
+- *YouTube* : afficher une vidéo à partir d'un ID de vidéo (en fin d'url) => Ne fonctionne pas pour le moment
 - *Backdrop* : afficher le fond d'écran ou économiseur d'écran Google Cast (selon les modèles)
 - *Plex* : jouer un fichier ou une playlist à partir d'un serveur Plex
 
@@ -239,10 +239,10 @@ Commandes personnalisées
 ### Commandes avancées
 
 #### Syntaxe des commandes brutes
-Elles doivent être séparés par *|*
+Elles doivent être séparées par *|*
 ```
 - app : name of application (web/backdrop/youtube/media)
-- cmd : name of command (dépend of application)
+- cmd : name of command (depend of application)
     * tts : text to speech, use value to pass text
     * notif : send sound notification based on existing media file (ex: mp3)
     * warmupnotif : prepare device before receiving 'tts' or 'notif' commands (useful for group broadcast)
@@ -286,7 +286,7 @@ ex storecmd and resume : app=web|cmd=load_url|vol=90|value='http://pictoplasma.s
 ```
 
 > **Notes**     
-> les chaines de caractères pour les commandes sont limitées dans Jeedom à 128 caractères. Utiliser les scénarios (voir plus bas pour passer outre cette limitation)
+> les chaînes de caractères pour les commandes sont limitées dans Jeedom à 128 caractères. Utiliser les scénarios (voir plus bas pour passer outre cette limitation)
 
 #### Paramètres possibles pour *play_media* en mode *media* :
 ```
@@ -319,9 +319,9 @@ ex long : app=media|cmd=play_media|value='http://contentlink','video/mp4',title:
 ```
 
 > **Notes**   
-> - Les url et chaînes de caractères sont entourées de guillements simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
+> - Les url et chaînes de caractères sont entourées de guillemets simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
 > - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
-> - Un média local situé dans le répertoire *<jeedom>/plugins/googlecast/localmedia/* peux être utilisé en appelant l'url *local://<nomdufichier>* (ex: local://bigben1.mp3)
+> - Un média local situé dans le répertoire *<jeedom>/plugins/googlecast/localmedia/* peut être utilisé en appelant l'url *local://<nomdufichier>* (ex: local://bigben1.mp3)
 
 #### Paramètres possibles pour *load_url* en mode *web* :
 ```
@@ -336,7 +336,7 @@ ex 3 : app=web|value='http://mywebsite/index.php?apikey%3Dmyapikey' (implicit lo
 ```
 
 > **Notes**   
-> - Les url et chaines de caractères sont entourés de guillements simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
+> - Les url et chaînes de caractères sont entourées de guillemets simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
 > - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
 
 #### Paramètres possibles pour *play_media* en mode *plex* :
@@ -453,7 +453,7 @@ Ces commandes de ce type sont rafraichies toutes les 15 minutes ou manuellement 
 Une liste est disponible en se connectant sur l'équipement :
 http://IP:8008/setup/eureka_info?options=detail
 
-Pour plus d'info voir  https://rithvikvibhu.github.io/GHLocalApi/
+Pour plus d'info, voir  https://rithvikvibhu.github.io/GHLocalApi/
 
 ###### paramètres possibles pour cmd *getconfig* :
 ```
@@ -519,11 +519,11 @@ Les commandes suivantes peuvent être utilisées dans une commande 'info' ou sc�
 - *conf_getbonded_bluetooth* : retourne tous les équipements bluetooth enregistrés.
 - *conf_getconnected_wifi* : retourne le nom du réseau wifi configuré.
 
-Les commandes suivantes peuvent être utilisé dans une commande 'action' ou scénario (via fonction *setInfoHttpSimple()* ou commande *Custom Cmd*) :
+Les commandes suivantes peuvent être utilisées dans une commande 'action' ou scénario (via fonction *setInfoHttpSimple()* ou commande *Custom Cmd*) :
 
 - *gh_set_donotdisturb_on* : active la fonction 'Do Not Disturb'.
 - *gh_set_donotdisturb_off* : désactive la fonction 'Do Not Disturb'.
-- *gh_set_donotdisturb_#* (#=true/false) : active/désavtive la fonction 'Do Not Disturb'
+- *gh_set_donotdisturb_#* (#=true/false) : active/désactive la fonction 'Do Not Disturb'
 - *gh_set_alarms_volume_#* (# = entre 0 et 100 (eg: 10)) : configure le volume des alarmes et timers.
 - *bt_connectdefault* : connecte l'équipement bluetooth configuré par défaut.
 - *bt_connect_X* (#=adresse mac au format xx:xx:xx:xx:xx:xx) : connecte l'équipement bluetooth donné en paramètre.
@@ -541,7 +541,7 @@ gh_set_alarms_volume_80
 
 Pour créer une commande *action* de type *Liste* dont plusieurs paramètres changent, la commande doit impérativement s'appeler *cmdlist_XXXX* avec XXXX pouvant être remplacé par un nom (example cmdlist_radio).
 
-Le champs *Liste de valeurs* doit contenir la liste de commandes enière et suivre le format `<commandes>|<texte affiché>;<commandes>|<texte affiché>;...`   
+Le champs *Liste de valeurs* doit contenir la liste de commandes entière et suivre le format `<commandes>|<texte affiché>;<commandes>|<texte affiché>;...`   
 Le séparateur de commande devra être changé de '|' pour '^'.
 
 ````
@@ -573,7 +573,7 @@ Exemple : commande appelée 'radio_rtl'
 ````
 
 > **Note**   
-> Il est possible de rajouter des webradios dans un fichier appelé *custom.json* (à créer) dans le repertoire du plugin *webradios*. Le format doit être similaire au fichier *webradios/radiolist.json*. Ce fichier ne sera pas modifié lors des mises à jour du plugin.
+> Il est possible de rajouter des webradios dans un fichier appelé *custom.json* (à créer) dans le répertoire du plugin *webradios*. Le format doit être similaire au fichier *webradios/radiolist.json*. Ce fichier ne sera pas modifié lors des mises à jour du plugin.
 
 ### Utilisation dans un scénario
 
@@ -675,13 +675,13 @@ $ret = $googlecast->helperSendNotifandWait('XXXXXXXX', 'cmd=tts|value=Test Scén
 
 ### Utilisation avec interactions et IFTTT
 
-Trois type d'actions sont possibles :
+Trois types d'actions sont possibles :
 - Intéraction TTS (Text To Speech)
 - Réponse à action de type ask
 - Lancer une commande personnalisée
 
 #### Interactions
-Compatibilité avec interaction IFTTT de type *TTS* en utilisant l'url suivant dans la configuration (GET ou POST) :
+Compatibilité avec interaction IFTTT de type *TTS* en utilisant l'url suivante dans la configuration (GET ou POST) :
 ```
 http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=#GCAST_UUID#&query=<<{{TextField}}>>
 Optional :   
@@ -693,13 +693,13 @@ Optional :
 Documentation Jeedom et IFTTT : https://jeedom.github.io/plugin-gcast
 
 #### Réponse type *ask*
-Compatibilité avec IFTTT et réponse à une requête de type *ask* (scénarios) en utilisant l'url suivant dans la configuration (GET ou POST) :
+Compatibilité avec IFTTT et réponse à une requête de type *ask* (scénarios) en utilisant l'url suivante dans la configuration (GET ou POST) :
 ```
 http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=#GCAST_UUID#&action=askreply&query=<<{{TextField}}>>
 ```
 
 > **Notes**   
-> - uuid peut avoir la valeur *any* pour tester tous les équipements google cast en attente potentielle de réponse.
+> - uuid peut avoir la valeur *any* pour tester tous les équipements Google Cast en attente potentielle de réponse.
 > - l'action ask du scénario peut utiliser soit la commande *Custom Cmd* (ex: cmd=tts|value="Confirmer commande ?"|vol=60) soit la commande *Parle !*.
 
 #### Custom CMD
@@ -711,7 +711,7 @@ Notes :
   It may be necessary to encode #CUSTOM_CMD# using https://www.url-encode-decode.com/
 ```
 
-Limitations et bug connus
+Limitations et bugs connus
 =============================
 
 - Moteur PicoTTS ne gère pas les phrases accentuées (ils sont supprimés)
@@ -722,10 +722,10 @@ FAQ
 
 #### Aucune détection lors du scan
 
-- Vérifier que le Google Cast est disponible à partir d'une application permettant la visulisation des appareils compatibles ;
+- Vérifier que le Google Cast est disponible à partir d'une application permettant la visualisation des appareils compatibles ;
 - Jeedom doit se trouver sur le même réseau que les équipements Google Cast    
 (pour Docker, le container doit être configuré pour être sur le même réseau ; en VM, la machine est en mode bridge) ;
-- Vérifier qu'il n'y a pas de blocages au niveau du firewall pour la découverte via le protocol 'Zeroconf' ;
+- Vérifier qu'il n'y a pas de blocages au niveau du firewall pour la découverte via le protocole 'Zeroconf' ;
 - Pour mettre Docker sur le même réseau, voir https://github.com/guirem/plugin-googlecast/issues/8
 
 #### Aucune commande ne semble fonctionner
@@ -744,7 +744,7 @@ Vérifier dans les logs (*Googlecast_update*) la provenance de l'erreur. Le plug
 Si le log contient le message *Error: Cound not found pip3 program to install python dependencies !*, tenter de lancer les lignes de commandes en ssh :
 - `python3 -V` doit retourner la version de python 3 installée.
 - `compgen -ac | grep -E '^pip-?3' | sort -r | head -1` doit retourner une ligne (ex: pip3)
-- Si aucun retour sur le ligne précédante tenter une réinstallation de pip3   
+- Si aucun retour sur la ligne précédente, tenter une réinstallation de pip3   
 ```
 sudo apt-get remove python3-pip
 sudo apt-get -y install python3-pip
@@ -759,10 +759,10 @@ sudo apt-get -y install python3-pip
 
 #### Le Text To Speech (TTS) fonctionne mais a des coupures pendant le message ou se termine trop tôt
 
-Le type d'équipements utilisé (wifi, serveur Jeedom) ou la longueur du message peut avoir un impact sur le rendu TTS.
+Le type d'équipements utilisés (wifi, serveur Jeedom) ou la longueur du message peut avoir un impact sur le rendu TTS.
 - Ajouter le paramêtre 'sleep' pour ajouter un délai supplémentaire à la fin du message (ex: |sleep=0.8 pour 0.8 seconde).
-- Tester avec le paramêtre 'buffered=1' pour voir si cela règle le problème.
-- Utiliser le paramêtre 'forcetts' durant les tests pour être certain que le câche n'est pas utilisé.
+- Tester avec le paramètre 'buffered=1' pour voir si cela règle le problème.
+- Utiliser le paramêtre 'forcetts' durant les tests pour être certain que le cache n'est pas utilisé.
 
 #### Diffuser Jeedom sans authentification sur un Google Cast
 
