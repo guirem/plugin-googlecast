@@ -286,7 +286,7 @@ ex storecmd and resume : app=web|cmd=load_url|vol=90|value='http://pictoplasma.s
 ```
 
 > **Notes**     
-> les chaînes de caractères pour les commandes sont limitées dans Jeedom à 128 caractères. Utiliser les scénarios (voir plus bas pour passer outre cette limitation)
+> les chaînes de caractères pour les commandes sont limitées dans Jeedom à 128 caractères. Utiliser les scénarios (voir plus bas pour passer outre cette limitation) ou voir la FAQ pour optimiser la commande.
 
 #### Paramètres possibles pour *play_media* en mode *media* :
 ```
@@ -326,7 +326,7 @@ ex long : app=media|cmd=play_media|value='http://contentlink','video/mp4',title:
 #### Paramètres possibles pour *load_url* en mode *web* :
 ```
 - value: str - seperated by ',' (see notes)
-    * url: str - website url.
+    * url: str - website url. Must start with http, https...
     * force: bool - force mode. To be used if default is not working. (optional, default False).
     * reload: int - reload time in seconds. 0 = no reload. (optional, default 0)
 
@@ -338,6 +338,7 @@ ex 3 : app=web|value='http://mywebsite/index.php?apikey%3Dmyapikey' (implicit lo
 > **Notes**   
 > - Les url et chaînes de caractères sont entourées de guillemets simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
 > - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
+> - Pour la diffusion de flux caméra, la caméra doit pouvoir fournir le flux via http (rtsp n'est pas compatible google cast)
 
 #### Paramètres possibles pour *play_media* en mode *plex* :
 ```
@@ -686,8 +687,8 @@ Compatibilité avec interaction IFTTT de type *TTS* en utilisant l'url suivante 
 http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=#GCAST_UUID#&query=<<{{TextField}}>>
 Optional :   
   &vol=X (between 1 and 100)    
-  &noresume    (will not try to resume previous app)
-  &quit        
+  &noresume=1 (will not try to resume previous app)    
+  &quit=1        
   &silence=X (in milliseconds, ex: 1000 for 1 sec)
 ```
 Documentation Jeedom et IFTTT : https://jeedom.github.io/plugin-gcast
@@ -766,7 +767,22 @@ Le type d'équipements utilisés (wifi, serveur Jeedom) ou la longueur du messag
 
 #### Diffuser Jeedom sans authentification sur un Google Cast
 
-C'est possible via le mode web. Pour gérer l'authentification automatiquement, utiliser le plugin 'autologin' (voir doc du plugin).
+C'est possible via le mode web. Pour gérer l'authentification automatiquement, utiliser le plugin 'autologin' (voir doc du plugin).    
+Note : Les champs de commandes sont limités a 128, voir ci-dessous pour optimiser la longueur de la commande.
+
+#### La commande est tronquée au dela de 128 caractères
+
+C'est une limitation Jeedom. L'alternative est d'utiliser la commande *custom cmd* via un scénario qui n'a pas de limitation.    
+
+Cependant, il est possible d'optimiser la longueur de la commande :
+- *value=* peut être réduit en *v=*
+- Pour le mode *web* et *media*, *cmd=X* est inutile car implicite (ex: *app=web|cmd=load_url|v=.....* identique à *app=web|v=.....*)
+- Les booleans *True*/*False* peuvent être réduits à *T*/*F*
+- Enlever le port si 80 ou 443 (http://addresseweb:80/contenu => http://addresseweb/contenu)
+- Pour les url, *http://* peut être réduit en *h:/* et *https://* peut être réduit en *hs:/*
+- Pour les url longues, utiliser des services web tel que bitly pour les réduire drastiquement
+
+Exemple : *app=web|cmd=load_url|value='https://xxxxx.xxxxxxx.com:443/plugins/autologin/core/php/go.php?apikey%3Dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&id%3D999',True* réduit en *app=web|v=hs:/xxxxx.xxxxxxx.com/plugins/autologin/core/php/go.php?apikey%3Dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&id%3D999,T*
 
 #### Récupérer une clé API pour Google Speech API
 

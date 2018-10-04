@@ -715,6 +715,8 @@ def action_handler(message):
             value = None
             if 'value' in command :
                 value = command['value']
+            if 'v' in command :
+                value = command['v']
             sleep=0
             if 'sleep' in command :
                 sleep = float(command['sleep'])
@@ -772,6 +774,8 @@ def action_handler(message):
                             else :
                                 del command['live']
 
+                        value = value.replace('h:/', 'http://')
+                        value = value.replace('hs:/', 'https://')
                         value = value.replace('local://', globals.JEEDOM_WEB+'/plugins/googlecast/'+globals.localmedia_folder+'/')
                         fallbackMode=False
                         player = jcast.loadPlayer('media', { 'quitapp' : quit_app_before})
@@ -786,6 +790,8 @@ def action_handler(message):
                     if cmd in possibleCmd :
                         fallbackMode=False
                         player = jcast.loadPlayer(app, { 'quitapp' : quit_app_before})
+                        value = value.replace('h:/', 'http://')
+                        value = value.replace('hs:/', 'https://')
                         eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
                         jcast.savePreviousPlayerCmd(command)
 
@@ -1014,7 +1020,7 @@ def action_handler(message):
                         gcast.start_app(appToLaunch)
                         fallbackMode=False
                     elif cmd == 'quit_app':
-                        logging.debug("ACTION------Stop action")
+                        logging.debug("ACTION------Quit app action")
                         gcast.quit_app()
                         jcast.resetPlayer()
                         fallbackMode=False
@@ -1349,8 +1355,10 @@ def generate_warmupnotif():
             warmup.export(filenamemp3, format="mp3", bitrate='32k', tags={'albumartist': 'Jeedom', 'title': 'WARMUPNOTIF', 'artist':'Jeedom'}, parameters=["-ac", "1", "-ar", "24000"])
         else :
             try :   # touch file so cleaning can be done later based on date
-                os.utime(filenamemp3, None)
+                if os.stat(filenamemp3).st_mtime < (time.time() - 86400) :
+                    os.utime(filenamemp3, None)
             except :
+                logging.debug("WARMUPNOTIF------Touching file failed !")
                 pass
         urltoplay=globals.JEEDOM_WEB+'/plugins/googlecast/tmp/'+file+'.mp3'
     except Exception as e:
@@ -1547,8 +1555,10 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
             logging.debug("CMD-TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+")")
 
         try :   # touch file so cleaning can be done later based on date
-            os.utime(filenamemp3, None)
+            if os.stat(filenamemp3).st_mtime < (time.time() - 86400) :
+                os.utime(filenamemp3, None)
         except :
+            logging.debug("CMD-TTS------Touching file failed !")
             pass
         urltoplay=globals.JEEDOM_WEB+'/plugins/googlecast/tmp/'+file+'.mp3'
     except Exception as e:
@@ -1608,7 +1618,7 @@ def gcast_prepareAppParam(params):
     s = [k for k in re.split("(,|\w*?:'.*?'|'.*?')", params) if k.strip() and k!=',']
     for p in s :
         p = p.strip()
-        s2 = [k for k in re.split("(:|'.*?'|http:.*)", p) if k.strip() and k!=':']
+        s2 = [k for k in re.split("(:|'.*?'|http:.*|https:.*)", p) if k.strip() and k!=':']
         prefix = ''
         if len(s2)==2 :
             prefix = s2[0].strip() + '='
@@ -1617,6 +1627,10 @@ def gcast_prepareAppParam(params):
             ret = ret + ',' + prefix + p
         elif p.lower() == 'true' or p.lower() == 'false' or p.lower() == 'none' :
             ret = ret + ',' + prefix + p[0].upper()+p[1:]
+        elif p.lower() == 't' :
+            ret = ret + ',' + prefix + 'True'
+        elif p.lower() == 'f' :
+            ret = ret + ',' + prefix + 'False'
         else :
             if p.startswith( "'" ) and p.endswith("'") :    # if starts already with simple quote
                 withoutQuote = p[1:-1].lower()
@@ -1781,8 +1795,10 @@ def scanner(name):
 
         rawcasts = None
         scanForced = False
+        discoveryMode = False
         if (int(time.time())-globals.DISCOVERY_LAST)>globals.DISCOVERY_FREQUENCY :
             scanForced = True
+            discoveryMode = True
         else :
             for known in globals.KNOWN_DEVICES :
                 if known not in globals.GCAST_DEVICES :
@@ -1834,7 +1850,9 @@ def scanner(name):
                 elif (current_time-globals.DISCOVERY_LAST)>globals.DISCOVERY_FREQUENCY :
                     logging.debug("SCANNER------ DISCOVERY MODE : New device : " + uuid + ' (' + cast.friendly_name + ')')
                     globals.JEEDOM_COM.send_change_immediate({'discovery' : 1, 'uuid' : uuid, 'friendly_name' : cast.friendly_name})
-                    globals.DISCOVERY_LAST = current_time
+
+        if discoveryMode==True :
+            globals.DISCOVERY_LAST = int(time.time())
 
         # memory cleaning
         if rawcasts is not None :
@@ -1938,7 +1956,7 @@ def show_memory_usage():
             curtime=int(time.time())
             timedif=curtime-memory_last_time
             timediftotal=curtime-memory_first_time
-            logging.warning(' MEMORY---- Total CPU time used : %.3fs (%.2f%%)  |  Last %i sec : %.3fs (%.2f%%)  | Memory : %s Mo' % (total, total/timediftotal*100, timedif, total-memory_last_use, (total-memory_last_use)/timedif*100, int(round(ru_maxrss/1000))))
+            logging.debug(' MEMORY---- Total CPU time used : %.3fs (%.2f%%)  |  Last %i sec : %.3fs (%.2f%%)  | Memory : %s Mo' % (total, total/timediftotal*100, timedif, total-memory_last_use, (total-memory_last_use)/timedif*100, int(round(ru_maxrss/1000))))
             memory_last_use=total
             memory_last_time=curtime
         except:
@@ -1951,17 +1969,20 @@ def cleanCache(nbDays=0):
                 shutil.rmtree(globals.tts_cachefoldertmp)
             generate_warmupnotif()
         except:
+            logging.warn("CLEAN CACHE------Error while cleaning cache entirely")
             pass
     else :              # clean only files older than X days
         now = time.time()
         path = globals.tts_cachefoldertmp
         try:
             for f in os.listdir(path):
-                if os.stat(os.path.join(path,f)).st_mtime < now - nbDays * 86400 :
-                    if os.path.isfile(f):
+                logging.debug("CLEAN CACHE------Date comparator (" + str(os.stat(os.path.join(path,f)).st_mtime) + ' / ' + str(now - nbDays * 86400)) + ")"
+                if os.stat(os.path.join(path,f)).st_mtime < (now - nbDays * 86400) :
+                    if os.path.isfile(os.path.join(path, f)):
                         os.remove(os.path.join(path, f))
             generate_warmupnotif()
         except:
+            logging.warn("CLEAN CACHE------Error while cleaning cache based on date number")
             pass
 
 def handler(signum=None, frame=None):

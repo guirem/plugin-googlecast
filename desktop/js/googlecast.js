@@ -139,7 +139,7 @@ function addCmdToTable(_cmd) {
        //tr += '<span><center>' + init(_cmd.type) + '</center></span><span style="display:none;" class="type" type="' + init(_cmd.type) + '">' + jeedom.cmd.availableType() + '</span>';
        //tr += '<span><center>' + init(_cmd.subType) + '</center></span><span style="display:none;" class="subType" subType="' + init(_cmd.subType) + '"></span>';
        tr += '<span><center>{{' + init(_cmd.type) + '}}</center></span>';
-       tr += '<span><center style="font-size:small;">({{' + init(_cmd.subType) + '}})</center></span>';
+       tr += '<span><center style="font-size:x-small;">({{' + init(_cmd.subType) + '}})</center></span>';
        tr += '</td>';
        tr += '<td><input class="cmdAttr form-control input-sm" data-l1key="logicalId" value="0" style="width : 98%; display : inline-block;" title="{{Commande par défaut du plugin}}" readonly><br/>';
        tr += '</td>';
