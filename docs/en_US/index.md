@@ -644,8 +644,8 @@ Compatibility with IFTTT de type *TTS* using the following url in the configurat
 http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=#GCAST_UUID#&query=<<{{TextField}}>>
 Optional :   
   &vol=X (between 1 and 100)    
-  &noresume    
-  &quit
+  &noresume=1 (will not try to resume previous app)    
+  &quit=1   
   &silence=X (in milliseconds, ex: 1000 for 1 sec)
 ```
 Documentation Jeedom et IFTTT : https://jeedom.github.io/plugin-gcast
