@@ -10,6 +10,7 @@ Version list of googlecast plugin.
 - updated gtts library
 - fix log output when set to none
 - bug fixes and minor changes
+- fix volume param not working for IFTTT
 - doc update
 
 ## Version of July 11, 2018 (stable)

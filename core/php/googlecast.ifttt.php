@@ -81,7 +81,7 @@ try {
         $queryTransform = str_replace(array('[',']') , ' ', $reply['reply']);
         $cmd = "cmd=tts|value=".$queryTransform;
         if ( init('vol') != '' ) {
-            $cmd .= '|vol=' . $vol;
+            $cmd .= '|vol=' . init('vol');
         }
         if ( init('noresume') != '' ) {
             $cmd .= '|noresume=1';
@@ -90,7 +90,7 @@ try {
             $cmd .= '|quit=1';
         }
         if ( init('silence') != '' ) {
-            $cmd .= '|silence=' . $silence;
+            $cmd .= '|silence=' . init('silence');
         }
         log::add('googlecast', 'debug', 'IFTTT API : Interaction reply cmd : ' . $cmd);
         $customcmd->execCmd(array('message' => $cmd));
