@@ -1325,7 +1325,7 @@ def action_handler(message):
             globals.JEEDOM_COM.send_change_immediate(callbackmsg);
 
     else :
-        logging.error("ACTION------ Device not connected !")
+        logging.warn("ACTION------ Device not connected !")
         sendErrorDeviceStatus(uuid, 'NOT CONNECTED')
         return False
 
@@ -1976,10 +1976,10 @@ def cleanCache(nbDays=0):
         path = globals.tts_cachefoldertmp
         try:
             for f in os.listdir(path):
-                logging.debug("CLEAN CACHE------Date comparator (" + str(os.stat(os.path.join(path,f)).st_mtime) + ' / ' + str(now - nbDays * 86400)) + ")"
-                if os.stat(os.path.join(path,f)).st_mtime < (now - nbDays * 86400) :
-                    if os.path.isfile(os.path.join(path, f)):
-                        os.remove(os.path.join(path, f))
+                logging.debug("CLEAN CACHE------Age for " + f + " is "+ str( int((now - (os.stat(os.path.join(path,f)).st_mtime)) / 86400 )) + " days")
+                if os.stat(os.path.join(path,f)).st_mtime < (now - (nbDays * 86400)) :
+                    os.remove(os.path.join(path, f))
+                    logging.debug("CLEAN CACHE------Removed " + f + " due to expiration ("+ str(nbDays)+ " days)")
             generate_warmupnotif()
         except:
             logging.warn("CLEAN CACHE------Error while cleaning cache based on date number")

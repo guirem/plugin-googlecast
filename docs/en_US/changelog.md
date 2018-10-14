@@ -4,13 +4,18 @@ Version list of googlecast plugin.
 
 *[Back to documentation] (index.md)*
 
-## Version of October 04, 2018 (beta/stable)
+## Version of October 14, 2018 (stable)
+
+- beta to stable (see 04 October)
+
+## Version of October 04, 2018 (beta)
 
 - added spanish translation (framirezl)
-- updated gtts library
+- updated gtts library (error : 'NoneType' object has no attribute 'group')
 - fix log output when set to none
 - bug fixes and minor changes
 - fix volume param not working for IFTTT
+- fix cleanCache not cleaning after expiration
 - doc update
 
 ## Version of July 11, 2018 (stable)
