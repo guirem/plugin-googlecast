@@ -159,6 +159,8 @@ class jeedom_utils():
             level='info'
         if level=='1000' :
             level='critical'
+        if level=='none' :
+            level='critical'
 
         if level=='debug' :
             logging.getLogger("pychromecast").setLevel(logging.ERROR)
@@ -173,7 +175,12 @@ class jeedom_utils():
             logging.getLogger("pydub").setLevel(logging.CRITICAL)
             logging.getLogger("gtts").setLevel(logging.CRITICAL)
 
-        logging.basicConfig(level=jeedom_utils.convert_log_level(level),format=FORMAT, datefmt="%Y-%m-%d %H:%M:%S")
+        if level=='none' :
+            logging.getLogger().disabled = True
+        else :
+            #logging.getLogger().disabled = False
+            logging.basicConfig(level=jeedom_utils.convert_log_level(level),format=FORMAT, datefmt="%Y-%m-%d %H:%M:%S")
+
 
     @staticmethod
     def write_pid(path):
