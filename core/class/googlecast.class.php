@@ -1500,7 +1500,7 @@ class googlecastcmd extends cmd {
             ),
             'command' => $datalist,
         );
-		log::add('googlecast','debug',"Envoi d'une commande depuis Jeedom");
+		log::add('googlecast','debug',"Envoi de la commande [$originalLogicalId] depuis Jeedom");
 		googlecast::socket_connection( json_encode($fulldata) );
 	}
 
