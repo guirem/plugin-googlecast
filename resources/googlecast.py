@@ -1325,7 +1325,7 @@ def action_handler(message):
             globals.JEEDOM_COM.send_change_immediate(callbackmsg);
 
     else :
-        logging.warn("ACTION------ Device not connected !")
+        logging.debug("ACTION------ Device not connected !")
         sendErrorDeviceStatus(uuid, 'NOT CONNECTED')
         return False
 
