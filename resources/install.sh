@@ -23,7 +23,15 @@ sudo apt-get install -y libttspico-utils libavcodec-extra libav-tools sox
 echo 75 > /tmp/dependancy_googlecast_in_progress
 # get pip3 command (different depending of OS such as raspberry)
 pip3cmd=$(compgen -ac | grep -E '^pip-?3' | sort -r | head -1)
-if [[ !  -z  $pip3cmd  ]]; then     # pip3 found
+if [[ -z  $pip3cmd ]]; then     # pip3 not found
+    if python3 -m pip -V 2>&1 | grep -q -i "^pip " ; then     # but try other way
+        pip3cmd="python3 -m pip"
+    fi
+fi
+if [[ ! -z  $pip3cmd ]]; then     # pip3 found
+    echo ""
+    echo "-- Installed version of pip :"
+    echo $($pip3cmd -V)
     echo ""
     echo "-- Installation of python library 'netifaces' with command $pip3cmd"
     $(sudo $pip3cmd install netifaces > /tmp/dependancy_googlecast)
