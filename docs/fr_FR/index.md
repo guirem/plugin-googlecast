@@ -114,13 +114,13 @@ Les paramètres de configuration n'ont généralement pas besoin d'être modifi�
   - Configuration spéciale (eg: Docker, VM). Ne modifier que si ça ne fonctionne pas sans l'option.
   - Fréquence de rafraîchissement. A ne modifier uniquement si la fréquence normale a un impact important sur les performances globales
 - **TTS**
-  - Utiliser l'adresse Jeedom externe : par défaut utilise l'adresse web Jeedom interne
+  - Utiliser l'adresse Jeedom externe : par défaut utilise l'adresse web Jeedom interne. Ne modifier que pour des configurations spéciales.
   - Langue par défaut : langue du moteur TTS utilisé par défaut
   - Moteur par défaut : le moteur TTS utilisé (PicoTTS, Google Translate, Google Speach API, Google Speach API dev)
   - Vitesse de parole : rapidité de prononciation du texte
   - Ne pas utiliser le cache : désactive l'utilisation du cache Jeedom (déconseillé)
   - Nettoyer cache : nettoie le répertoire temporaire de géneration des fichiers son
-  - Suppression automatique du cache de plus de X jours : supprime les fichiers son TTS non utilisés depuis X jours (cron journalier). 0 supprime tout le cache.
+  - Suppression automatique du cache de plus de X jours : supprime les fichiers son TTS non utilisés depuis X jours (tâche lancée tous les jours). 0 supprime tout le cache.
 - **Notifications**
   - Désactiver notifs pour nouveaux Google Cast : ce sont des notifications lors de la découverte de nouveaux Google Cast non configurés
 
