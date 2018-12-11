@@ -4,6 +4,11 @@ Version list of googlecast plugin.
 
 *[Back to documentation] (index.md)*
 
+## Version of December 11, 2018 (beta/stable)
+
+- Update of gtts library
+- Possible fix for zeronconf dependency installation
+
 ## Version of October 14, 2018 (stable)
 
 - beta to stable (see 04 October)

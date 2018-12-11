@@ -304,7 +304,7 @@ class googlecast extends eqLogic {
 			$cmd->setName(__('Muet ON', __FILE__));
 			$cmd->setIsVisible(1);
 			$cmd->setTemplate('dashboard', 'btnCircle');
-			$cmd->setTemplate('mobile', 'binaryDefault');
+			$cmd->setTemplate('mobile', 'circle');
 			$cmd->setConfiguration('googlecast_cmd', true);
 			$cmd->setOrder($order++);
 		}
@@ -322,7 +322,7 @@ class googlecast extends eqLogic {
 			$cmd->setName(__('Muet OFF', __FILE__));
 			$cmd->setIsVisible(1);
 			$cmd->setTemplate('dashboard', 'btnCircle');
-			$cmd->setTemplate('mobile', 'binaryDefault');
+			$cmd->setTemplate('mobile', 'circle');
 			$cmd->setConfiguration('googlecast_cmd', true);
 			$cmd->setOrder($order++);
 		}
@@ -512,6 +512,7 @@ class googlecast extends eqLogic {
 			$cmd->setOrder($order++);
 		}
 		$cmd->setTemplate('dashboard','googlecast_playing');
+        $cmd->setTemplate('mobile','googlecast_playing');
 		$cmd->setType('info');
 		$cmd->setSubType('string');
 		$cmd->setEqLogic_id($this->getId());
@@ -527,6 +528,7 @@ class googlecast extends eqLogic {
 			$cmd->setConfiguration('googlecast_cmd', true);
 		}
         $cmd->setTemplate('dashboard','googlecast_speak');
+        $cmd->setTemplate('mobile','googlecast_speak');
 		$cmd->setType('action');
 		$cmd->setSubType('message');
 		$cmd->setEqLogic_id($this->getId());

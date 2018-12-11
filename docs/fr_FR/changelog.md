@@ -4,6 +4,11 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
+## Version du 11 décembre 2018 (beta/stable)
+
+- Mise à jour de la librairie gTTS pour le TTS
+- Fix possible pour l'installation de dépendance zeroconf
+
 ## Version du 14 octobre 2018 (stable)
 
 - passage beta en stable (voir 04 octobre)

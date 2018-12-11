@@ -16,10 +16,14 @@ echo 50 > /tmp/dependancy_googlecast_in_progress
 echo ""
 echo "-- Installation of pip for python3 and necessary libraries"
 sudo apt-get install -y python3-dev python-requests python3-pip
-echo 70 > /tmp/dependancy_googlecast_in_progress
+echo 68 > /tmp/dependancy_googlecast_in_progress
 echo ""
 echo "-- Installation of TTS libraries"
-sudo apt-get install -y libttspico-utils libavcodec-extra libav-tools sox
+sudo apt-get install -y libttspico-utils sox
+echo 72 > /tmp/dependancy_googlecast_in_progress
+echo ""
+echo "-- Installation of libav/ffmpeg libraries"
+sudo apt-get install -y libav-tools libavcodec-extra
 echo 75 > /tmp/dependancy_googlecast_in_progress
 # get pip3 command (different depending of OS such as raspberry)
 pip3cmd=$(compgen -ac | grep -E '^pip-?3' | sort -r | head -1)
@@ -33,6 +37,11 @@ if [[ -z  $pip3cmd ]]; then     # pip3 not found
     fi
 fi
 if [[ ! -z  $pip3cmd ]]; then     # pip3 found
+    echo ""
+    echo "-- Upgrade setuptools with command $pip3cmd if not up to date"
+    $(sudo $pip3cmd install setuptools>=40.6.3 > /tmp/dependancy_googlecast)
+    cat /tmp/dependancy_googlecast
+    echo 78 > /tmp/dependancy_googlecast_in_progress
     echo ""
     echo "-- Installed version of pip :"
     echo $($pip3cmd -V)
