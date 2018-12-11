@@ -1309,7 +1309,7 @@ def action_handler(message):
                     jcast.manage_exceptions(str(e))
 
             if fallbackMode==True :
-                logging.debug("ACTION------Action " + cmd + " not implemented !")
+                logging.debug("ACTION------Action " + cmd + " not implemented or exception occured !")
                 sendErrorDeviceStatus(uuid, 'CMD UNKNOWN')
 
             if sleep>0 :
@@ -1439,6 +1439,11 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ac", "1", "-ar", samplerate,"-vol", "200"])
                     duration_seconds = speech.duration_seconds
                 except Exception as e:
+                    if os.path.isfile(filenamemp3) :
+                        try:
+                            os.remove(filenamemp3)
+                        except OSError:
+                            pass
                     logging.error("CMD-TTS------Google Translate API : Cannot connect to API - failover to picotts  (%s)" % str(e))
                     logging.debug(traceback.format_exc())
                     engine = 'picotts'
@@ -1548,8 +1553,17 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
         else:
             logging.debug("CMD-TTS------Using from cache")
             if calcduration == True:
-                speech = AudioSegment.from_mp3(filenamemp3)
-                duration_seconds = speech.duration_seconds
+                try :
+                    speech = AudioSegment.from_mp3(filenamemp3)
+                    duration_seconds = speech.duration_seconds
+                except :
+                    logging.error("CMD-TTS------Exception when trying to get duration. Will try to remove file to force generation next time...")
+                    logging.debug(traceback.format_exc())
+                    duration_seconds = 0
+                    try :
+                        os.remove(filenamemp3)
+                    except :
+                        pass
             else:
                 duration_seconds=0
             logging.debug("CMD-TTS------Sentence: '" +ttstext+ "' ("+engine+","+language+")")
@@ -2094,7 +2108,8 @@ logging.info('GLOBAL------Log level : '+str(globals.log_level))
 logging.info('GLOBAL------Socket port : '+str(globals.socketport))
 logging.info('GLOBAL------Socket host : '+str(globals.sockethost))
 logging.info('GLOBAL------PID file : '+str(globals.pidfile))
-logging.info('GLOBAL------Apikey : '+str(globals.apikey))
+#logging.info('GLOBAL------Apikey : '+str(globals.apikey))
+logging.info('GLOBAL------Apikey : *******************************')
 logging.info('GLOBAL------TTS Jeedom server : '+str(globals.JEEDOM_WEB))
 logging.info('GLOBAL------TTS default language : '+str(globals.tts_language))
 logging.info('GLOBAL------TTS default engine : '+str(globals.tts_engine))
