@@ -1139,7 +1139,7 @@ class googlecast extends eqLogic {
                 //$arrayret = json_decode($httpret, true);
 
                 log::add('googlecast','debug','Request content : ' . print_r($arrayret,true));
-                if ($has_error===true or count($arrayret)==0) {
+                if ($has_error===true or !isset($arrayret)) {
                     if ( $showError==true) {
                         log::add('googlecast','error',__('Configuration non accessible', __FILE__));
                     }
