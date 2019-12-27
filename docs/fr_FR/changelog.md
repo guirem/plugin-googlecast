@@ -4,6 +4,13 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
+## Version du 27 décembre 2019 (beta)
+
+- TTS : ajout des moteurs TTS de Jeedom et TTSWebserver
+- Compatibilité Jeedom 4 et php7
+- Mise à jour des librairies plex et pydub
+- Mise à jour du controlleur youtube (gestion des playlists)
+
 ## Version du 11 décembre 2018 (beta/stable)
 
 - Mise à jour de la librairie gTTS pour le TTS
