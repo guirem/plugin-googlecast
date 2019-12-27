@@ -14,7 +14,7 @@ if [[ -z  $pip3cmd ]]; then     # pip3 not found
     fi
 fi
 if [[ !  -z  $pip3cmd  ]]; then     # pip3 found
-    $(sudo $pip3cmd list 2>/dev/null | grep -E "zeroconf|requests|protobuf|netifaces|bs4|websocket-client|tqdm" | wc -l > /tmp/dependancycheck_googlecast)
+    $(sudo $pip3cmd list 2>/dev/null | grep -E "zeroconf|requests|protobuf|bs4|websocket-client|tqdm" | wc -l > /tmp/dependancycheck_googlecast)
     content=$(cat /tmp/dependancycheck_googlecast 2>/dev/null)
     rm -f /tmp/dependancycheck_googlecast
     if [[ -z  $content  ]]; then
