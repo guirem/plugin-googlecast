@@ -4,6 +4,10 @@ Version list of googlecast plugin.
 
 *[Back to documentation] (index.md)*
 
+## Version du 27 aout 2019 (beta/stable) - 2.10
+
+- Jeedom 4 (php 7.3) basic compatibility
+
 ## Version of December 11, 2018 (beta/stable)
 
 - Update of gtts library
@@ -61,7 +65,7 @@ Version list of googlecast plugin.
 
 - Cleaning / optimization of the order configuration page
 - Compatibility command action of list type
-- New command 'notif' (similar to tts but to play a local mp3)    
+- New command 'notif' (similar to tts but to play a local mp3)
   Test with `cmd=notif|value=bigben1.mp3|vol=100`
 - Possibility to play local files for media app
 - fix getconfig (jsonpath compatibility)

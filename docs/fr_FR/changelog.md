@@ -11,6 +11,10 @@ Liste des versions du plugin googlecast.
 - Mise à jour des librairies plex et pydub
 - Mise à jour du controlleur youtube (gestion des playlists)
 
+## Version du 27 aout 2019 (beta/stable) - 2.10
+
+- Début de compatibilité avec Jeedom 4 (php 7.3)
+
 ## Version du 11 décembre 2018 (beta/stable)
 
 - Mise à jour de la librairie gTTS pour le TTS
@@ -68,7 +72,7 @@ Liste des versions du plugin googlecast.
 
 - Nettoyage/optimisation de la page de configuration des commandes
 - Compatibilité commande action de type liste
-- Nouvelle commande 'notif' (similaire à tts mais pour jouer un mp3 local)    
+- Nouvelle commande 'notif' (similaire à tts mais pour jouer un mp3 local)
   Tester avec `cmd=notif|value=bigben1.mp3|vol=100`
 - Possiblité de jouer des fichiers en local pour app media
 - fix getconfig (compatiblité jsonpath)
