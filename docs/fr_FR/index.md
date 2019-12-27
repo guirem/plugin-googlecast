@@ -3,7 +3,7 @@ Plugin GoogleCast (googlecast)
 
 ![Logo plugin](../images/logoplugin.png "Logo plugin")
 
-Plugin pour commander les équipements compatibles Google Cast.
+Plugin pour commander les équipements compatibles Google Cast et Google Assistant.
 
 
 **Fonctionnalités :**
@@ -16,18 +16,22 @@ Plugin pour commander les équipements compatibles Google Cast.
 - Retour d'état sur les principales fonctionnalités
 - Affichage de la lecture en cours
 - Text To Speech (TTS)
-- Récupération/modification de configuration d'équipements
+- Pour les équipements 'Google Assistant' (ex: Google Home)
+    - DoNotDisturb (on/off)
+    - recupération/configuration des alarmes et timers
+    - recupération/configuration d'autres paramètres
 
 
 ![Logo plugin](../images/chromecast.png "Chromecast")
 
 **Modèles compatibles Google Cast**
 - Chromecast Audio/Video
+- Google Home (ou compatible Google Assistant)
 - Android TV, Nexus Player, TV (Vizio, Sharp, Sony, Toshiba, Philips)
-- Google Home
 - Soundbars and speakers (Vizio, Sony, LG, Philips
 B&O Play, Grundig, Polk Audio, Bang & Olufsen, Onkyo, Pioneer...)
 - Autres modèles labelisés *Google Cast*
+- Certaines Box internet (ex: Bouygues)
 
 ![GoogleCast Logo](../images/googlecast_logo.png "GoogleCast Logo")
 ![Android TV](../images/tv.png "Android TV")
@@ -342,7 +346,7 @@ ex 3 : app=web|value='http://mywebsite/index.php?apikey%3Dmyapikey' (implicit lo
 
 #### Paramètres possibles pour *play_media* en mode *plex* :
 ```
-- value: str - search query. It will play the first element returned.
+- value: str - search query. It could be individual title, playlist or other type of content handled by Plex (it will play the first element returned).
 - type: str - type of content. Example: 'video/audio' (optional, default=video).
 - server: str - URL if token is provided, friendly name of Plex server if user & pass provided.
 - user: str - account login possibly as an email account (optional if token provided).
@@ -362,7 +366,7 @@ ex using token with implicit play_media command call :
 
 > **Notes**   
 > - When using user & pass, internet access is required
-> - Token value is displayed in logs (debug) when user & pass has been used the first time
+> - Token value is displayed in logs (debug) when user & pass has been used the first time. Token is then persistent.
 > - you can simulate result of search query (value) in main search field of Plex web UI
 
 
@@ -431,6 +435,7 @@ ex : cmd=notif|value=tornado_siren.mp3|vol=100|duration=11
 > - By default, the plugin will try to resume previous app launched (will only work when previous application has been launched by the plugin).
 > - You can try to force resume to any application using 'forceapplaunch=1' but there is a good chance of failure.
 > - Existing sounds in plugin : house_firealarm.mp3, railroad_crossing_bell.mp3, submarine_diving.mp3, tornado_siren.mp3, bigben1.mp3, bigben2.mp3
+> - files added to localmedia folder must have approriate rights
 
 #### Séquence de commandes
 Il est possible de lancer plusieurs commandes à la suite en séparant par *$$*
@@ -575,6 +580,8 @@ Exemple : commande appelée 'radio_rtl'
 
 > **Note**   
 > Il est possible de rajouter des webradios dans un fichier appelé *custom.json* (à créer) dans le répertoire du plugin *webradios*. Le format doit être similaire au fichier *webradios/radiolist.json*. Ce fichier ne sera pas modifié lors des mises à jour du plugin.
+A la création du fichier, s'assurer que le fichier à les bons droits avec la commande `sudo chown www-data:www-data custom.json && sudo chmod 775 custom.json`
+
 
 ### Utilisation dans un scénario
 
@@ -764,6 +771,12 @@ Le type d'équipements utilisés (wifi, serveur Jeedom) ou la longueur du messag
 - Ajouter le paramêtre 'sleep' pour ajouter un délai supplémentaire à la fin du message (ex: |sleep=0.8 pour 0.8 seconde).
 - Tester avec le paramètre 'buffered=1' pour voir si cela règle le problème.
 - Utiliser le paramêtre 'forcetts' durant les tests pour être certain que le cache n'est pas utilisé.
+
+#### Les fichiers nouvellement placés dans le repertoire 'localmedia' ne fonctionnent pas
+
+Les nouveaux fichiers doivent avoir les droits de lecture
+A partir du répertoire localmedia, corriger les droits avec la commande :     
+`sudo chown www-data:www-data * && sudo chmod 775 *`
 
 #### Diffuser Jeedom sans authentification sur un Google Cast
 
