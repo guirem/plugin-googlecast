@@ -18,12 +18,20 @@ echo "-- Installation of pip for python3 and necessary libraries"
 sudo apt-get install -y python3-dev python-requests python3-pip
 echo 68 > /tmp/dependancy_googlecast_in_progress
 echo ""
+echo "-- Installation of audio sox library"
+sudo apt-get install -y sox
+echo 71 > /tmp/dependancy_googlecast_in_progress
+echo ""
 echo "-- Installation of TTS libraries"
-sudo apt-get install -y libttspico-utils sox
-echo 72 > /tmp/dependancy_googlecast_in_progress
+sudo apt-get install -y libttspico-utils
+echo 73 > /tmp/dependancy_googlecast_in_progress
 echo ""
 echo "-- Installation of libav/ffmpeg libraries"
-sudo apt-get install -y libav-tools libavcodec-extra
+if [ $(sudo apt-cache search --names-only '^ffmpeg$' | wc -l) -eq 1 ]; then
+    sudo apt-get install -y ffmpeg
+else
+    sudo apt-get install -y libav-tools libavcodec-extra
+fi
 echo 75 > /tmp/dependancy_googlecast_in_progress
 # get pip3 command (different depending of OS such as raspberry)
 pip3cmd=$(compgen -ac | grep -E '^pip-?3' | sort -r | head -1)
@@ -46,23 +54,23 @@ if [[ ! -z  $pip3cmd ]]; then     # pip3 found
     echo "-- Installed version of pip :"
     echo $($pip3cmd -V)
     echo ""
-    echo "-- Installation of python library 'netifaces' with command $pip3cmd"
-    $(sudo $pip3cmd install netifaces > /tmp/dependancy_googlecast)
-    cat /tmp/dependancy_googlecast
-    echo 80 > /tmp/dependancy_googlecast_in_progress
-    echo ""
+    #echo "-- Installation of python library 'netifaces' with command $pip3cmd"
+    #$(sudo $pip3cmd install netifaces > /tmp/dependancy_googlecast)
+    #cat /tmp/dependancy_googlecast
+    #echo 80 > /tmp/dependancy_googlecast_in_progress
+    #echo ""
     echo "-- Installation of python library 'requests' with command $pip3cmd"
     $(sudo $pip3cmd install requests>=2.0 > /tmp/dependancy_googlecast)
     cat /tmp/dependancy_googlecast
     echo 83 > /tmp/dependancy_googlecast_in_progress
     echo ""
     echo "-- Installation of python library 'protobuf' with command $pip3cmd"
-    $(sudo $pip3cmd install protobuf>=3.0.0 > /tmp/dependancy_googlecast)
+    $(sudo $pip3cmd install protobuf>=3.7.0 > /tmp/dependancy_googlecast)
     cat /tmp/dependancy_googlecast
     echo 87 > /tmp/dependancy_googlecast_in_progress
     echo ""
     echo "-- Installation of python library 'zeroconf' with command $pip3cmd"
-    $(sudo $pip3cmd install zeroconf>=0.17.7 > /tmp/dependancy_googlecast)
+    $(sudo $pip3cmd install zeroconf>=0.21.3 > /tmp/dependancy_googlecast)
     cat /tmp/dependancy_googlecast
     echo 92 > /tmp/dependancy_googlecast_in_progress
     echo ""
