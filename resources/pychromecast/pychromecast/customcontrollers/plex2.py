@@ -78,14 +78,14 @@ class PlexController(BaseController):
                 "requestId": self.request_id,
                 "sessionId": "jeedom_googlecast_plex",
                 "autoplay": True,
-                "duration": str(item.duration) if item.duration else None,
+                "duration": str(item.duration) if hasattr(item, 'duration') else None,
                 "currentTime": offset,
                 "media":{
                         "contentId": item.key,
                         "streamType": "BUFFERED",
                         "contentType": type,
                         "metadata" : {
-                                "thumb" : str(item.thumb) if hasattr(item, 'thumb') else None
+                                "thumb" : str(item.thumb) if hasattr(item, 'thumb') else (str(item.parentThumb) if hasattr(item, 'parentThumb') else None)
                             },
                         "customData": {
                                 "offset": offset,
