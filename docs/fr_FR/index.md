@@ -18,7 +18,6 @@ Plugin pour commander les équipements compatibles Google Cast et Google Assista
 - Text To Speech (TTS)
 - Pour les équipements 'Google Assistant' (ex: Google Home)
     - DoNotDisturb (on/off)
-    - recupération/configuration des alarmes et timers
     - recupération/configuration d'autres paramètres
 
 
@@ -450,6 +449,9 @@ ex Commande TTS sur plusieurs google cast en parallèle en s'assurant que le fic
 > adding 'uuid' parameter will redirect to this uuid device in new thread. This can be used to send a sequence to several device in one command.
 
 #### Configuration avancée des équipements
+
+> **Important**   
+> Certaines informations tel que les informations sur les alarmes ne sont plus disponibles via ces commandes depuis septembre 2019 suite à une mise à jour du protocol Google Cast.
 
 ##### Récupérer une configuration
 Certaines configurations peuvent être récupérées dans une commande de type info (*cmd=getconfig*).
