@@ -4,7 +4,15 @@ Version list of googlecast plugin.
 
 *[Back to documentation] (index.md)*
 
-## Version du 27 aout 2019 (beta/stable) - 2.10
+## Version of December 30, 2019 (beta) - 2.11
+
+- TTS : addition of core Jeedom TTS engine and TTSWebserver
+- Jeedom 4 et php7 Compatibility
+- added logo for Google Hub
+- fix for debian buster installation
+- core libraries update
+
+## Version of August 27, 2019 (beta/stable) - 2.10
 
 - Jeedom 4 (php 7.3) basic compatibility
 
