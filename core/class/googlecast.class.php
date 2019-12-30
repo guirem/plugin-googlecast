@@ -31,8 +31,10 @@ class googlecast extends eqLogic {
 
 	const GCAST_MODELS = array(
 		'chromecast audio' => 'model_chromecast_audio.png',
+        'chromecast ultra'  => 'model_chromecast_video_ultra.png',
 		'chromecast' => 'model_chromecast_video.png',
 		'google home mini' => 'model_googlehome_mini.png',
+        'google home hub' => 'model_googlehome_hub.png',
 		'google home' => 'model_googlehome.png',
 		'google cast group' => 'model_castgroup.png',
 		'tv' => 'model_tv.png',
@@ -639,7 +641,7 @@ class googlecast extends eqLogic {
 		}
 
         if (intval($this->getConfiguration('has_googleassistant', '0')) == 1) {
-            $order = googlecast_utils::getCmdDefinition($this, 'googlehome', 210);
+            //$order = googlecast_utils::getCmdDefinition($this, 'googlehome', 210);
         }
 
 		$this->checkAndUpdateCmd('nowplaying', $this->getLogicalId());
@@ -1139,7 +1141,7 @@ class googlecast extends eqLogic {
                 //$arrayret = json_decode($httpret, true);
 
                 log::add('googlecast','debug','Request content : ' . print_r($arrayret,true));
-                if ($has_error===true or count($arrayret)==0) {
+                if ($has_error===true or ($arrayret and count($arrayret)==0)) {
                     if ( $showError==true) {
                         log::add('googlecast','error',__('Configuration non accessible', __FILE__));
                     }
