@@ -57,7 +57,6 @@ except ImportError:
     pass
 
 try:
-    #import pychromecast.pychromecast.customcontrollers.youtube as youtube
     import pychromecast.pychromecast.customcontrollers.plex2 as plex
 except ImportError:
     logging.error("ERROR: Custom controller not loaded !")
@@ -1419,6 +1418,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
             samplerate = '24000'
             if quality != '32k' :
                 samplerate = '44100'
+
             if engine == 'gtts':
                 speed = float(speed)
                 language=language.split('-')[0]
@@ -1452,7 +1452,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     language = srclanguage
                     speed = 1.2
 
-            elif engine == 'gttsapi':
+            elif engine == 'gttsapi' or engine == 'gttsapidev':
                 ttsformat = 'text'
                 voice = 'female'
                 if ttsparams is not None :
@@ -1463,7 +1463,10 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                         ttstext = ttstext.replace('^', '=')
                         ttstext = urllib.parse.quote_plus(ttstext)
                 speed = float(speed) - 0.7
-                ttsurl = globals.tts_gapi_url + 'v1/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&'+ttsformat+'='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5&gender='+voice
+                gapiversion = 'v1'
+                if engine == 'gttsapidev':
+                    gapiversion = 'v2'
+                ttsurl = globals.tts_gapi_url + gapiversion + '/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&'+ttsformat+'='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5&gender='+voice
                 success=True
                 try :
                     r = requests.get(ttsurl, timeout=3)
@@ -1488,28 +1491,19 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     language = srclanguage
                     speed = 1.2
 
-            elif engine == 'gttsapidev':
-                ttsformat = 'text'
-                voice = 'female'
-                if ttsparams is not None :
-                    if 'voice' in ttsparams :
-                        voice = ttsparams['voice']
-                    if 'usessml' in ttsparams :
-                        ttsformat = 'ssml'
-                        ttstext = ttstext.replace('^', '=')
-                        ttstext = urllib.parse.quote_plus(ttstext)
-                speed = float(speed) - 0.7
-                ttsurl = globals.tts_gapi_url + 'v2/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&'+ttsformat+'='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5&gender='+voice
-                success=True
-                try :
-                    r = requests.get(ttsurl, timeout=3)
-                    if r.status_code != requests.codes.ok :
-                        success=False
-                except :
-                    success=False
-                if success==True :
+            elif engine == 'jeedomtts' or engine == 'ttswebserver':
+                speed = float(speed)
+                proxyttsfile = globals.JEEDOM_COM.proxytts(engine, ttstext, {});
+                if proxyttsfile is not None:
                     with open(filenamemp3 , 'wb') as f:
-                        f.write(r.content)
+                        f.write(proxyttsfile)
+                    # if speed!=1:
+                    #     try:
+                    #         os.system('sox '+filenamemp3+' '+filenamemp3+ 'tmp.mp3 tempo ' +str(speed))
+                    #         os.remove(filenamemp3)
+                    #         os.rename(filenamemp3+'tmp.mp3', filenamemp3);
+                    #     except OSError:
+                    #         pass
                     speech = AudioSegment.from_mp3(filenamemp3)
                     if silence > 0 :
                         start_silence = AudioSegment.silent(duration=silence)
@@ -1517,7 +1511,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ac", "1", "-ar", samplerate,"-vol", "200"])
                     duration_seconds = speech.duration_seconds
                 else :
-                    logging.debug("CMD-TTS------Google Speech API : Cannot connect to API - failover to picotts")
+                    logging.debug("CMD-TTS------Jeedom TTS Proxy API : Cannot connect or incorrect output - failover to picotts")
                     engine = 'picotts'
                     filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
                     file = file + '_failover'
@@ -1607,7 +1601,7 @@ def get_notif_data(mediafilename, calcduration):
         urltoplay=None
         duration_seconds=0
         filename=None
-    logging.debug("CMD-NOTIF------NOTIF debug : " + urltoplay + ", duration: " + str(duration_seconds))
+    logging.debug("CMD-NOTIF------NOTIF debug : " + ('Unknown' if urltoplay is None else urltoplay) + ", duration: " + str(duration_seconds))
     return urltoplay, duration_seconds, filename
 
 def logByTTS(text_id):

@@ -67,7 +67,7 @@ function googlecast_install() {
 		config::save('tts_language','fr-FR', 'googlecast');
 	}
     if ( config::byKey('tts_engine', 'googlecast') == '' ) {
-		config::save('tts_engine','gtts', 'googlecast');
+		config::save('tts_engine','jeedomtts', 'googlecast');
 	}
 	if ( config::byKey('tts_speed', 'googlecast') == '' ) {
 		config::save('tts_speed','1.2', 'googlecast');

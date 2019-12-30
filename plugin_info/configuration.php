@@ -72,12 +72,36 @@ if (!isConnect('admin')) {
 	    <label class="col-lg-4 control-label">{{Moteur par défaut}}</label>
 	    <div class="col-lg-4">
             <select class="configKey form-control ttsengineform" data-l1key="tts_engine">
+				<option value="jeedomtts">{{Jeedom TTS (local)}}</option>
                 <option value="picotts">{{PicoTTS (local)}}</option>
                 <option value="gtts">{{Google Translate API (internet requis)}}</option>
 				<option value="gttsapi">{{Google Speech API (clé api & internet requis)}}</option>
 				<option value="gttsapidev">{{Google Speech API - dev (clé api & internet requis)}}</option>
+                <?php
+				if (config::byKey('active', 'ttsWebServer', 0) == 1) {
+				echo '<option value="ttswebserver">{{TTS WebServer (plugin)}}</option>';
+				}
+				?>
             </select>
 	    </div>
+    </div>
+    <div class='form-group ttswebserver'>
+        <label class="col-lg-4 control-label">{{Voix TTS WebServer}}</label>
+        <div class="col-lg-4">
+        	<?php
+        	if (config::byKey('active', 'ttsWebServer', 0) == 1) {
+        		$_aTWSVoiceList = ttsWebServer::getVoicesList();
+        		print_r($_aTWSVoiceList, 1);
+        		echo "<select class=\"configKey form-control ttswsoptform\" data-l1key=\"ttsws_config\">";
+        		for ($i = 0; $i < count($_aTWSVoiceList); $i++) {
+        			echo "<option value=\"" . $_aTWSVoiceList[$i]['eqLogicId'] . "|" . $_aTWSVoiceList[$i]['voice'] . "\">[" . $_aTWSVoiceList[$i]['eqLogicName'] . "] " . $_aTWSVoiceList[$i]['voice'] . "</option>";
+        		}
+        		echo "</select>";
+        	} else {
+        		echo "Le plugin TTS WebServer n'est pas actif";
+        	}
+        	?>
+        </div>
     </div>
 	<div class="form-group ttsgapikeyform">
 	    <label class="col-lg-4 control-label">{{Key Google Speech API}}</label>
@@ -85,13 +109,15 @@ if (!isConnect('admin')) {
 	        <input  type="text" class="configKey form-control" data-l1key="tts_gapikey" placeholder="Voir la documenttion pour obtenir une clé API"/>
 	    </div>
     </div>
-	<div class="form-group">
+	<div class="form-group ttsspeedform">
 	    <label class="col-lg-4 control-label">{{Vitesse de parole}}</label>
 	    <div class="col-lg-2">
             <select class="configKey form-control" data-l1key="tts_speed">
                 <option value="0.8">{{Très lent}}</option>
 				<option value="1">{{Lent}}</option>
 				<option value="1.2">{{Normal}}</option>
+                <option value="1.25">{{Normal +}}</option>
+                <option value="1.3">{{Normal ++}}</option>
                 <option value="1.4">{{Rapide}}</option>
 				<option value="1.6">{{Très rapide}}</option>
 				<option value="1.8">{{Encore plus rapide}}</option>
@@ -128,21 +154,36 @@ if (!isConnect('admin')) {
 </form>
 <script>
 
-function manage_gttskey() {
-    console.log('in');
+function manage_ttsengineselection() {
+    //console.log('in');
+    $('.ttsspeedform').show();
     var val = $('.ttsengineform').val();
+
     if (val=='gttsapi' || val=='gttsapidev') {
         $('.ttsgapikeyform').show();
     }
     else {
         $('.ttsgapikeyform').hide();
     }
+
+    if (val=='ttswebserver') {
+        $('.ttswebserver').show();
+		$('.ttsspeedform').hide();
+    }
+    else {
+        $('.ttswebserver').hide();
+    }
+
+    if (val=='jeedomtts') {
+		$('.ttsspeedform').hide();
+    }
+
 }
 
 $( document ).ready(function() {
-    manage_gttskey();
+    manage_ttsengineselection();
 });
-$('.ttsengineform').on('change', manage_gttskey);
+$('.ttsengineform').on('change', manage_ttsengineselection);
 
 $('.cleanTTScache').on('click', function () {
     $.ajax({// fonction permettant de faire de l'ajax
