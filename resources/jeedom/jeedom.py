@@ -126,6 +126,26 @@ class jeedom_com():
             else:
                 d1[k] = v2
 
+    def proxytts(self, ttsengine, ttsmessage, options):
+        filecontent = None
+        proxyttsdata = {'ttsproxy': ttsengine, 'ttsmsg': ttsmessage}
+        try:
+            response = requests.post(self.url + '?apikey=' + self.apikey, json=proxyttsdata, timeout=1, verify=False)
+            filecontent = response.content
+
+            if response.status_code != requests.codes.ok:
+                filecontent = None
+                logging.error('SENDER------PROXYTTS Callback error: %s'% (response.status_code,))
+            else :
+                if len(response.content) < 254 and os.path.exists(response.content):
+                    fc = open(response.content,"rb")
+                    filecontent = fc.read()
+                    fc.close()
+        except Exception as e:
+            logging.error('SENDER------PROXYTTS Callback result as a unknown error: %s. '% str(e))
+            filecontent = None
+        return filecontent
+
     def test(self):
         try:
             response = requests.get(self.url + '?apikey=' + self.apikey, verify=False)
@@ -168,12 +188,14 @@ class jeedom_utils():
             logging.getLogger("urllib3").setLevel(logging.ERROR)
             logging.getLogger("pydub").setLevel(logging.ERROR)
             logging.getLogger("gtts").setLevel(logging.ERROR)
+            logging.getLogger("requests").setLevel(logging.ERROR)
         else :
             logging.getLogger("pychromecast").setLevel(logging.CRITICAL)
             logging.getLogger("plexapi").setLevel(logging.ERROR)
             logging.getLogger("urllib3").setLevel(logging.CRITICAL)
             logging.getLogger("pydub").setLevel(logging.CRITICAL)
             logging.getLogger("gtts").setLevel(logging.CRITICAL)
+            logging.getLogger("requests").setLevel(logging.CRITICAL)
 
         if level=='none' :
             logging.getLogger().disabled = True

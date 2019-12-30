@@ -20,7 +20,7 @@ if [[ !  -z  $pip3cmd  ]]; then     # pip3 found
     if [[ -z  $content  ]]; then
         content=0
     fi
-    if [ "$content" -lt 7  ];then
+    if [ "$content" -lt 6  ];then
         echo "nok"
         exit 0
     fi
