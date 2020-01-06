@@ -4,6 +4,12 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
+## Version du 06 janvier 2020 (beta) - 2.12
+
+- Optimisations et corrections de bugs
+- Fix bug zeroconf
+- Mise à jour de la documentation
+
 ## Version du 30 décembre 2019 (beta) - 2.11
 
 - TTS : ajout des moteurs TTS de Jeedom et TTSWebserver

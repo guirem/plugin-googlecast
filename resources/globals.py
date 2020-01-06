@@ -26,6 +26,7 @@ GCAST_DEVICES = {}
 
 NOWPLAYING_TIMEOUT = 60*6    # 6 minutes
 NOWPLAYING_FREQUENCY = 15     # 15 seconds
+NOWPLAYING_FREQUENCY_MAX = 120     # 120 seconds
 NOWPLAYING_LAST = 0
 
 LEARN_BEGIN = int(time.time())
