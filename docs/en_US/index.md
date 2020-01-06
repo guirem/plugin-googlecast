@@ -359,7 +359,7 @@ ex using token with implicit play_media command call :
 ```
 - value: str - text
 - lang: str - fr-FR/en-US or any compatible language (optional, default is configuration)
-- engine: str - picotts/gtts/gttsapi/gttsapidev. (optional, default is configuration)
+- engine: str - jeedomtts/ttsws/picotts/gtts/gttsapi/gttsapidev. (optional, default is configuration)
 - quit: 0/1 - quit app after tts action.
 - forcetts: 1 - do not use cache (useful for testing).
 - speed: float (default=1.2) - speed of speech (eg: 0.5, 2).

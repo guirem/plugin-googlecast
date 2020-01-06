@@ -153,7 +153,11 @@ if (isset($result['ttsproxy'])) {
 
 	if ($result['ttsproxy'] == 'jeedomtts') {
 		log::add('googlecast','debug','[PROXY TTS] with jeedom engine');
-        $ttsdata = file_get_contents(network::getNetworkAccess('internal') . '/core/api/tts.php?apikey=' . config::byKey('api', 'core') . '&path=1&text=' . urlencode($ttsmsg));
+        $additionnalOptions = '';
+        if ($result['options'] && $result['options']['language']) {
+            $additionnalOptions = '&voice=' . $result['options']['language'];
+        }
+        $ttsdata = file_get_contents(network::getNetworkAccess('internal') . '/core/api/tts.php?apikey=' . config::byKey('api', 'core') . $additionnalOptions . '&path=0&text=' . urlencode($ttsmsg));
 	}
 
     if ($result['ttsproxy'] == 'ttsws') {
@@ -168,7 +172,7 @@ if (isset($result['ttsproxy'])) {
 				list($ttsws_opt_id, $_ttsws_opt_voice) = explode('|', $ttsws_config);
 
 				if ($ttsws_opt_id > 0) {
-					$ttsws_options = array('eqLogicId' => $ttsws_opt_id, 'message' => $ttsmsg, 'returnType' => 'path', 'returnFormat' => 'mp3');
+					$ttsws_options = array('eqLogicId' => $ttsws_opt_id, 'message' => $ttsmsg, 'returnType' => 'file', 'returnFormat' => 'mp3');
 					if ($_ttsws_opt_voice != '') {
 						$ttsws_options['voice'] = $_ttsws_opt_voice;
 					}
@@ -193,6 +197,8 @@ if (isset($result['ttsproxy'])) {
 
         header("Content-Disposition: attachment; filename=proxytts.mp3;");
         header("Content-Type: Content-Type: audio/mpeg");
+		header("Content-Transfer-Encoding: binary");
+		header("Pragma: no-cache");
         header('Content-Length: ' . strlen($ttsdata));
         http_response_code(200);
         echo $ttsdata;

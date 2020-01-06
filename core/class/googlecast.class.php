@@ -188,20 +188,28 @@ class googlecast extends eqLogic {
 		$cmd->setDisplay('generic_type', 'ENERGY_STATE');
 		$cmd->save();
 
+		// $cmd = $this->getCmd(null, 'reboot');
+		// if (!is_object($cmd)) {
+		// 	$cmd = new googlecastCmd();
+		// 	$cmd->setLogicalId('reboot');
+		// 	$cmd->setName(__('Restart', __FILE__));
+		// 	$cmd->setIsVisible(1);
+		// 	$cmd->setDisplay('icon', '<i class="fa fa-power-off"></i>');
+		// 	$cmd->setConfiguration('googlecast_cmd', true);
+		// }
+		// $cmd->setTemplate('dashboard', 'googlecast_reboot');
+		// $cmd->setType('action');
+		// $cmd->setSubType('other');
+		// $cmd->setEqLogic_id($this->getId());
+		// $cmd->save();
+
+		// hide reboot button if exists as it's not available anymore in latest googlecast versions
 		$cmd = $this->getCmd(null, 'reboot');
-		if (!is_object($cmd)) {
-			$cmd = new googlecastCmd();
-			$cmd->setLogicalId('reboot');
-			$cmd->setName(__('Restart', __FILE__));
-			$cmd->setIsVisible(1);
-			$cmd->setDisplay('icon', '<i class="fa fa-power-off"></i>');
-			$cmd->setConfiguration('googlecast_cmd', true);
+		if (is_object($cmd)) {
+		    // $cmd->remove();
+		    $cmd->setIsVisible(0);
+		    $cmd->save();
 		}
-		$cmd->setTemplate('dashboard', 'googlecast_reboot');
-		$cmd->setType('action');
-		$cmd->setSubType('other');
-		$cmd->setEqLogic_id($this->getId());
-		$cmd->save();
 
 		$cmd = $this->getCmd(null, 'is_busy');
 		if (!is_object($cmd)) {
@@ -744,7 +752,7 @@ class googlecast extends eqLogic {
 			if (@posix_getsid(trim(file_get_contents($pid_file)))) {
 				$return['state'] = 'ok';
 			} else {
-				shell_exec('sudo rm -rf ' . $pid_file . ' 2>&1 > /dev/null;rm -rf ' . $pid_file . ' 2>&1 > /dev/null;');
+				shell_exec(system::getCmdSudo() . 'rm -rf ' . $pid_file . ' 2>&1 > /dev/null;rm -rf ' . $pid_file . ' 2>&1 > /dev/null;');
 			}
 		}
 		$return['launchable'] = 'ok';
@@ -760,7 +768,7 @@ class googlecast extends eqLogic {
 		$return = array();
 		$return['log'] = 'googlecast_update';
 		$return['progress_file'] = '/tmp/dependancy_googlecast_in_progress';
-		$cmd = 'sudo /bin/bash ' . dirname(__FILE__) . '/../../resources/install_check.sh';
+		$cmd = system::getCmdSudo() . '/bin/bash ' . dirname(__FILE__) . '/../../resources/install_check.sh';
 		if (exec($cmd) == "ok") {
 			$return['state'] = 'ok';
 		} else {
@@ -1140,7 +1148,9 @@ class googlecast extends eqLogic {
                 //$httpret = '{"alarm":[{"date_pattern":{"day":13,"month":6,"year":2018},"fire_time":1528909200000.0,"id":"alarm/5b205564-0000-27be-9e26-089e082ee87c","status":1,"time_pattern":{"hour":13,"minute":0,"second":0}}],"timer":[]}';
                 //$arrayret = json_decode($httpret, true);
 
-                log::add('googlecast','debug','Request content : ' . print_r($arrayret,true));
+                if (isset($arrayret)) {
+                    log::add('googlecast','debug','Request content : ' . print_r($arrayret,true));
+                }
                 if ($has_error===true or ($arrayret and count($arrayret)==0)) {
                     if ( $showError==true) {
                         log::add('googlecast','error',__('Configuration non accessible', __FILE__));

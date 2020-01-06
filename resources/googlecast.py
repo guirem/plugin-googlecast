@@ -549,15 +549,18 @@ class JeedomChromeCast :
         if force==True :
             self._internal_send_now_playing()
         elif self.now_playing==True:
-            logging.debug("JEEDOMCHROMECAST------ NOW PLAYING " + str(int(time.time())-self.nowplaying_lastupdated))
+            logging.debug("JEEDOMCHROMECAST------ NOW PLAYING " + self.uuid + " in seconds : " + str(int(time.time())-self.nowplaying_lastupdated))
             if (int(time.time())-self.nowplaying_lastupdated)>=globals.NOWPLAYING_FREQUENCY :
                 self._internal_trigger_now_playing_update()
 
     def sendNowPlaying_heartbeat(self):
         if self.now_playing==True:
             if (int(datetime.utcnow().timestamp())-self.nowplaying_lastupdated)>=globals.NOWPLAYING_FREQUENCY :
-                logging.debug("JEEDOMCHROMECAST------ NOW PLAYING heartbeat " + str(int(datetime.utcnow().timestamp())-self.nowplaying_lastupdated))
+                logging.debug("JEEDOMCHROMECAST------ NOW PLAYING heartbeat for " + self.uuid + " in seconds : " + str(int(datetime.utcnow().timestamp())-self.nowplaying_lastupdated))
                 self._internal_trigger_now_playing_update()
+            if (int(datetime.utcnow().timestamp())-self.nowplaying_lastupdated)>=globals.NOWPLAYING_FREQUENCY_MAX :
+                logging.debug("JEEDOMCHROMECAST------ NOW PLAYING heartbeat for " + self.uuid + " : force to resend data after " + str(globals.NOWPLAYING_FREQUENCY_MAX) + " seconds")
+                self._internal_send_now_playing()
 
     def _internal_send_now_playing(self):
         uuid = self.uuid
@@ -1493,7 +1496,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
 
             elif engine == 'jeedomtts' or engine == 'ttswebserver':
                 speed = float(speed)
-                proxyttsfile = globals.JEEDOM_COM.proxytts(engine, ttstext, {});
+                proxyttsfile = globals.JEEDOM_COM.proxytts(engine, ttstext, {'language': language});
                 if proxyttsfile is not None:
                     with open(filenamemp3 , 'wb') as f:
                         f.write(proxyttsfile)
@@ -1813,13 +1816,13 @@ def scanner(name):
                     scanForced = scanForced or True
 
         if scanForced==True or globals.LEARN_MODE==True:
-            logging.debug("SCANNER------ Looking for chromecasts on network...")
+            logging.debug("SCANNER------ Looking for googlecast devices on network... (" + str(len(globals.KNOWN_DEVICES) - len(globals.GCAST_DEVICES)) + " to be found out of " + str(len(globals.KNOWN_DEVICES)) + " registered devices)")
             rawcasts = pychromecast.get_chromecasts(tries=1, retry_wait=2, timeout=globals.SCAN_TIMEOUT)
             casts = []
             for cast in rawcasts :
                 casts.append( JeedomChromeCast(cast, scan_mode=True) )
         else :
-            logging.debug("SCANNER------ No need to scan network, all devices are present")
+            logging.debug("SCANNER------ No need to scan network, all googlecast devices already being monitored (" + str(len(globals.GCAST_DEVICES)) + " registered and found devices)")
             casts = list(globals.GCAST_DEVICES.values())
 
         uuid_newlyadded = []
