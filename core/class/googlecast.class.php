@@ -38,6 +38,8 @@ class googlecast extends eqLogic {
 		'google home' => 'model_googlehome.png',
 		'google cast group' => 'model_castgroup.png',
 		'tv' => 'model_tv.png',
+        'shield' => 'model_androidtv.png',
+        'android' => 'model_androidtv.png',
 	);
 
 	/*     * ***********************Methode static*************************** */
@@ -92,13 +94,20 @@ class googlecast extends eqLogic {
 		}
 		if (!$found) {	// try to guess based on manufacturer
 			$castType = $this->getConfiguration('cast_type');
-			if ($this->getConfiguration('manufacturer')=='Google Inc.') {
+			$manufName = strtolower( $this->getConfiguration('manufacturer','UNKOWN') );
+			if (strpos($manufName, 'google') !== false) {
 				if ($castType=='audio')
 					$imgLogo = $imgRoot . 'model_googlehome.png';
 				if ($castType=='cast')
 					$imgLogo = $imgRoot . 'model_chromecast_video.png';
                 if ($castType=='group')
     				$imgLogo = $imgRoot . 'model_castgroup.png';
+			}
+			if (strpos($manufName, 'xiaomi') !== false) {
+				$imgLogo = $imgRoot . 'model_androidtv.png';
+			}
+			if (strpos($manufName, 'nvidia') !== false) {
+				$imgLogo = $imgRoot . 'model_androidtv.png';
 			}
 		}
 		$this->setConfiguration('logoDevice', $imgLogo);
@@ -109,7 +118,6 @@ class googlecast extends eqLogic {
         else {
             $this->setConfiguration('has_googleassistant', '0');
         }
-
 
 	}
 
