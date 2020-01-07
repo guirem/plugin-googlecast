@@ -10,7 +10,7 @@ Plugin to control Google Cast enabled devices.
 
 - Sound control (mute, +/-)
 - Media control (play/pause/stop ...)
-- Stop app in progress, reboot
+- Stop app in progress
 - Broadcast a web page on a screen
 - Play audio and video files via url
 - Return of status on the main functionalities
@@ -247,7 +247,7 @@ They must be seperated by *|*
     * notif : send sound notification based on existing media file (ex: mp3)
     * warmupnotif : prepare device before receiving 'tts' or 'notif' commands (useful for group broadcast)
     * refresh
-    * reboot : reboot the Google Cast
+    * reboot : reboot the googlecast device (doesn't work since end of 2019)
     * volume_up
     * volume_down
     * volume_set : use value (0-100)

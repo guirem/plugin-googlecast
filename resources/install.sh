@@ -3,6 +3,10 @@ touch /tmp/dependancy_googlecast_in_progress
 echo 0 > /tmp/dependancy_googlecast_in_progress
 echo "Launch install of googlecast dependancies"
 echo ""
+export DEBIAN_FRONTEND=noninteractive
+echo "-- Current OS version :"
+sudo lsb_release -d
+echo ""
 echo "-- Updating repo..."
 sudo apt-get update
 echo 20 > /tmp/dependancy_googlecast_in_progress
@@ -46,6 +50,7 @@ if [[ -z  $pip3cmd ]]; then     # pip3 not found
         pip3cmd="python3 -m pip"
     else # something is wrong with pip3 so reinstall it
         echo "-- Something is wrong with pip3, trying to re-install :"
+        sudo python3 -m pip uninstall -y pip
         sudo apt-get -y --reinstall install python3-pip
         pip3cmd=$(compgen -ac | grep -E '^pip-?3' | sort -r | head -1)
     fi
@@ -56,7 +61,7 @@ if [[ ! -z  $pip3cmd ]]; then     # pip3 found
     if [ "$pyver" -lt "35" ]; then  # using 3.4 that is depreciated
         $(sudo $pip3cmd install setuptools > /tmp/dependancy_googlecast)
     else
-        $(sudo $pip3cmd install 'setuptools>=44.0.0' > /tmp/dependancy_googlecast)
+        $(sudo $pip3cmd install 'setuptools>=42.0.0' > /tmp/dependancy_googlecast)
     fi
     cat /tmp/dependancy_googlecast
     echo 78 > /tmp/dependancy_googlecast_in_progress

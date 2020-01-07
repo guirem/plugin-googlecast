@@ -10,7 +10,7 @@ Plugin pour commander les équipements compatibles Google Cast et Google Assista
 
 - Contrôle du son (mute, +/-)
 - Contrôle des médias (play/pause/stop...)
-- Arrêt appli en cours, reboot
+- Arrêt appli en cours
 - Diffuser une page web sur un écran
 - Lecture de fichiers audio et vidéo via url
 - Retour d'état sur les principales fonctionnalités
@@ -253,7 +253,7 @@ Elles doivent être séparées par *|*
     * warmupnotif : prepare device before receiving 'tts' or 'notif' commands (useful for group broadcast)
     * resume : force a resume of previous command (compatible with storecmd, notif and tts)
     * refresh
-    * reboot : reboot the Google Cast
+    * reboot : reboot the googlecast device (doesn't work since end of 2019)
     * volume_up
     * volume_down
     * volume_set : use value (0-100)
@@ -758,10 +758,19 @@ Si le log contient le message *Error: Cound not found pip3 program to install py
 - `compgen -ac | grep -E '^pip-?3' | sort -r | head -1` doit retourner une ligne (ex: pip3)
 - Si aucun retour sur la ligne précédente, tenter une réinstallation de pip3   
 ```
-sudo apt-get remove python3-pip
-sudo apt-get -y install python3-pip
+sudo python3 -m pip uninstall -y pip
+sudo apt-get -y --reinstall install python3-pip
 ```
 - Relancer l'installation des dépendances
+
+#### Les dépendances sont 'ok' mais le démon ne se lance pas
+
+Un des modules est peut etre corrompu.
+Pour désinstaller les modules utiliser la commande 
+```
+sudo pip3 uninstall -y requests zeroconf click bs4 six tqdm websocket-client
+```
+Puis relancer l'installation des dépendances.
 
 #### Le Text To Speech (TTS) ne fonctionne pas
 
