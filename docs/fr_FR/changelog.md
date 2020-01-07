@@ -4,11 +4,13 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
-## Version du 06 janvier 2020 (beta) - 2.12
+## Version du 07 janvier 2020 (beta) - 2.12
 
-- Optimisations et corrections de bugs
-- Fix bug zeroconf
-- Mise à jour de la documentation
+- optimisations et corrections de bugs
+- fix du bug de dépendance zeroconf
+- ajout logo pour modèles androidtv
+- suppression du bouton 'reboot' (ne fonctionne plus)
+- mise à jour de la documentation et ajout de logs pour debug
 
 ## Version du 30 décembre 2019 (beta) - 2.11
 

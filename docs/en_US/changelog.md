@@ -4,6 +4,14 @@ Version list of googlecast plugin.
 
 *[Back to documentation] (index.md)*
 
+## Version of January 07, 2020 (beta) - 2.12
+
+- optimizations and bug fixes
+- fix zeroconf dependency bug
+- added androidtv model logo
+- removed 'reboot' button from UI (not working anymore)
+- documentation update and added debug logs
+
 ## Version of December 30, 2019 (beta) - 2.11
 
 - TTS : addition of core Jeedom TTS engine and TTSWebserver
