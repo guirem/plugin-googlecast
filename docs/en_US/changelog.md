@@ -4,6 +4,12 @@ Version list of googlecast plugin.
 
 *[Back to documentation] (index.md)*
 
+## Version of January 08, 2020 (beta) - 2.13
+
+- engine 'TTS Google Speech API' removed and replaced by 'Google Cloud Text-To-Speech' (https://cloud.google.com/text-to-speech/)
+(check doc FAQ if API key doesn't work anymore)
+- documentation update
+
 ## Version of January 07, 2020 (beta) - 2.12
 
 - optimizations and bug fixes

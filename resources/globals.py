@@ -63,6 +63,7 @@ tts_cachefolderweb = os.path.abspath(os.path.join(os.path.dirname(os.path.dirnam
 tts_cachefoldertmp = os.path.join('/tmp/jeedom/', 'googlecast_tts')
 tts_gapi_url = 'https://www.google.com/speech-api/'
 tts_gapi_key = 'none'
+tts_gapi_voice = 'fr-FR-Standard-A'
 tts_gapi_haskey = False
 
 localmedia_folder = 'localmedia'
