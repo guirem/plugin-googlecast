@@ -116,7 +116,7 @@ Configuration settings do not usually need to be changed
 - **TTS**
   - Use the external Jeedom address: by default uses the internal Jeedom web address
   - Default language: TTS engine language used by default
-  - Default engine: the TTS engine used (PicoTTS, Google Translate, Speach API, Google Speach API dev)
+  - Default engine: the TTS engine used (PicoTTS, Google Translate, Google Cloud Text-to-Speech)
   - Speech rate: speed of pronunciation of the text
   - Do not use cache: disables use of Jeedom cache (deprecated)
   - Clean cache: cleans the temporary directory for generating sound files
@@ -126,7 +126,7 @@ Configuration settings do not usually need to be changed
 
 > **Notes for TTS (Text To Speech)**
 > - PicoTTS does not require an internet connection, the Google Translate API requires web access and rendering is better.
-> - For Google Speech API, a key is required (see FAQ). Rendering is better than Google Translate API.
+> - For Google Cloud Text-to-Speech, a key is required (see FAQ). Rendering is better than Google Translate API.
 > - A cache mechanism makes it possible to generate the sound reproduction only if it does not already exist in memory (RAM). The cache is deleted when the server is restarted.
 > - In the event of failure on one of the motors other than picotts (ex: problem of Internet connection), the command will be launched via picotts.
 
@@ -359,7 +359,7 @@ ex using token with implicit play_media command call :
 ```
 - value: str - text
 - lang: str - fr-FR/en-US or any compatible language (optional, default is configuration)
-- engine: str - jeedomtts/ttsws/picotts/gtts/gttsapi/gttsapidev. (optional, default is configuration)
+- engine: str - jeedomtts/ttsws/picotts/gtts/gttsapi. (optional, default is configuration)
 - quit: 0/1 - quit app after tts action.
 - forcetts: 1 - do not use cache (useful for testing).
 - speed: float (default=1.2) - speed of speech (eg: 0.5, 2).
@@ -372,12 +372,14 @@ ex using token with implicit play_media command call :
 - forceapplaunch: 1 - will try to force launch of previous application even if not launched by plugin.
 - highquality: 1 - increase tts sound file bitrate and sample rate. Use this setting for test.
 - buffered: 1 - stream to google cast as buffered stream instead of live. Use this setting for test.
-- voice (gttsapi/gttsapidev only): male/female - chose a male or female voice (default is female)
-- usessml (gttsapi/gttsapidev only): 1 - use ssml format insteaf of text in 'value' field. See https://cloud.google.com/text-to-speech/docs/ssml ('=' symbols must be replace by '^')
+- voice (gttsapi only): overwrite default voice (eg: 'fr-FR-Standard-A')
+- usessml (gttsapi only): 1 - use ssml format insteaf of text in 'value' field. See https://cloud.google.com/text-to-speech/docs/ssml ('=' symbols must be replace by '^')
+- pitch (gttsapi only): 0 - speaking pitch, in the range [-20.0, 20.0]. 20 means increase 20 semitones from the original pitch. -20 means decrease 20 semitones from the original pitch.
+- volgain (gttsapi only): 0 - volume gain (in dB) of the normal native volume supported by the specific voice, in the range [-96.0, 16.0].
 
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
 ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
-ex voice/ssml : cmd=tts|engine=gttsapi|voice=male|value=<speak>Etape 1<break time^"3s"/>Etape 2</speak>
+ex voice/ssml : cmd=tts|engine=gttsapi|voice=fr-FR-Standard-A|value=<speak>Etape 1<break time^"3s"/>Etape 2</speak>
 ```
 
 > **Notes**   
@@ -710,9 +712,13 @@ FAQ
 
 This is possible via the web mode. To manage the authentication automatically, use the plugin 'autologin' (see doc of the plugin).
 
-#### Get an API Key for Google Speech API
+#### Get an API Key for Google Cloud Text-to-Speech' API
 
-The steps to get this key are on this link : http://domotique-home.fr/comment-obtenir-google-speech-api-et-integrer-dans-sarah/
+[Generate an API key](../fr_FR/gcloudttskey.md).
+
+#### TTS 'Google Cloud Text-to-Speech' API key is not working anymore
+
+Since version 2.13 (Janaury 2020), make sur 'Google Cloud Text-to-Speech' API is enabled in Google CLoud project credential configuration.
 
 Changelog
 =============================

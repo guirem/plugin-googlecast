@@ -821,6 +821,7 @@ class googlecast extends eqLogic {
             $cmd .= ' --ttscache 1';
         }
 		$cmd .= ' --ttsgapikey ' . config::byKey('tts_gapikey', 'googlecast', 'none');
+		$cmd .= ' --gcttsvoice ' . config::byKey('gctts_voice', 'googlecast', 'fr-FR-Standard-A');
 		$cmd .= ' --daemonname local';
 		$cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', 'googlecast', '1');
         $cmd .= ' --defaultstatus ' . "'". config::byKey('defaultsatus', 'googlecast', "&nbsp;") ."'";

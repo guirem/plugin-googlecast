@@ -119,7 +119,9 @@ Les paramètres de configuration n'ont généralement pas besoin d'être modifi�
 - **TTS**
   - Utiliser l'adresse Jeedom externe : par défaut utilise l'adresse web Jeedom interne. Ne modifier que pour des configurations spéciales.
   - Langue par défaut : langue du moteur TTS utilisé par défaut
-  - Moteur par défaut : le moteur TTS utilisé (TTS Jeedom, TTS Webserver, PicoTTS, Google Translate, Google Speach API, Google Speach API dev)
+  - Moteur par défaut : le moteur TTS utilisé (TTS Jeedom, TTS Webserver, PicoTTS, Google Translate, Google Cloud Text-to-Speech)
+  - Key Google Cloud Text-to-Speech (uniquement si le moteur 'Google Cloud Text-to-Speech' est selectionné) : Clé API nécessaire à l'utilisation de ce moteur.
+  - Voix par défaut pour Google Cloud Text-to-Speech (uniquement si le moteur 'Google Cloud Text-to-Speech' est selectionné) : voix par défaut qui sera utilisé par ce moteur TTS.
   - Vitesse de parole : rapidité de prononciation du texte
   - Ne pas utiliser le cache : désactive l'utilisation du cache Jeedom (déconseillé)
   - Nettoyer cache : nettoie le répertoire temporaire de géneration des fichiers son
@@ -131,9 +133,17 @@ Les paramètres de configuration n'ont généralement pas besoin d'être modifi�
 > - Jeedom TTS est le moteur TTS utilisé par Jeedom. Cela rend compatible l'utilisation du plugin officiel 'Song'. Il ne nécessite pas de connexion internet.
 > - TTSWebserveur nécessite l'installation et configuration d'un autre plugin dédié ('TTS Web Server' - payant).
 > - PicoTTS ne nécessite pas de connexion internet, l'API Google Translate nécessite un accès web et le rendu est meilleur.
-> - Pour Google Speech API, une clé est nécessaire (voir FAQ). Le rendu est meilleur que Google Translate API.
 > - Un mécanisme de cache permet de ne générer le rendu sonore que s'il n'existe pas déjà en mémoire (RAM). La cache est donc supprimé au redémarrage du serveur.
 > - En cas d'échec sur un des moteurs autre que picotts (ex: problème de connexion internet), la commande sera lancée via picotts.
+
+> **Notes sur le moteur 'Google Cloud Text-to-Speech'**  
+> - C'est le moteur TTS de Google (https://cloud.google.com/text-to-speech). Il est entre autres utilisé par la voix de Google Assistant. La qualité est bien supréieure aux autres moteurs TTS.
+> - Une clé API est nécessaire qu'il faut avoir créé au préalable (voir [créer un clé API](gcloudttskey.md)).
+> - Il est possible de tester les voix sur la page principale https://cloud.google.com/text-to-speech
+> - L'utilisation est gratuite jusqu'à un certain quota d'utilisation qui est largement suffisant pour une utilisation domotique d'un particulier.
+    - Voix standards (hors WaveNet): Gratuit de 0 à 4 millions de caractères par mois (puis 4 USD/1 million de caractères supplémentaires)
+    - Voix WaveNet: gratuit de 0 à 1 million de caractères par mois (puis 16 USD/1 million de caractères supplémentaires)
+
 
 ![Configuration Plugin](../images/configuration_plugin.png "Configuration Plugin")
 
@@ -392,7 +402,7 @@ ex using valid token :
 ```
 - value: str - text
 - lang: str - fr-FR/en-US or any compatible language (optional, default is configuration)
-- engine: str - jeedomtts/ttsws/picotts/gtts/gttsapi/gttsapidev. (optional, default is configuration)
+- engine: str - jeedomtts/ttsws/picotts/gtts/gttsapi. (optional, default is configuration)
 - quit: 0/1 - quit app after tts action.
 - forcetts: 1 - do not use cache (useful for testing).
 - speed: float (default=1.2) - speed of speech (eg: 0.5, 2).
@@ -405,12 +415,14 @@ ex using valid token :
 - forceapplaunch: 1 - will try to force launch of previous application even if not launched by plugin.
 - highquality: 1 - increase tts sound file bitrate and sample rate. Use this setting for test as it should not improve much audio quality.
 - buffered: 1 - stream to google cast as buffered stream instead of live. Use this setting for test.
-- voice (gttsapi/gttsapidev only): male/female - chose a male or female voice
-- usessml (gttsapi/gttsapidev only): 1 - use ssml format insteaf of text in 'value' field. See https://cloud.google.com/text-to-speech/docs/ssml ('=' symbols must be replace by '^')
+- voice (gttsapi only): overwrite default voice (eg: 'fr-FR-Standard-A')
+- usessml (gttsapi only): 1 - use ssml format insteaf of text in 'value' field. See https://cloud.google.com/text-to-speech/docs/ssml ('=' symbols must be replace by '^')
+- pitch (gttsapi only): 0 - speaking pitch, in the range [-20.0, 20.0]. 20 means increase 20 semitones from the original pitch. -20 means decrease 20 semitones from the original pitch.
+- volgain (gttsapi only): 0 - volume gain (in dB) of the normal native volume supported by the specific voice, in the range [-96.0, 16.0].
 
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
 ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
-ex voice/ssml : cmd=tts|engine=gttsapi|voice=male|value=<speak>Etape 1<break time^"3s"/>Etape 2</speak>
+ex voice/ssml : cmd=tts|engine=gttsapi|voice=fr-CA-Standard-A|value=<speak>Etape 1<break time^"3s"/>Etape 2</speak>
 ```
 
 > **Notes**   
@@ -766,7 +778,7 @@ sudo apt-get -y --reinstall install python3-pip
 #### Les dépendances sont 'ok' mais le démon ne se lance pas
 
 Un des modules est peut etre corrompu.
-Pour désinstaller les modules utiliser la commande 
+Pour désinstaller les modules utiliser la commande
 ```
 sudo pip3 uninstall -y requests zeroconf click bs4 six tqdm websocket-client
 ```
@@ -810,9 +822,13 @@ Cependant, il est possible d'optimiser la longueur de la commande :
 
 Exemple : *app=web|cmd=load_url|value='https://xxxxx.xxxxxxx.com:443/plugins/autologin/core/php/go.php?apikey%3Dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&id%3D999',True* réduit en *app=web|v=hs:/xxxxx.xxxxxxx.com/plugins/autologin/core/php/go.php?apikey%3Dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&id%3D999,T*
 
-#### Récupérer une clé API pour Google Speech API
+#### Récupérer une clé API pour utiliser TTS 'Google Cloud Text-to-Speech'
 
-Les étapes pour obtenir cette clé se trouvent sur ce lien : http://domotique-home.fr/comment-obtenir-google-speech-api-et-integrer-dans-sarah/
+[Créer un clé API](gcloudttskey.md).
+
+#### La clé API pour utiliser TTS 'Google Cloud Text-to-Speech' ne fonctionne plus
+
+Suite à la mise à jour de janvier 2020, il est probable que l'API 'Google Cloud Text-to-Speech' doivent être activée sur l'interface via Google Cloud. Avant cette mise à jour, une autre API était utilisée.
 
 Changelog
 =============================
