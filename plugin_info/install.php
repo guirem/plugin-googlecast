@@ -40,6 +40,13 @@ function googlecast_update() {
 
     createHtaccess();
 
+    if ( config::byKey('tts_engine', 'googlecast') == 'gttsapidev' ) {  // remove dev version of gtts
+		config::save('tts_engine','gttsapi', 'googlecast');
+	}
+    if ( config::byKey('gctts_voice', 'googlecast') == '' ) {
+		config::save('gctts_voice','fr-FR-Standard-A', 'googlecast');
+	}
+
 	foreach (googlecast::byType('googlecast') as $googlecast) {
 		try {
 			$googlecast->save();

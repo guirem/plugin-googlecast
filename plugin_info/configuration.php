@@ -75,7 +75,7 @@ if (!isConnect('admin')) {
 				<option value="jeedomtts">{{Jeedom TTS (local)}}</option>
                 <option value="picotts">{{PicoTTS (local)}}</option>
                 <option value="gtts">{{Google Translate API (internet requis)}}</option>
-				<option value="gttsapi">{{Google Speech API (clé api & internet requis)}}</option>
+				<option value="gttsapi">{{Google Cloud Text-to-Speech (clé api & internet requis)}}</option>
                 <?php
 				if (config::byKey('active', 'ttsWebServer', 0) == 1) {
 				echo '<option value="ttswebserver">{{TTS WebServer (plugin)}}</option>';
