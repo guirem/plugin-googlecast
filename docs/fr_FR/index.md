@@ -141,8 +141,8 @@ Les paramètres de configuration n'ont généralement pas besoin d'être modifi�
 > - Une clé API est nécessaire qu'il faut avoir créé au préalable (voir [créer un clé API](gcloudttskey.md)).
 > - Il est possible de tester les voix sur la page principale https://cloud.google.com/text-to-speech
 > - L'utilisation est gratuite jusqu'à un certain quota d'utilisation qui est largement suffisant pour une utilisation domotique d'un particulier.
-    - Voix standards (hors WaveNet): Gratuit de 0 à 4 millions de caractères par mois (puis 4 USD/1 million de caractères supplémentaires)
-    - Voix WaveNet: gratuit de 0 à 1 million de caractères par mois (puis 16 USD/1 million de caractères supplémentaires)
+    + Voix standards (hors WaveNet): Gratuit de 0 à 4 millions de caractères par mois (puis 4 USD/1 million de caractères supplémentaires)
+    + Voix WaveNet: gratuit de 0 à 1 million de caractères par mois (puis 16 USD/1 million de caractères supplémentaires)
 
 
 ![Configuration Plugin](../images/configuration_plugin.png "Configuration Plugin")
