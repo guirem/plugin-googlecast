@@ -26,6 +26,7 @@ CAST_TYPES = {
     'chromecast audio': CAST_TYPE_AUDIO,
     'google home': CAST_TYPE_AUDIO,
     'google home mini': CAST_TYPE_AUDIO,
+    'google nest mini': CAST_TYPE_AUDIO,
     'google cast group': CAST_TYPE_GROUP,
 }
 
