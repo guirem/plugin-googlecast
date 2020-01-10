@@ -12,6 +12,8 @@ from tqdm import tqdm
 from plexapi import compat
 from plexapi.exceptions import NotFound
 
+log = logging.getLogger('plexapi')
+
 # Search Types - Plex uses these to filter specific media types when searching.
 # Library Types - Populated at runtime
 SEARCHTYPES = {'movie': 1, 'show': 2, 'season': 3, 'episode': 4, 'trailer': 5, 'comic': 6, 'person': 7,
@@ -176,12 +178,16 @@ def toDatetime(value, format=None):
     """
     if value and value is not None:
         if format:
-            value = datetime.strptime(value, format)
+            try:
+                value = datetime.strptime(value, format)
+            except ValueError:
+                log.info('Failed to parse %s to datetime, defaulting to None', value)
+                return None
         else:
             # https://bugs.python.org/issue30684
             # And platform support for before epoch seems to be flaky.
             # TODO check for others errors too.
-            if int(value) == 0:
+            if int(value) <= 0:
                 value = 86400
             value = datetime.fromtimestamp(int(value))
     return value
@@ -252,8 +258,6 @@ def download(url, token, filename=None, savepath=None, session=None, chunksize=4
             >>> download(a_episode.getStreamURL(), a_episode.location)
             /path/to/file
     """
-
-    from plexapi import log
     # fetch the data to be saved
     session = session or requests.Session()
     headers = {'X-Plex-Token': token}

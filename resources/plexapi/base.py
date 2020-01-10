@@ -6,6 +6,7 @@ from plexapi.compat import quote_plus, urlencode
 from plexapi.exceptions import BadRequest, NotFound, UnknownType, Unsupported
 from plexapi.utils import tag_helper
 
+DONT_RELOAD_FOR_KEYS = ['key', 'session']
 OPERATORS = {
     'exact': lambda v, q: v == q,
     'iexact': lambda v, q: v.lower() == q.lower(),
@@ -278,7 +279,8 @@ class PlexPartialObject(PlexObject):
         # Dragons inside.. :-/
         value = super(PlexPartialObject, self).__getattribute__(attr)
         # Check a few cases where we dont want to reload
-        if attr == 'key' or attr.startswith('_'): return value
+        if attr in DONT_RELOAD_FOR_KEYS: return value
+        if attr.startswith('_'): return value
         if value not in (None, []): return value
         if self.isFullObject(): return value
         # Log the reload.
@@ -452,6 +454,7 @@ class Playable(object):
         self.transcodeSessions = self.findItems(data, etag='TranscodeSession')      # session
         self.session = self.findItems(data, etag='Session')                         # session
         self.viewedAt = utils.toDatetime(data.attrib.get('viewedAt'))               # history
+        self.accountID = utils.cast(int, data.attrib.get('accountID'))              # history
         self.playlistItemID = utils.cast(int, data.attrib.get('playlistItemID'))    # playlist
 
     def isFullObject(self):

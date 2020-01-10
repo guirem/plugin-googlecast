@@ -78,9 +78,21 @@ class Video(PlexPartialObject):
         self._server.query(key)
         self.reload()
 
+    def rate(self, rate):
+        """ Rate video. """
+        key = '/:/rate?key=%s&identifier=com.plexapp.plugins.library&rating=%s' % (self.ratingKey, rate)
+
+        self._server.query(key)
+        self.reload()
+
     def _defaultSyncTitle(self):
         """ Returns str, default title for a new syncItem. """
         return self.title
+
+    def posters(self):
+        """ Returns list of available poster objects. :class:`~plexapi.media.Poster`:"""
+
+        return self.fetchItems('%s/posters' % self.key, cls=media.Poster)
 
     def sync(self, videoQuality, client=None, clientId=None, limit=None, unwatched=False, title=None):
         """ Add current video (movie, tv-show, season or episode) as sync item for specified device.
@@ -262,6 +274,7 @@ class Show(Video):
             banner (str): Key to banner artwork (/library/metadata/<ratingkey>/art/<artid>)
             childCount (int): Unknown.
             contentRating (str) Content rating (PG-13; NR; TV-G).
+            collections (List<:class:`~plexapi.media.Collection`>): List of collections this media belongs.
             duration (int): Duration of show in milliseconds.
             guid (str): Plex GUID (com.plexapp.agents.imdb://tt4302938?lang=en).
             index (int): Plex index (?)
@@ -294,6 +307,7 @@ class Show(Video):
         self.banner = data.attrib.get('banner')
         self.childCount = utils.cast(int, data.attrib.get('childCount'))
         self.contentRating = data.attrib.get('contentRating')
+        self.collections = self.findItems(data, media.Collection)
         self.duration = utils.cast(int, data.attrib.get('duration'))
         self.guid = data.attrib.get('guid')
         self.index = data.attrib.get('index')
@@ -332,9 +346,9 @@ class Show(Video):
             Parameters:
                 title (str or int): Title or Number of the season to return.
         """
-        if isinstance(title, int):
-            title = 'Season %s' % title if title != 0 else 'Specials'
         key = '/library/metadata/%s/children' % self.ratingKey
+        if isinstance(title, int):
+            return self.fetchItem(key, etag='Directory', index__iexact=str(title))
         return self.fetchItem(key, etag='Directory', title__iexact=title)
 
     def episodes(self, **kwargs):
@@ -459,7 +473,7 @@ class Season(Video):
         key = '/library/metadata/%s/children' % self.ratingKey
         if title:
             return self.fetchItem(key, title=title)
-        return self.fetchItem(key, seasonNumber=self.index, index=episode)
+        return self.fetchItem(key, parentIndex=self.index, index=episode)
 
     def get(self, title=None, episode=None):
         """ Alias to :func:`~plexapi.video.Season.episode()`. """
