@@ -116,10 +116,12 @@ if (!isConnect('admin')) {
 				<option value="fr-FR-Standard-B">French (France) - Standard B Male (fr-FR-Standard-B)</option>
 				<option value="fr-FR-Standard-C">French (France) - Standard C Female (fr-FR-Standard-C)</option>
 				<option value="fr-FR-Standard-D">French (France) - Standard D Male (fr-FR-Standard-D)</option>
+				<option value="fr-FR-Standard-E">French (France) - Standard E Female (fr-FR-Standard-E)</option>
 				<option value="fr-FR-Wavenet-A">French (France) - WaveNet A Female (fr-FR-Wavenet-A)</option>
 				<option value="fr-FR-Wavenet-B">French (France) - WaveNet B Male (fr-FR-Wavenet-B)</option>
 				<option value="fr-FR-Wavenet-C">French (France) - WaveNet C Female (fr-FR-Wavenet-C)</option>
 				<option value="fr-FR-Wavenet-D">French (France) - WaveNet D Male (fr-FR-Wavenet-D)</option>
+				<option value="fr-FR-Wavenet-E">French (France) - WaveNet E Female (fr-FR-Wavenet-E)</option>
 				<option value="fr-CA-Standard-A">French (Canada) - Standard A Female (fr-CA-Standard-A)</option>
 				<option value="fr-CA-Standard-B">French (Canada) - Standard B Male (fr-CA-Standard-B)</option>
 				<option value="fr-CA-Standard-C">French (Canada) - Standard C Female (fr-CA-Standard-C)</option>
