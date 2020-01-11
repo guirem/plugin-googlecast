@@ -74,37 +74,37 @@ class PlexController(BaseController):
             version = server.version
         self.namespace="urn:x-cast:com.google.cast.media"
         msg = {
-                "type": medtype,
-                "requestId": self.request_id,
-                "sessionId": "jeedom_googlecast_plex",
-                "autoplay": True,
-                "duration": str(item.duration) if hasattr(item, 'duration') else None,
-                "currentTime": offset,
-                "media":{
-                        "contentId": item.key,
-                        "streamType": "BUFFERED",
-                        "contentType": type,
-                        "metadata" : {
-                                "thumb" : str(item.thumb) if hasattr(item, 'thumb') else (str(item.parentThumb) if hasattr(item, 'parentThumb') else None)
-                            },
-                        "customData": {
-                                "offset": offset,
-                                "server": {
-                                        "machineIdentifier": server.machineIdentifier,
-                                        "transcoderVideo": server.transcoderVideo,
-                                        "transcoderVideoRemuxOnly": False,
-                                        "transcoderAudio": server.transcoderAudio,
-                                        "version": version,
-                                        "myPlexSubscription": server.myPlexSubscription,
-                                        "isVerifiedHostname": False,
-                                        "protocol": protocol,
-                                        "address": address,
-                                        "port": str(port),
-                                        "accessToken": transient_token,
-                                },
-                                "user": {"username": server.myPlexUsername},
-                                "containerKey": "/playQueues/{}?own=1&window=200".format(playqueue),
-                        },
-                }
+            "type": medtype,
+            "requestId": self.request_id,
+            "sessionId": "jeedom_googlecast_plex",
+            "autoplay": True,
+            "duration": str(item.duration) if hasattr(item, 'duration') else None,
+            "currentTime": offset,
+            "media":{
+                "contentId": item.key,
+                "streamType": "BUFFERED",
+                "contentType": type,
+                "metadata" : {
+                    "thumb" : str(item.thumb) if hasattr(item, 'thumb') else (str(item.parentThumb) if hasattr(item, 'parentThumb') else None)
+                },
+                "customData": {
+                    "offset": offset,
+                    "server": {
+                            "machineIdentifier": server.machineIdentifier,
+                            "transcoderVideo": server.transcoderVideo,
+                            "transcoderVideoRemuxOnly": False,
+                            "transcoderAudio": server.transcoderAudio,
+                            "version": version,
+                            "myPlexSubscription": server.myPlexSubscription,
+                            "isVerifiedHostname": False,
+                            "protocol": protocol,
+                            "address": address,
+                            "port": str(port),
+                            "accessToken": transient_token,
+                            "user": {"username": server.myPlexUsername},
+                    },
+                    "containerKey": "/playQueues/{}?own=1&window=200".format(playqueue),
+                },
+            }
         }
         self.send_message(msg, inc_session_id=True)
