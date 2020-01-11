@@ -93,6 +93,7 @@ class PlexServer(PlexObject):
 
     def __init__(self, baseurl=None, token=None, session=None, timeout=None):
         self._baseurl = baseurl or CONFIG.get('auth.server_baseurl', 'http://localhost:32400')
+        self._baseurl = self._baseurl.rstrip('/')
         self._token = logfilter.add_secret(token or CONFIG.get('auth.server_token'))
         self._showSecrets = CONFIG.get('log.show_secrets', '').lower() == 'true'
         self._session = session or requests.Session()
@@ -232,7 +233,7 @@ class PlexServer(PlexObject):
                 name (str): Name of the client to return.
 
             Raises:
-                :class:`~plexapi.exceptions.NotFound`: Unknown client name
+                :class:`plexapi.exceptions.NotFound`: Unknown client name
         """
         for client in self.clients():
             if client and client.title == name:
@@ -240,14 +241,14 @@ class PlexServer(PlexObject):
 
         raise NotFound('Unknown client name: %s' % name)
 
-    def createPlaylist(self, title, items):
+    def createPlaylist(self, title, items=None, section=None, limit=None, smart=None, **kwargs):
         """ Creates and returns a new :class:`~plexapi.playlist.Playlist`.
 
             Parameters:
                 title (str): Title of the playlist to be created.
                 items (list<Media>): List of media items to include in the playlist.
         """
-        return Playlist.create(self, title, items)
+        return Playlist.create(self, title, items=items, limit=limit, section=section, smart=smart, **kwargs)
 
     def createPlayQueue(self, item, **kwargs):
         """ Creates and returns a new :class:`~plexapi.playqueue.PlayQueue`.
@@ -290,12 +291,14 @@ class PlexServer(PlexObject):
         part = '/updater/check?download=%s' % (1 if download else 0)
         if force:
             self.query(part, method=self._session.put)
-        return self.fetchItem('/updater/status')
+        releases = self.fetchItems('/updater/status')
+        if len(releases):
+            return releases[0]
 
     def isLatest(self):
         """ Check if the installed version of PMS is the latest. """
         release = self.check_for_update(force=True)
-        return bool(release.version == self.version)
+        return release is None
 
     def installUpdate(self):
         """ Install the newest version of Plex Media Server. """
@@ -324,7 +327,7 @@ class PlexServer(PlexObject):
                 title (str): Title of the playlist to return.
 
             Raises:
-                :class:`~plexapi.exceptions.NotFound`: Invalid playlist title
+                :class:`plexapi.exceptions.NotFound`: Invalid playlist title
         """
         return self.fetchItem('/playlists', title=title)
 
@@ -391,7 +394,7 @@ class PlexServer(PlexObject):
                 callback (func): Callback function to call on recieved messages.
 
             raises:
-                :class:`~plexapi.exception.Unsupported`: Websocket-client not installed.
+                :class:`plexapi.exception.Unsupported`: Websocket-client not installed.
         """
         notifier = AlertListener(self, callback)
         notifier.start()
@@ -421,6 +424,21 @@ class PlexServer(PlexObject):
             delim = '&' if '?' in key else '?'
             return '%s%s%sX-Plex-Token=%s' % (self._baseurl, key, delim, self._token)
         return '%s%s' % (self._baseurl, key)
+
+    def refreshSynclist(self):
+        """ Force PMS to download new SyncList from Plex.tv. """
+        return self.query('/sync/refreshSynclists', self._session.put)
+
+    def refreshContent(self):
+        """ Force PMS to refresh content for known SyncLists. """
+        return self.query('/sync/refreshContent', self._session.put)
+
+    def refreshSync(self):
+        """ Calls :func:`~plexapi.server.PlexServer.refreshSynclist` and
+            :func:`~plexapi.server.PlexServer.refreshContent`, just like the Plex Web UI does when you click 'refresh'.
+        """
+        self.refreshSynclist()
+        self.refreshContent()
 
 
 class Account(PlexObject):

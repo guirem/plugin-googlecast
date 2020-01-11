@@ -138,6 +138,79 @@ if (isset($result['devices'])) {
 	}
 }
 
+if (isset($result['ttsproxy'])) {
+
+    if (isset($result['ttsmsg'])) {
+        $ttsmsg = trim($result['ttsmsg']);
+    }
+    else {
+        log::add('googlecast','debug','TTS PROXY : No TTS message in the request');
+        http_response_code(400);
+        return;
+    }
+
+    $ttsdata = false;
+
+	if ($result['ttsproxy'] == 'jeedomtts') {
+		log::add('googlecast','debug','[PROXY TTS] with jeedom engine');
+        $additionnalOptions = '';
+        if ($result['options'] && $result['options']['language']) {
+            $additionnalOptions = '&voice=' . $result['options']['language'];
+        }
+        $ttsdata = file_get_contents(network::getNetworkAccess('internal') . '/core/api/tts.php?apikey=' . config::byKey('api', 'core') . $additionnalOptions . '&path=0&text=' . urlencode($ttsmsg));
+	}
+
+    if ($result['ttsproxy'] == 'ttsws') {
+		log::add('googlecast','debug','[PROXY TTS] with webserver TTS engine (plugin)');
+
+		if (config::byKey('active', 'ttsWebServer', 0) == 1) {
+			$ttsws_config = config::byKey('ttsws_config', 'googlecast', '');
+			if ($ttsws_config == '') {
+				log::add('googlecast', 'warning', '[PROXY TTS] [TTSWebServer] options of TTSWebServer is empty, stop action for ttswebserver');
+			}
+            else {
+				list($ttsws_opt_id, $_ttsws_opt_voice) = explode('|', $ttsws_config);
+
+				if ($ttsws_opt_id > 0) {
+					$ttsws_options = array('eqLogicId' => $ttsws_opt_id, 'message' => $ttsmsg, 'returnType' => 'file', 'returnFormat' => 'mp3');
+					if ($_ttsws_opt_voice != '') {
+						$ttsws_options['voice'] = $_ttsws_opt_voice;
+					}
+					log::add('googlecast', 'debug', '[PROXY TTS] [TTSWebServer] show _ttswsOptions=' . print_r($ttsws_options, true));
+
+                    $ttsws_filepath = ttsWebServer::getAudioFile($ttsws_options);
+                    log::add('googlecast', 'debug', '[PROXY TTS] [TTSWebServer] show _fileTTSWSPath="' . $ttsws_filepath . '"');
+
+                    $ttsdata = file_get_contents($ttsws_filepath);
+
+				} else {
+					log::add('googlecast', 'warning', '[PROXY TTS] [TTSWebServer] id of TTSWebServer equipement is wrong (' . $ttsws_opt_id . '), stop action for ttswebserver');
+				}
+			}
+		} else {
+			log::add('googlecast', 'warning', '[PROXY TTS] [TTSWebServer] TTS WebServer plugin is not active');
+		}
+	}
+
+    if ($ttsdata !== false) {
+        //log::add('googlecast', 'debug', '[PROXY TTS] File successfuly sent !');
+
+        header("Content-Disposition: attachment; filename=proxytts.mp3;");
+        header("Content-Type: Content-Type: audio/mpeg");
+		header("Content-Transfer-Encoding: binary");
+		header("Pragma: no-cache");
+        header('Content-Length: ' . strlen($ttsdata));
+        http_response_code(200);
+        echo $ttsdata;
+    }
+    else {
+        log::add('googlecast', 'debug', '[PROXY TTS] Error while generating TTS file using PROXY TTS engine');
+
+        http_response_code(400);
+        echo 'Error while generating TTS file using PROXY TTS engine';
+    }
+}
+
 function array_flatten($array) {
     $return = array();
     foreach ($array as $key => $value) {

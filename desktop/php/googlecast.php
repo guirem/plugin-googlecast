@@ -17,40 +17,27 @@ if (config::byKey('include_mode', 'googlecast', 0) == 1) {
 
 ?>
 <div class="row row-overflow">
-  <div class="col-lg-2 sidebar-container">
-    <div class="bs-sidebar">
-      <ul id="ul_eqLogic" class="nav nav-list bs-sidenav">
-        <li class="filter" style="margin-bottom: 5px;"><input class="filter form-control input-sm" placeholder="{{Rechercher}}" style="width: 100%"/></li>
-<?php
-foreach ($eqLogics as $eqLogic) {
-	echo '<li class="cursor li_eqLogic" data-eqLogic_id="' . $eqLogic->getId() . '"><a>' . $eqLogic->getHumanName(true) . '</a></li>';
-}
-?>
-     </ul>
-   </div>
-</div>
- <div class="col-lg-10 col-md-9 col-sm-8 eqLogicThumbnailDisplay equipement-container" style="border-left: solid 1px #EEE; padding-left: 25px;">
-   <a class="btn btn-default pull-right bt_sidebarToogle"><i class="fa fa-dedent"></i></a>
-   <legend><i class="fa fa-cog" style="height:35px;"></i> &nbsp; {{Gestion}}</legend>
+ <div class="col-xs-12 eqLogicThumbnailDisplay">
+   <legend><i class="fa fa-cog"></i> &nbsp; {{Gestion}}</legend>
    <div class="eqLogicThumbnailContainer">
-<?php
-if (config::byKey('include_mode', 'googlecast', 0) == 1) {
-	echo '<div class="cursor changeIncludeState include card" data-mode="1" data-state="0" style="background-color : #ffffff; height : 140px;margin-bottom : 10px;padding : 5px;border-radius: 2px;width : 160px;margin-left : 10px;" >';
-	echo '<center class="includeicon">';
-	echo '<i class="fa fa-spinner fa-pulse" style="font-size : 6em;color:red"></i>';
-	echo '</center>';
-	echo '<span class="includeicon_text" style="font-size : 1.1em;position:relative; top : 15px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;color:red;font-weight: bold;"><center>{{Arrêter Scan}}</center></span>';
-	echo '</div>';
-} else {
-	echo '<div class="cursor changeIncludeState include card" data-mode="1" data-state="1" style="background-color : #ffffff; height : 140px;margin-bottom : 10px;padding : 5px;border-radius: 2px;width : 160px;margin-left : 10px;" >';
-	echo '<center class="includeicon">';
-	echo '<i class="fa fa-bullseye" style="font-size : 6em;color:#94ca02;"></i>';
-	echo '</center>';
-	echo '<span class="includeicon_text" style="font-size : 1.1em;position:relative; top : 15px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;color:#94ca02";font-weight: normal;><center>{{Lancer Scan}}</center></span>';
-	echo '</div>';
-}
-?>
-   <div class="cursor eqLogicAction" data-action="gotoPluginConf" style="background-color : #ffffff; height : 120px;margin-bottom : 10px;padding : 5px;border-radius: 2px;width : 160px;margin-left : 10px;">
+    <?php
+    if (config::byKey('include_mode', 'googlecast', 0) == 1) {
+    	echo '<div class="cursor changeIncludeState include card" data-mode="1" data-state="0" style="background-color : #ffffff; height : 140px;margin-bottom : 10px;padding : 5px;border-radius: 2px;width : 160px;margin-left : 10px;" >';
+    	echo '<center class="includeicon">';
+    	echo '<i class="fa fa-spinner fa-pulse" style="font-size : 6em;color:red"></i>';
+    	echo '</center>';
+    	echo '<span class="includeicon_text" style="font-size : 1.1em;position:relative; top : 15px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;color:red;font-weight: bold;"><center>{{Arrêter Scan}}</center></span>';
+    	echo '</div>';
+    } else {
+    	echo '<div class="cursor changeIncludeState include card" data-mode="1" data-state="1" style="background-color : #ffffff; height : 140px;margin-bottom : 10px;padding : 5px;border-radius: 2px;width : 160px;margin-left : 10px;" >';
+    	echo '<center class="includeicon">';
+    	echo '<i class="fa fa-bullseye" style="font-size : 6em;color:#94ca02;"></i>';
+    	echo '</center>';
+    	echo '<span class="includeicon_text" style="font-size : 1.1em;position:relative; top : 15px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;color:#94ca02";font-weight: normal;><center>{{Lancer Scan}}</center></span>';
+    	echo '</div>';
+    }
+    ?>
+       <div class="cursor eqLogicAction" data-action="gotoPluginConf" style="background-color : #ffffff; height : 120px;margin-bottom : 10px;padding : 5px;border-radius: 2px;width : 160px;margin-left : 10px;">
     <center>
       <i class="fa fa-wrench" style="font-size : 6em;color:#767676;"></i>
     </center>
@@ -63,26 +50,23 @@ if (config::byKey('include_mode', 'googlecast', 0) == 1) {
     <span style="font-size : 1.1em;position:relative; top : 15px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;color:#767676"><center>{{Santé}}</center></span>
   </div>
 </div>
-<legend><i class="icon techno-cable1"></i> &nbsp; {{Mes équipements Google Cast}}
-</legend>
+<legend><i class="icon techno-cable1"></i> &nbsp; {{Mes équipements Google Cast}}</legend>
+<input class="form-control" placeholder="{{Rechercher}}" id="in_searchEqlogic" />
 <div class="eqLogicThumbnailContainer">
 <?php
 foreach ($eqLogics as $eqLogic) {
-	$opacity = '';
-	if ($eqLogic->getIsEnable() != 1) {
-		$opacity = 'opacity:0.3;';
-	}
-	echo '<div class="eqLogicDisplayCard cursor" data-eqLogic_id="' . $eqLogic->getId() . '" style="text-align: center; background-color : #ffffff; height : 200px;margin-bottom : 10px;padding : 5px;border-radius: 2px;width : 160px;margin-left : 10px;' . $opacity . '" >';
-	echo '<img src="' . $eqLogic->getConfiguration('logoDevice', 'plugins/googlecast/desktop/images/model_default.png') . '" height="125" width="120" />';
-	echo "<br>";
-	echo '<span style="font-size : 1.1em;position:relative; top : 10px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;">' . $eqLogic->getHumanName(true, true) . '</span>';
+    $opacity = ($eqLogic->getIsEnable()) ? '' : 'disableCard';
+    echo '<div class="eqLogicDisplayCard cursor '.$opacity.'" data-eqLogic_id="' . $eqLogic->getId() . '" >';
+	echo '<img src="' . $eqLogic->getConfiguration('logoDevice', 'plugins/googlecast/desktop/images/model_default.png') . '" />';
+	echo '<br>';
+	echo '<span class="name">' . $eqLogic->getHumanName(true, true) . '</span>';
 	echo '</div>';
 }
 ?>
 </div>
 </div>
-<div class="col-lg-10 eqLogic equipement-container" style="border-left: solid 1px #EEE; padding-left: 25px;display: none;">
-  <a class="btn btn-default pull-right bt_sidebarToogle"><i class="fa fa-dedent"></i></a>
+<div class="col-xs-12 eqLogic" style="display: none;">
+  <!-- <a class="btn btn-default pull-right bt_sidebarToogle"><i class="fa fa-dedent"></i></a> -->
   <a class="btn btn-success eqLogicAction pull-right" data-action="save"><i class="fa fa-check-circle"></i> {{Sauvegarder}}</a>
   <a class="btn btn-danger eqLogicAction pull-right" data-action="remove"><i class="fa fa-minus-circle"></i> {{Supprimer}}</a>
   <a class="btn btn-default eqLogicAction pull-right" data-action="configure"><i class="fa fa-cogs"></i> {{Configuration avancée}}</a>
@@ -110,10 +94,10 @@ foreach ($eqLogics as $eqLogic) {
               <select id="sel_object" class="eqLogicAttr form-control" data-l1key="object_id">
                 <option value="">{{Aucun}}</option>
                 <?php
-foreach (jeeObject::all() as $object) {
-	echo '<option value="' . $object->getId() . '">' . $object->getName() . '</option>';
-}
-?>
+                foreach (jeeObject::all() as $object) {
+                	echo '<option value="' . $object->getId() . '">' . $object->getName() . '</option>';
+                }
+                ?>
              </select>
            </div>
          </div>

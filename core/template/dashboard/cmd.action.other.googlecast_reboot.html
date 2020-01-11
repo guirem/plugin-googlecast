@@ -1,6 +1,6 @@
-<span class="cmd pull-left cursor tooltips" title="#name#" data-type="action" data-subtype="other" data-cmd_id="#id#" data-cmd_uid="#uid#" style="margin-top: 3px;margin-left:0px;" data-version="#version#">
+<div class="cmd pull-left cursor tooltips" title="#name#" data-type="action" data-subtype="other" data-cmd_id="#id#" data-cmd_uid="#uid#" style="margin-top: 3px;margin-left:5px;color: var(--eqTitle-color) !important;font-size: 1.0em !important;" data-version="#version#">
 #name_display#
-</span>
+</div>
 <script>
     $('.cmd[data-cmd_uid=#uid#]:last').off('click').on('click', function () {
         jeedom.cmd.execute({id: '#id#'});

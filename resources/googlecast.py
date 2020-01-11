@@ -35,6 +35,7 @@ import resource
 from pydub import AudioSegment
 import hashlib
 from gtts import gTTS
+from gcloudtts import gcloudTTS, WrongAPIKeyError
 import urllib.parse
 
 import globals
@@ -57,7 +58,6 @@ except ImportError:
     pass
 
 try:
-    #import pychromecast.pychromecast.customcontrollers.youtube as youtube
     import pychromecast.pychromecast.customcontrollers.plex2 as plex
 except ImportError:
     logging.error("ERROR: Custom controller not loaded !")
@@ -550,15 +550,18 @@ class JeedomChromeCast :
         if force==True :
             self._internal_send_now_playing()
         elif self.now_playing==True:
-            logging.debug("JEEDOMCHROMECAST------ NOW PLAYING " + str(int(time.time())-self.nowplaying_lastupdated))
+            logging.debug("JEEDOMCHROMECAST------ NOW PLAYING " + self.uuid + " in seconds : " + str(int(time.time())-self.nowplaying_lastupdated))
             if (int(time.time())-self.nowplaying_lastupdated)>=globals.NOWPLAYING_FREQUENCY :
                 self._internal_trigger_now_playing_update()
 
     def sendNowPlaying_heartbeat(self):
         if self.now_playing==True:
             if (int(datetime.utcnow().timestamp())-self.nowplaying_lastupdated)>=globals.NOWPLAYING_FREQUENCY :
-                logging.debug("JEEDOMCHROMECAST------ NOW PLAYING heartbeat " + str(int(datetime.utcnow().timestamp())-self.nowplaying_lastupdated))
+                logging.debug("JEEDOMCHROMECAST------ NOW PLAYING heartbeat for " + self.uuid + " in seconds : " + str(int(datetime.utcnow().timestamp())-self.nowplaying_lastupdated))
                 self._internal_trigger_now_playing_update()
+            if (int(datetime.utcnow().timestamp())-self.nowplaying_lastupdated)>=globals.NOWPLAYING_FREQUENCY_MAX :
+                logging.debug("JEEDOMCHROMECAST------ NOW PLAYING heartbeat for " + self.uuid + " : force to resend data after " + str(globals.NOWPLAYING_FREQUENCY_MAX) + " seconds")
+                self._internal_send_now_playing()
 
     def _internal_send_now_playing(self):
         uuid = self.uuid
@@ -1158,6 +1161,10 @@ def action_handler(message):
                                 ttsparams['voice'] = command['voice']
                             if 'usessml' in command :
                                 ttsparams['usessml'] = command['usessml']
+                            if 'pitch' in command :
+                                ttsparams['pitch'] = command['pitch']
+                            if 'volgain' in command :
+                                ttsparams['volgain'] = command['volgain']
 
                         curvol = jcast.getCurrentVolume()
                         if curvol == vol and not forcevol :
@@ -1386,7 +1393,9 @@ def manage_resume(uuid, source='googlecast', forceapplaunch=False, origin='TTS')
 
 def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=300, quality='32k', ttsparams=None):
     srclanguage = language
-    if not globals.tts_gapi_haskey and (engine=='gttsapi' or engine=='gttsapidev') :
+    if engine == 'gttsapidev':  # removed this engine but failover to gttsapi
+        engine = 'gttsapi'
+    if not globals.tts_gapi_haskey and engine=='gttsapi' :
         logging.error("CMD-TTS------No key provided, fallback to picotts engine")
         engine = 'picotts'
         speed = 1
@@ -1411,6 +1420,11 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
         os.symlink(symlinkpath, cachepath)
     try:
         rawfilename = text+engine+language+str(silence)
+        if engine=='gttsapi' :      # add exception when using gttsapi engine to use voice over language
+            if ttsparams is not None and 'voice' in ttsparams :
+                rawfilename = text+engine+ttsparams['voice']+str(silence)
+            else :
+                rawfilename = text+engine+globals.tts_gapi_voice+str(silence)
         file = hashlib.md5(rawfilename.encode('utf-8')).hexdigest()
         filenamemp3=os.path.join(cachepath,file+'.mp3')
         logging.debug("CMD-TTS------TTS Filename hexdigest : " + file + "  ("+rawfilename+")")
@@ -1419,6 +1433,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
             samplerate = '24000'
             if quality != '32k' :
                 samplerate = '44100'
+
             if engine == 'gtts':
                 speed = float(speed)
                 language=language.split('-')[0]
@@ -1452,64 +1467,63 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     language = srclanguage
                     speed = 1.2
 
-            elif engine == 'gttsapi':
+            elif engine == 'gttsapi' :
                 ttsformat = 'text'
-                voice = 'female'
+                voice = globals.tts_gapi_voice
+                speed = float(speed) - 0.2
+                pitch = 0.0
+                volumegaindb = 0.0
                 if ttsparams is not None :
                     if 'voice' in ttsparams :
                         voice = ttsparams['voice']
+                    if 'pitch' in ttsparams :
+                        pitch = float(ttsparams['pitch'])
+                    if 'volgain' in ttsparams :
+                        volumegaindb = float(ttsparams['volgain'])
                     if 'usessml' in ttsparams :
                         ttsformat = 'ssml'
                         ttstext = ttstext.replace('^', '=')
                         ttstext = urllib.parse.quote_plus(ttstext)
-                speed = float(speed) - 0.7
-                ttsurl = globals.tts_gapi_url + 'v1/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&'+ttsformat+'='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5&gender='+voice
                 success=True
-                try :
-                    r = requests.get(ttsurl, timeout=3)
-                    if r.status_code != requests.codes.ok :
-                        success=False
+                try:
+                    gctts = gcloudTTS(globals.tts_gapi_key)
+                    rawttsdata = gctts.tts(voice, voice[:5], ttstext, ttsformat, speed, pitch, volumegaindb, 'LINEAR16')
+                except WrongAPIKeyError :
+                    success=False
+                    logging.error("CMD-TTS------Google Cloud TextToSpeech API Key is wrong. Please check !")
                 except :
                     success=False
+                    logging.debug("CMD-TTS------Google Cloud TextToSpeech API Unknown error")
+                    logging.debug(traceback.format_exc())
                 if success==True :
-                    with open(filenamemp3 , 'wb') as f:
-                        f.write(r.content)
-                    speech = AudioSegment.from_mp3(filenamemp3)
+                    speech = AudioSegment(data=rawttsdata)
                     if silence > 0 :
                         start_silence = AudioSegment.silent(duration=silence)
                         speech = start_silence + speech
-                    speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ac", "1", "-ar", samplerate,"-vol", "200"])
+                    #speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ac", "1", "-ar", samplerate,"-vol", "200"])
+                    speech.export(filenamemp3, format="mp3", tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ac", "1", "-vol", "200"])
                     duration_seconds = speech.duration_seconds
                 else :
-                    logging.debug("CMD-TTS------Google Speech API : Cannot connect to API - failover to picotts")
+                    logging.error("CMD-TTS------Google Cloud TextToSpeech API : Error while using Google Cloud TextToSpeech API - failover to picotts")
                     engine = 'picotts'
                     filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
                     file = file + '_failover'
                     language = srclanguage
                     speed = 1.2
 
-            elif engine == 'gttsapidev':
-                ttsformat = 'text'
-                voice = 'female'
-                if ttsparams is not None :
-                    if 'voice' in ttsparams :
-                        voice = ttsparams['voice']
-                    if 'usessml' in ttsparams :
-                        ttsformat = 'ssml'
-                        ttstext = ttstext.replace('^', '=')
-                        ttstext = urllib.parse.quote_plus(ttstext)
-                speed = float(speed) - 0.7
-                ttsurl = globals.tts_gapi_url + 'v2/synthesize?enc=mpeg&client=chromium&key='+globals.tts_gapi_key+'&'+ttsformat+'='+ttstext+'&lang='+language+'&speed='+"{0:.2f}".format(speed)+'&pitch=0.5&gender='+voice
-                success=True
-                try :
-                    r = requests.get(ttsurl, timeout=3)
-                    if r.status_code != requests.codes.ok :
-                        success=False
-                except :
-                    success=False
-                if success==True :
+            elif engine == 'jeedomtts' or engine == 'ttswebserver':
+                speed = float(speed)
+                proxyttsfile = globals.JEEDOM_COM.proxytts(engine, ttstext, {'language': language});
+                if proxyttsfile is not None:
                     with open(filenamemp3 , 'wb') as f:
-                        f.write(r.content)
+                        f.write(proxyttsfile)
+                    # if speed!=1:
+                    #     try:
+                    #         os.system('sox '+filenamemp3+' '+filenamemp3+ 'tmp.mp3 tempo ' +str(speed))
+                    #         os.remove(filenamemp3)
+                    #         os.rename(filenamemp3+'tmp.mp3', filenamemp3);
+                    #     except OSError:
+                    #         pass
                     speech = AudioSegment.from_mp3(filenamemp3)
                     if silence > 0 :
                         start_silence = AudioSegment.silent(duration=silence)
@@ -1517,7 +1531,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     speech.export(filenamemp3, format="mp3", bitrate=quality, tags={'albumartist': 'Jeedom', 'title': 'TTS', 'artist':'Jeedom'}, parameters=["-ac", "1", "-ar", samplerate,"-vol", "200"])
                     duration_seconds = speech.duration_seconds
                 else :
-                    logging.debug("CMD-TTS------Google Speech API : Cannot connect to API - failover to picotts")
+                    logging.error("CMD-TTS------Jeedom TTS Proxy API : Cannot connect or incorrect output - failover to picotts")
                     engine = 'picotts'
                     filenamemp3 = filenamemp3.replace(".mp3", "_failover.mp3")
                     file = file + '_failover'
@@ -1607,7 +1621,7 @@ def get_notif_data(mediafilename, calcduration):
         urltoplay=None
         duration_seconds=0
         filename=None
-    logging.debug("CMD-NOTIF------NOTIF debug : " + urltoplay + ", duration: " + str(duration_seconds))
+    logging.debug("CMD-NOTIF------NOTIF debug : " + ('Unknown' if urltoplay is None else urltoplay) + ", duration: " + str(duration_seconds))
     return urltoplay, duration_seconds, filename
 
 def logByTTS(text_id):
@@ -1663,8 +1677,8 @@ def gcast_prepareAppParam(params):
 
 def start(cycle=2):
     jeedom_socket.open()
-    logging.info("GLOBAL------Socket started...")
-    logging.info("GLOBAL------Waiting for messages...")
+    logging.info("GLOBAL------Socket started and waiting for messages from Jeedom...")
+    #logging.info("GLOBAL------Waiting for messages...")
     thread.start_new_thread( read_socket, (globals.cycle,))
     globals.JEEDOM_COM.send_change_immediate({'started' : 1,'source' : globals.daemonname});
     try:
@@ -1819,13 +1833,13 @@ def scanner(name):
                     scanForced = scanForced or True
 
         if scanForced==True or globals.LEARN_MODE==True:
-            logging.debug("SCANNER------ Looking for chromecasts on network...")
+            logging.debug("SCANNER------ Looking for googlecast devices on network... (" + str(len(globals.KNOWN_DEVICES) - len(globals.GCAST_DEVICES)) + " to be found out of " + str(len(globals.KNOWN_DEVICES)) + " registered devices)")
             rawcasts = pychromecast.get_chromecasts(tries=1, retry_wait=2, timeout=globals.SCAN_TIMEOUT)
             casts = []
             for cast in rawcasts :
                 casts.append( JeedomChromeCast(cast, scan_mode=True) )
         else :
-            logging.debug("SCANNER------ No need to scan network, all devices are present")
+            logging.debug("SCANNER------ No need to scan network, all googlecast devices already being monitored (" + str(len(globals.GCAST_DEVICES)) + " registered and found devices)")
             casts = list(globals.GCAST_DEVICES.values())
 
         uuid_newlyadded = []
@@ -2035,7 +2049,8 @@ parser.add_argument("--ttslang", help="Default TTS language", type=str)
 parser.add_argument("--ttsengine", help="Default TTS engine", type=str)
 parser.add_argument("--ttscache", help="Use cache", type=str)
 parser.add_argument("--ttsspeed", help="TTS speech speed", type=str)
-parser.add_argument("--ttsgapikey", help="TTS Google API Key", type=str)
+parser.add_argument("--ttsgapikey", help="TTS Google Speech API Key", type=str)
+parser.add_argument("--gcttsvoice", help="TTS Google Speech API default voice", type=str)
 parser.add_argument("--socketport", help="Socket Port", type=str)
 parser.add_argument("--sockethost", help="Socket Host", type=str)
 parser.add_argument("--daemonname", help="Daemon Name", type=str)
@@ -2074,6 +2089,8 @@ if args.ttsgapikey:
     globals.tts_gapi_key = args.ttsgapikey
     if globals.tts_gapi_key != 'none' :
         globals.tts_gapi_haskey = True
+if args.gcttsvoice:
+    globals.tts_gapi_voice = args.gcttsvoice
 if args.cycle:
     globals.cycle = float(args.cycle)
 if args.cyclemain:
@@ -2115,7 +2132,8 @@ logging.info('GLOBAL------TTS default language : '+str(globals.tts_language))
 logging.info('GLOBAL------TTS default engine : '+str(globals.tts_engine))
 logging.info('GLOBAL------TTS default speech speed : '+str(globals.tts_speed))
 if globals.tts_gapi_haskey :
-    logging.info('GLOBAL------TTS Google API Key (optional) : OK')
+    logging.info('GLOBAL------TTS Google Speech API Key (optional) : OK')
+    logging.info('GLOBAL------TTS Google Speech API Voice (optional) : '+str(globals.tts_gapi_voice))
 else :
     logging.info('GLOBAL------TTS Google API Key (optional) : NOK')
 logging.info('GLOBAL------Cache status : '+str(globals.tts_cacheenabled))

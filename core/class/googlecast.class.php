@@ -31,11 +31,15 @@ class googlecast extends eqLogic {
 
 	const GCAST_MODELS = array(
 		'chromecast audio' => 'model_chromecast_audio.png',
+        'chromecast ultra'  => 'model_chromecast_video_ultra.png',
 		'chromecast' => 'model_chromecast_video.png',
 		'google home mini' => 'model_googlehome_mini.png',
+        'google home hub' => 'model_googlehome_hub.png',
 		'google home' => 'model_googlehome.png',
 		'google cast group' => 'model_castgroup.png',
 		'tv' => 'model_tv.png',
+        'shield' => 'model_androidtv.png',
+        'android' => 'model_androidtv.png',
 	);
 
 	/*     * ***********************Methode static*************************** */
@@ -90,13 +94,20 @@ class googlecast extends eqLogic {
 		}
 		if (!$found) {	// try to guess based on manufacturer
 			$castType = $this->getConfiguration('cast_type');
-			if ($this->getConfiguration('manufacturer')=='Google Inc.') {
+			$manufName = strtolower( $this->getConfiguration('manufacturer','UNKOWN') );
+			if (strpos($manufName, 'google') !== false) {
 				if ($castType=='audio')
 					$imgLogo = $imgRoot . 'model_googlehome.png';
 				if ($castType=='cast')
 					$imgLogo = $imgRoot . 'model_chromecast_video.png';
                 if ($castType=='group')
     				$imgLogo = $imgRoot . 'model_castgroup.png';
+			}
+			if (strpos($manufName, 'xiaomi') !== false) {
+				$imgLogo = $imgRoot . 'model_androidtv.png';
+			}
+			if (strpos($manufName, 'nvidia') !== false) {
+				$imgLogo = $imgRoot . 'model_androidtv.png';
 			}
 		}
 		$this->setConfiguration('logoDevice', $imgLogo);
@@ -107,7 +118,6 @@ class googlecast extends eqLogic {
         else {
             $this->setConfiguration('has_googleassistant', '0');
         }
-
 
 	}
 
@@ -186,20 +196,28 @@ class googlecast extends eqLogic {
 		$cmd->setDisplay('generic_type', 'ENERGY_STATE');
 		$cmd->save();
 
+		// $cmd = $this->getCmd(null, 'reboot');
+		// if (!is_object($cmd)) {
+		// 	$cmd = new googlecastCmd();
+		// 	$cmd->setLogicalId('reboot');
+		// 	$cmd->setName(__('Restart', __FILE__));
+		// 	$cmd->setIsVisible(1);
+		// 	$cmd->setDisplay('icon', '<i class="fa fa-power-off"></i>');
+		// 	$cmd->setConfiguration('googlecast_cmd', true);
+		// }
+		// $cmd->setTemplate('dashboard', 'googlecast_reboot');
+		// $cmd->setType('action');
+		// $cmd->setSubType('other');
+		// $cmd->setEqLogic_id($this->getId());
+		// $cmd->save();
+
+		// hide reboot button if exists as it's not available anymore in latest googlecast versions
 		$cmd = $this->getCmd(null, 'reboot');
-		if (!is_object($cmd)) {
-			$cmd = new googlecastCmd();
-			$cmd->setLogicalId('reboot');
-			$cmd->setName(__('Restart', __FILE__));
-			$cmd->setIsVisible(1);
-			$cmd->setDisplay('icon', '<i class="fa fa-power-off"></i>');
-			$cmd->setConfiguration('googlecast_cmd', true);
+		if (is_object($cmd)) {
+		    // $cmd->remove();
+		    $cmd->setIsVisible(0);
+		    $cmd->save();
 		}
-		$cmd->setTemplate('dashboard', 'googlecast_reboot');
-		$cmd->setType('action');
-		$cmd->setSubType('other');
-		$cmd->setEqLogic_id($this->getId());
-		$cmd->save();
 
 		$cmd = $this->getCmd(null, 'is_busy');
 		if (!is_object($cmd)) {
@@ -639,7 +657,7 @@ class googlecast extends eqLogic {
 		}
 
         if (intval($this->getConfiguration('has_googleassistant', '0')) == 1) {
-            $order = googlecast_utils::getCmdDefinition($this, 'googlehome', 210);
+            //$order = googlecast_utils::getCmdDefinition($this, 'googlehome', 210);
         }
 
 		$this->checkAndUpdateCmd('nowplaying', $this->getLogicalId());
@@ -742,7 +760,7 @@ class googlecast extends eqLogic {
 			if (@posix_getsid(trim(file_get_contents($pid_file)))) {
 				$return['state'] = 'ok';
 			} else {
-				shell_exec('sudo rm -rf ' . $pid_file . ' 2>&1 > /dev/null;rm -rf ' . $pid_file . ' 2>&1 > /dev/null;');
+				shell_exec(system::getCmdSudo() . 'rm -rf ' . $pid_file . ' 2>&1 > /dev/null;rm -rf ' . $pid_file . ' 2>&1 > /dev/null;');
 			}
 		}
 		$return['launchable'] = 'ok';
@@ -758,7 +776,7 @@ class googlecast extends eqLogic {
 		$return = array();
 		$return['log'] = 'googlecast_update';
 		$return['progress_file'] = '/tmp/dependancy_googlecast_in_progress';
-		$cmd = 'sudo /bin/bash ' . dirname(__FILE__) . '/../../resources/install_check.sh';
+		$cmd = system::getCmdSudo() . '/bin/bash ' . dirname(__FILE__) . '/../../resources/install_check.sh';
 		if (exec($cmd) == "ok") {
 			$return['state'] = 'ok';
 		} else {
@@ -803,6 +821,7 @@ class googlecast extends eqLogic {
             $cmd .= ' --ttscache 1';
         }
 		$cmd .= ' --ttsgapikey ' . config::byKey('tts_gapikey', 'googlecast', 'none');
+		$cmd .= ' --gcttsvoice ' . config::byKey('gctts_voice', 'googlecast', 'fr-FR-Standard-A');
 		$cmd .= ' --daemonname local';
 		$cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', 'googlecast', '1');
         $cmd .= ' --defaultstatus ' . "'". config::byKey('defaultsatus', 'googlecast', "&nbsp;") ."'";
@@ -1138,8 +1157,10 @@ class googlecast extends eqLogic {
                 //$httpret = '{"alarm":[{"date_pattern":{"day":13,"month":6,"year":2018},"fire_time":1528909200000.0,"id":"alarm/5b205564-0000-27be-9e26-089e082ee87c","status":1,"time_pattern":{"hour":13,"minute":0,"second":0}}],"timer":[]}';
                 //$arrayret = json_decode($httpret, true);
 
-                log::add('googlecast','debug','Request content : ' . print_r($arrayret,true));
-                if ($has_error===true or count($arrayret)==0) {
+                if (isset($arrayret)) {
+                    log::add('googlecast','debug','Request content : ' . print_r($arrayret,true));
+                }
+                if ($has_error===true or ($arrayret and count($arrayret)==0)) {
                     if ( $showError==true) {
                         log::add('googlecast','error',__('Configuration non accessible', __FILE__));
                     }
