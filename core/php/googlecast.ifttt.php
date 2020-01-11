@@ -29,6 +29,7 @@ try {
     	die();
     }
 
+    $uuid = 'any';
     if ( init('uuid') != '' ) {
         $uuid=init('uuid');
     }

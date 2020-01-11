@@ -719,7 +719,11 @@ Documentation Jeedom et IFTTT : https://jeedom.github.io/plugin-gcast
 #### Réponse type *ask*
 Compatibilité avec IFTTT et réponse à une requête de type *ask* (scénarios) en utilisant l'url suivante dans la configuration (GET ou POST) :
 ```
+# on specific device UUID
 http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=#GCAST_UUID#&action=askreply&query=<<{{TextField}}>>
+
+# on all devices
+http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=any&action=askreply&query=<<{{TextField}}>>
 ```
 
 > **Notes**   
