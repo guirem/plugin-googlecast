@@ -40,6 +40,13 @@ function googlecast_update() {
 
     createHtaccess();
 
+    if ( config::byKey('tts_engine', 'googlecast') == 'gttsapidev' ) {  // remove dev version of gtts
+		config::save('tts_engine','gttsapi', 'googlecast');
+	}
+    if ( config::byKey('gctts_voice', 'googlecast') == '' ) {
+		config::save('gctts_voice','fr-FR-Standard-A', 'googlecast');
+	}
+
 	foreach (googlecast::byType('googlecast') as $googlecast) {
 		try {
 			$googlecast->save();
@@ -66,8 +73,14 @@ function googlecast_install() {
     if ( config::byKey('tts_language', 'googlecast') == '' ) {
 		config::save('tts_language','fr-FR', 'googlecast');
 	}
+    if ( config::byKey('gctts_voice', 'googlecast') == '' ) {
+		config::save('gctts_voice','fr-FR-Standard-A', 'googlecast');
+	}
     if ( config::byKey('tts_engine', 'googlecast') == '' ) {
-		config::save('tts_engine','gtts', 'googlecast');
+		config::save('tts_engine','jeedomtts', 'googlecast');
+	}
+    if ( config::byKey('tts_engine', 'googlecast') == 'gttsapidev' ) {  // remove dev version of gtts
+		config::save('tts_engine','gttsapi', 'googlecast');
 	}
 	if ( config::byKey('tts_speed', 'googlecast') == '' ) {
 		config::save('tts_speed','1.2', 'googlecast');

@@ -78,7 +78,12 @@
 				}
 			}
 			else {
-				root.find('.line1').empty().append(playing['status_text']);
+				if ( (playing['status_text']==='Ready to cast' || playing['status_text']==='Pr\xeat \xe0 caster') && playing['display_name'] && playing['display_name']!=='') {
+					root.find('.line1').empty().append(playing['display_name']);
+				}
+				else {
+					root.find('.line1').empty().append(playing['status_text']);
+				}
 				root.find('.line2').empty();
 			}
 		}

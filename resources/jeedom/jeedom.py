@@ -24,6 +24,7 @@ import collections
 import os
 import socket
 import queue
+import json
 import socketserver as SocketServer
 from socketserver  import (TCPServer, StreamRequestHandler)
 
@@ -126,6 +127,28 @@ class jeedom_com():
             else:
                 d1[k] = v2
 
+    def proxytts(self, ttsengine, ttsmessage, options):
+        filecontent = None
+        proxyttsdata = {'ttsproxy': ttsengine, 'ttsmsg': ttsmessage, 'options': options}
+        try:
+            response = requests.post(self.url + '?apikey=' + self.apikey, json=proxyttsdata, timeout=1, verify=False)
+            filecontent = response.content
+
+            if response.status_code != requests.codes.ok:
+                filecontent = None
+                logging.error('SENDER------PROXYTTS Callback error: %s'% (response.status_code,))
+            else :
+                logging.debug('SENDER------PROXYTTS Using Proxy tts request to jeedom server for ' + ttsengine + ' engine.')
+                if len(response.content) < 254 and os.path.exists(response.content):
+                    logging.debug('SENDER------PROXYTTS Data returned is a file path. Downloading content now...')
+                    fc = open(response.content,"rb")
+                    filecontent = fc.read()
+                    fc.close()
+        except Exception as e:
+            logging.error('SENDER------PROXYTTS Callback result as a unknown error: %s. '% str(e))
+            filecontent = None
+        return filecontent
+
     def test(self):
         try:
             response = requests.get(self.url + '?apikey=' + self.apikey, verify=False)
@@ -165,15 +188,19 @@ class jeedom_utils():
         if level=='debug' :
             logging.getLogger("pychromecast").setLevel(logging.ERROR)
             logging.getLogger("plexapi").setLevel(logging.DEBUG)
-            logging.getLogger("urllib3").setLevel(logging.ERROR)
             logging.getLogger("pydub").setLevel(logging.ERROR)
             logging.getLogger("gtts").setLevel(logging.ERROR)
+            logging.getLogger("requests").setLevel(logging.ERROR)
+            logging.getLogger("urllib3").setLevel(logging.ERROR)
+            logging.getLogger("requests.packages.urllib3").setLevel(logging.ERROR)
         else :
             logging.getLogger("pychromecast").setLevel(logging.CRITICAL)
             logging.getLogger("plexapi").setLevel(logging.ERROR)
-            logging.getLogger("urllib3").setLevel(logging.CRITICAL)
             logging.getLogger("pydub").setLevel(logging.CRITICAL)
             logging.getLogger("gtts").setLevel(logging.CRITICAL)
+            logging.getLogger("requests").setLevel(logging.CRITICAL)
+            logging.getLogger("urllib3").setLevel(logging.CRITICAL)
+            logging.getLogger("requests.packages.urllib3").setLevel(logging.CRITICAL)
 
         if level=='none' :
             logging.getLogger().disabled = True
@@ -201,12 +228,19 @@ class jeedom_socket_handler(StreamRequestHandler):
         logging.debug("SOCKETHANDLER------Client connected to [%s:%d]" % self.client_address)
         lg = self.rfile.readline().strip().decode("ascii")
         JEEDOM_SOCKET_MESSAGE.put(lg)
-        logging.debug("SOCKETHANDLER------Message read from socket: " + lg)
+        if logging.getLogger().isEnabledFor(logging.DEBUG) :
+            try:
+                lgdebug = json.loads(lg)
+                if lgdebug and lgdebug['apikey']:
+                    lgdebug['apikey'] = 'XXXXXXXXXXXXX'
+                logging.debug("SOCKETHANDLER------Message read from socket: " + json.dumps(lgdebug))
+            except Exception as e:
+                logging.debug("SOCKETHANDLER------Message read from socket: " + lg)
         self.netAdapterClientConnected = False
         logging.debug("SOCKETHANDLER------Client disconnected from [%s:%d]" % self.client_address)
 
-class jeedom_socket():
 
+class jeedom_socket():
     def __init__(self,address='localhost', port=55000):
         self.address = address
         self.port = port

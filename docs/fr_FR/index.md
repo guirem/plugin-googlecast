@@ -3,31 +3,34 @@ Plugin GoogleCast (googlecast)
 
 ![Logo plugin](../images/logoplugin.png "Logo plugin")
 
-Plugin pour commander les équipements compatibles Google Cast.
+Plugin pour commander les équipements compatibles Google Cast et Google Assistant.
 
 
 **Fonctionnalités :**
 
 - Contrôle du son (mute, +/-)
 - Contrôle des médias (play/pause/stop...)
-- Arrêt appli en cours, reboot
+- Arrêt appli en cours
 - Diffuser une page web sur un écran
 - Lecture de fichiers audio et vidéo via url
 - Retour d'état sur les principales fonctionnalités
 - Affichage de la lecture en cours
 - Text To Speech (TTS)
-- Récupération/modification de configuration d'équipements
+- Pour les équipements 'Google Assistant' (ex: Google Home)
+    - DoNotDisturb (on/off)
+    - recupération/configuration d'autres paramètres
 
 
 ![Logo plugin](../images/chromecast.png "Chromecast")
 
 **Modèles compatibles Google Cast**
 - Chromecast Audio/Video
+- Google Home (ou compatible Google Assistant)
 - Android TV, Nexus Player, TV (Vizio, Sharp, Sony, Toshiba, Philips)
-- Google Home
 - Soundbars and speakers (Vizio, Sony, LG, Philips
 B&O Play, Grundig, Polk Audio, Bang & Olufsen, Onkyo, Pioneer...)
 - Autres modèles labelisés *Google Cast*
+- Certaines Box internet (ex: Bouygues)
 
 ![GoogleCast Logo](../images/googlecast_logo.png "GoogleCast Logo")
 ![Android TV](../images/tv.png "Android TV")
@@ -116,7 +119,9 @@ Les paramètres de configuration n'ont généralement pas besoin d'être modifi�
 - **TTS**
   - Utiliser l'adresse Jeedom externe : par défaut utilise l'adresse web Jeedom interne. Ne modifier que pour des configurations spéciales.
   - Langue par défaut : langue du moteur TTS utilisé par défaut
-  - Moteur par défaut : le moteur TTS utilisé (PicoTTS, Google Translate, Google Speach API, Google Speach API dev)
+  - Moteur par défaut : le moteur TTS utilisé (TTS Jeedom, TTS Webserver, PicoTTS, Google Translate, Google Cloud Text-to-Speech)
+  - Key Google Cloud Text-to-Speech (uniquement si le moteur 'Google Cloud Text-to-Speech' est selectionné) : Clé API nécessaire à l'utilisation de ce moteur.
+  - Voix par défaut pour Google Cloud Text-to-Speech (uniquement si le moteur 'Google Cloud Text-to-Speech' est selectionné) : voix par défaut qui sera utilisé par ce moteur TTS.
   - Vitesse de parole : rapidité de prononciation du texte
   - Ne pas utiliser le cache : désactive l'utilisation du cache Jeedom (déconseillé)
   - Nettoyer cache : nettoie le répertoire temporaire de géneration des fichiers son
@@ -125,10 +130,20 @@ Les paramètres de configuration n'ont généralement pas besoin d'être modifi�
   - Désactiver notifs pour nouveaux Google Cast : ce sont des notifications lors de la découverte de nouveaux Google Cast non configurés
 
 > **Notes pour TTS (Text To Speech)**  
+> - Jeedom TTS est le moteur TTS utilisé par Jeedom. Cela rend compatible l'utilisation du plugin officiel 'Song'. Il ne nécessite pas de connexion internet.
+> - TTSWebserveur nécessite l'installation et configuration d'un autre plugin dédié ('TTS Web Server' - payant).
 > - PicoTTS ne nécessite pas de connexion internet, l'API Google Translate nécessite un accès web et le rendu est meilleur.
-> - Pour Google Speech API, une clé est nécessaire (voir FAQ). Le rendu est meilleur que Google Translate API.
 > - Un mécanisme de cache permet de ne générer le rendu sonore que s'il n'existe pas déjà en mémoire (RAM). La cache est donc supprimé au redémarrage du serveur.
 > - En cas d'échec sur un des moteurs autre que picotts (ex: problème de connexion internet), la commande sera lancée via picotts.
+
+> **Notes sur le moteur 'Google Cloud Text-to-Speech'**  
+> - C'est le moteur TTS de Google (https://cloud.google.com/text-to-speech). Il est entre autres utilisé par la voix de Google Assistant. La qualité est bien supréieure aux autres moteurs TTS.
+> - Une clé API est nécessaire qu'il faut avoir créé au préalable (voir [créer un clé API](gcloudttskey.md)).
+> - Il est possible de tester les voix sur la page principale https://cloud.google.com/text-to-speech
+> - L'utilisation est gratuite jusqu'à un certain quota d'utilisation qui est largement suffisant pour une utilisation domotique d'un particulier.
+    + Voix standards (hors WaveNet): Gratuit de 0 à 4 millions de caractères par mois (puis 4 USD/1 million de caractères supplémentaires)
+    + Voix WaveNet: gratuit de 0 à 1 million de caractères par mois (puis 16 USD/1 million de caractères supplémentaires)
+
 
 ![Configuration Plugin](../images/configuration_plugin.png "Configuration Plugin")
 
@@ -248,7 +263,7 @@ Elles doivent être séparées par *|*
     * warmupnotif : prepare device before receiving 'tts' or 'notif' commands (useful for group broadcast)
     * resume : force a resume of previous command (compatible with storecmd, notif and tts)
     * refresh
-    * reboot : reboot the Google Cast
+    * reboot : reboot the googlecast device (doesn't work since end of 2019)
     * volume_up
     * volume_down
     * volume_set : use value (0-100)
@@ -342,7 +357,7 @@ ex 3 : app=web|value='http://mywebsite/index.php?apikey%3Dmyapikey' (implicit lo
 
 #### Paramètres possibles pour *play_media* en mode *plex* :
 ```
-- value: str - search query. It will play the first element returned.
+- value: str - search query. It could be individual title, playlist or other type of content handled by Plex (it will play the first element returned).
 - type: str - type of content. Example: 'video/audio' (optional, default=video).
 - server: str - URL if token is provided, friendly name of Plex server if user & pass provided.
 - user: str - account login possibly as an email account (optional if token provided).
@@ -362,7 +377,7 @@ ex using token with implicit play_media command call :
 
 > **Notes**   
 > - When using user & pass, internet access is required
-> - Token value is displayed in logs (debug) when user & pass has been used the first time
+> - Token value is displayed in logs (debug) when user & pass has been used the first time. Token is then persistent.
 > - you can simulate result of search query (value) in main search field of Plex web UI
 
 
@@ -387,7 +402,7 @@ ex using valid token :
 ```
 - value: str - text
 - lang: str - fr-FR/en-US or any compatible language (optional, default is configuration)
-- engine: str - picotts/gtts/gttsapi/gttsapidev. (optional, default is configuration)
+- engine: str - jeedomtts/ttsws/picotts/gtts/gttsapi. (optional, default is configuration)
 - quit: 0/1 - quit app after tts action.
 - forcetts: 1 - do not use cache (useful for testing).
 - speed: float (default=1.2) - speed of speech (eg: 0.5, 2).
@@ -400,12 +415,14 @@ ex using valid token :
 - forceapplaunch: 1 - will try to force launch of previous application even if not launched by plugin.
 - highquality: 1 - increase tts sound file bitrate and sample rate. Use this setting for test as it should not improve much audio quality.
 - buffered: 1 - stream to google cast as buffered stream instead of live. Use this setting for test.
-- voice (gttsapi/gttsapidev only): male/female - chose a male or female voice
-- usessml (gttsapi/gttsapidev only): 1 - use ssml format insteaf of text in 'value' field. See https://cloud.google.com/text-to-speech/docs/ssml ('=' symbols must be replace by '^')
+- voice (gttsapi only): overwrite default voice (eg: 'fr-FR-Standard-A')
+- usessml (gttsapi only): 1 - use ssml format insteaf of text in 'value' field. See https://cloud.google.com/text-to-speech/docs/ssml ('=' symbols must be replace by '^')
+- pitch (gttsapi only): 0 - speaking pitch, in the range [-20.0, 20.0]. 20 means increase 20 semitones from the original pitch. -20 means decrease 20 semitones from the original pitch.
+- volgain (gttsapi only): 0 - volume gain (in dB) of the normal native volume supported by the specific voice, in the range [-96.0, 16.0].
 
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
 ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
-ex voice/ssml : cmd=tts|engine=gttsapi|voice=male|value=<speak>Etape 1<break time^"3s"/>Etape 2</speak>
+ex voice/ssml : cmd=tts|engine=gttsapi|voice=fr-CA-Standard-A|value=<speak>Etape 1<break time^"3s"/>Etape 2</speak>
 ```
 
 > **Notes**   
@@ -431,6 +448,7 @@ ex : cmd=notif|value=tornado_siren.mp3|vol=100|duration=11
 > - By default, the plugin will try to resume previous app launched (will only work when previous application has been launched by the plugin).
 > - You can try to force resume to any application using 'forceapplaunch=1' but there is a good chance of failure.
 > - Existing sounds in plugin : house_firealarm.mp3, railroad_crossing_bell.mp3, submarine_diving.mp3, tornado_siren.mp3, bigben1.mp3, bigben2.mp3
+> - files added to localmedia folder must have approriate rights
 
 #### Séquence de commandes
 Il est possible de lancer plusieurs commandes à la suite en séparant par *$$*
@@ -445,6 +463,9 @@ ex Commande TTS sur plusieurs google cast en parallèle en s'assurant que le fic
 > adding 'uuid' parameter will redirect to this uuid device in new thread. This can be used to send a sequence to several device in one command.
 
 #### Configuration avancée des équipements
+
+> **Important**   
+> Certaines informations tel que les informations sur les alarmes ne sont plus disponibles via ces commandes depuis septembre 2019 suite à une mise à jour du protocol Google Cast.
 
 ##### Récupérer une configuration
 Certaines configurations peuvent être récupérées dans une commande de type info (*cmd=getconfig*).
@@ -575,6 +596,8 @@ Exemple : commande appelée 'radio_rtl'
 
 > **Note**   
 > Il est possible de rajouter des webradios dans un fichier appelé *custom.json* (à créer) dans le répertoire du plugin *webradios*. Le format doit être similaire au fichier *webradios/radiolist.json*. Ce fichier ne sera pas modifié lors des mises à jour du plugin.
+A la création du fichier, s'assurer que le fichier à les bons droits avec la commande `sudo chown www-data:www-data custom.json && sudo chmod 775 custom.json`
+
 
 ### Utilisation dans un scénario
 
@@ -747,10 +770,19 @@ Si le log contient le message *Error: Cound not found pip3 program to install py
 - `compgen -ac | grep -E '^pip-?3' | sort -r | head -1` doit retourner une ligne (ex: pip3)
 - Si aucun retour sur la ligne précédente, tenter une réinstallation de pip3   
 ```
-sudo apt-get remove python3-pip
-sudo apt-get -y install python3-pip
+sudo python3 -m pip uninstall -y pip
+sudo apt-get -y --reinstall install python3-pip
 ```
 - Relancer l'installation des dépendances
+
+#### Les dépendances sont 'ok' mais le démon ne se lance pas
+
+Un des modules est peut etre corrompu.
+Pour désinstaller les modules utiliser la commande
+```
+sudo pip3 uninstall -y requests zeroconf click bs4 six tqdm websocket-client
+```
+Puis relancer l'installation des dépendances.
 
 #### Le Text To Speech (TTS) ne fonctionne pas
 
@@ -764,6 +796,12 @@ Le type d'équipements utilisés (wifi, serveur Jeedom) ou la longueur du messag
 - Ajouter le paramêtre 'sleep' pour ajouter un délai supplémentaire à la fin du message (ex: |sleep=0.8 pour 0.8 seconde).
 - Tester avec le paramètre 'buffered=1' pour voir si cela règle le problème.
 - Utiliser le paramêtre 'forcetts' durant les tests pour être certain que le cache n'est pas utilisé.
+
+#### Les fichiers nouvellement placés dans le repertoire 'localmedia' ne fonctionnent pas
+
+Les nouveaux fichiers doivent avoir les droits de lecture
+A partir du répertoire localmedia, corriger les droits avec la commande :     
+`sudo chown www-data:www-data * && sudo chmod 775 *`
 
 #### Diffuser Jeedom sans authentification sur un Google Cast
 
@@ -784,9 +822,13 @@ Cependant, il est possible d'optimiser la longueur de la commande :
 
 Exemple : *app=web|cmd=load_url|value='https://xxxxx.xxxxxxx.com:443/plugins/autologin/core/php/go.php?apikey%3Dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&id%3D999',True* réduit en *app=web|v=hs:/xxxxx.xxxxxxx.com/plugins/autologin/core/php/go.php?apikey%3Dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&id%3D999,T*
 
-#### Récupérer une clé API pour Google Speech API
+#### Récupérer une clé API pour utiliser TTS 'Google Cloud Text-to-Speech'
 
-Les étapes pour obtenir cette clé se trouvent sur ce lien : http://domotique-home.fr/comment-obtenir-google-speech-api-et-integrer-dans-sarah/
+[Créer un clé API](gcloudttskey.md).
+
+#### La clé API pour utiliser TTS 'Google Cloud Text-to-Speech' ne fonctionne plus
+
+Suite à la mise à jour de janvier 2020, il est probable que l'API 'Google Cloud Text-to-Speech' doivent être activée sur l'interface via Google Cloud. Avant cette mise à jour, une autre API était utilisée.
 
 Changelog
 =============================

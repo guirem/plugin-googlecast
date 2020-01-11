@@ -4,6 +4,28 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
+## Version du 08 janvier 2020 (beta) - 2.13
+
+- suppression du moteur 'TTS Google Speech API', remplacé par 'Google Cloud Text-To-Speech' (https://cloud.google.com/text-to-speech/)
+(voir FAQ documentation si la clé API ne fonctionne plus)
+- mise à jour de la documentation
+
+## Version du 07 janvier 2020 (beta) - 2.12
+
+- optimisations et corrections de bugs
+- fix du bug de dépendance zeroconf
+- ajout logo pour modèles androidtv
+- suppression du bouton 'reboot' (ne fonctionne plus)
+- mise à jour de la documentation et ajout de logs pour debug
+
+## Version du 30 décembre 2019 (beta) - 2.11
+
+- TTS : ajout des moteurs TTS de Jeedom et TTSWebserver
+- Compatibilité Jeedom 4 et php7
+- Ajout icon pour Google Hub
+- Fix installation sur debian buster
+- Mise à jour de libraries du plugin
+
 ## Version du 27 aout 2019 (beta/stable) - 2.10
 
 - Début de compatibilité avec Jeedom 4 (php 7.3)
