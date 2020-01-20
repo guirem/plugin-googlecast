@@ -866,6 +866,21 @@ class googlecast extends eqLogic {
 		self::socket_connection($value);
 	}
 
+    public static function testAddress($useExternal=null) {
+        if ($useExternal===null) {
+            $useExternal = config::byKey('tts_externalweb', 'googlecast');
+        }
+
+        $testAddress = '';
+        if ($useExternal===1 || $useExternal===true || $useExternal==='true') {
+            $testAddress .= network::getNetworkAccess('external');
+        }
+        else {
+            $testAddress .= network::getNetworkAccess('internal');
+        }
+        return $testAddress . "/plugins/googlecast/localmedia/bigben1.mp3";
+	}
+
 	public static function deamon_stop() {
 		$pid_file = '/tmp/googlecast.pid';
 		if (file_exists($pid_file)) {
