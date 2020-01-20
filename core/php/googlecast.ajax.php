@@ -38,6 +38,10 @@ try {
         ajax::success(googlecast::refreshStatusAll());
     }
 
+    if (init('action') == 'testAddress') {
+        ajax::success( googlecast::testAddress( init('value') ) );
+    }
+
 
 	if (init('action') == 'sendcmd') {
 		$ret = googlecast::sendDisplayAction(init('uuid'),init('cmd'), init('options'));

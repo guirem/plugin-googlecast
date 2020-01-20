@@ -51,7 +51,8 @@ if (!isConnect('admin')) {
 	<div class="form-group">
 	    <label class="col-lg-4 control-label">{{Utiliser l'adresse Jeedom externe}}</label>
 	    <div class="col-lg-2">
-	        <input  type="checkbox" class="configKey" data-l1key="tts_externalweb"/>
+	        <input  type="checkbox" class="configKey addressForm" data-l1key="tts_externalweb"/>
+            <span class="addressTestURL"></span>
 	    </div>
     </div>
     <div class="form-group languageform">
@@ -398,6 +399,27 @@ $('.cleanTTScache').on('click', function () {
                    return;
                }
                $('#div_alert').showAlert({message: '{{Réussie}}', level: 'success'});
+           }
+       });
+});
+
+$('.addressForm').on('change', function () {
+
+    $.ajax({
+           type: "POST",
+           url: "plugins/googlecast/core/php/googlecast.ajax.php",
+           data: {
+               action: "testAddress",
+               value: $('.addressForm').prop('checked')
+           },
+           dataType: 'json',
+           error: function (request, status, error) {
+               $('.addressTestURL').text("");
+               handleAjaxError(request, status, error);
+           },
+           success: function (data) { // si l'appel a bien fonctionné
+               var spanContent = '&nbsp; &nbsp; &nbsp;<a href="'+data.result+'" target="_blank">(test)</a>';
+               $('.addressTestURL').html(spanContent);
            }
        });
 });
