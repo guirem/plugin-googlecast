@@ -5,14 +5,11 @@ import click
 import os
 import logging
 
-__all__ = ['gcloudTTS', 'WrongAPIKeyError']
+__all__ = ['gcloudTTS', 'gcloudTTSError']
 
 # Logger
 log = logging.getLogger(__name__)
 #log.addHandler(logging.NullHandler())
-
-class WrongAPIKeyError(Exception):
-    pass
 
 class gcloudTTS:
     def __init__(self, apiKey):
@@ -28,16 +25,8 @@ class gcloudTTS:
 
         if r.status_code == requests.codes.ok:
             return r.json()
-        elif r.status_code == 404:
-            raise ValueError("Google Speech API endpoint error (404)")
-        elif (
-            r.json() and r.json()["error"] is not "null"
-            and r.json()["error"]["message"].find("API key not valid") != -1
-        ):
-            raise WrongAPIKeyError()
         else:
-            log.debug(r.text)
-            raise ValueError("Error while making request to Google Cloud Speech REST !")
+            raise gcloudTTSError(payload=payload, response=r)
 
     def _decodeB64Data(self, data):
         return base64.b64decode(data)
@@ -106,3 +95,51 @@ cli.add_command(tts)
 
 if __name__ == "__main__":
     cli()
+
+class gcloudTTSError(Exception):
+    """Exception that uses context to present a meaningful error message"""
+
+    def __init__(self, msg=None, **kwargs):
+        self.payload = kwargs.pop('payload', None)
+        self.rsp = kwargs.pop('response', None)
+        if msg:
+            self.msg = msg
+        elif self.payload is not None and self.rsp is not None:
+            self.msg = self.infer_msg(self.payload, self.rsp)
+        else:
+            self.msg = None
+        super(gcloudTTSError, self).__init__(self.msg)
+
+    def infer_msg(self, payload, rsp):
+        """Attempt to guess what went wrong by using known
+        information (e.g. http response) and observed behaviour
+
+        """
+        status = rsp.status_code
+        reason = rsp.reason
+
+        cause = "Unknown"
+        if status == 404:
+            cause = "Google Speech API endpoint error (404)"
+        elif status >= 500:
+            cause = "Uptream API error. Try again later."
+        else:
+            respdata = None
+            if (rsp.json() and rsp.json()["error"] is not "null"
+                and rsp.json()["error"]["message"]):
+                respdata = rsp.json()["error"]["message"]
+
+            if respdata is not None:
+                if respdata.find("API key not valid") != -1:
+                    cause = "API key not valid"
+                elif respdata.find("Cloud Text-to-Speech API has not been used in project") != -1:
+                    cause = "Cloud Text-to-Speech API is not enabled for this key. Check and enable this API for the project in Google Console."
+                else:
+                    cause = respdata
+
+            log.debug("gcloudTTS DEBUG - Detailed reply ----")
+            log.debug(rsp.text)
+            log.debug("gcloudTTS DEBUG ---------------------")
+
+        return "%i (%s) from Google Cloud TTS API. Probable cause: %s" % (
+            status, reason, cause)

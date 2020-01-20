@@ -35,7 +35,7 @@ import resource
 from pydub import AudioSegment
 import hashlib
 from gtts import gTTS
-from gcloudtts import gcloudTTS, WrongAPIKeyError
+from gcloudtts import gcloudTTS, gcloudTTSError
 import urllib.parse
 
 import globals
@@ -1488,12 +1488,12 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                 try:
                     gctts = gcloudTTS(globals.tts_gapi_key)
                     rawttsdata = gctts.tts(voice, voice[:5], ttstext, ttsformat, speed, pitch, volumegaindb, 'LINEAR16')
-                except WrongAPIKeyError :
+                except gcloudTTSError as e:
                     success=False
-                    logging.error("CMD-TTS------Google Cloud TextToSpeech API Key is wrong. Please check !")
+                    logging.error("CMD-TTS------Google Cloud TextToSpeech API Error :  %s" % str(e))
                 except :
                     success=False
-                    logging.debug("CMD-TTS------Google Cloud TextToSpeech API Unknown error")
+                    logging.debug("CMD-TTS------Google Cloud TextToSpeech API : Unknown error")
                     logging.debug(traceback.format_exc())
                 if success==True :
                     speech = AudioSegment(data=rawttsdata)
