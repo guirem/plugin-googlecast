@@ -1483,7 +1483,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
                     if 'usessml' in ttsparams :
                         ttsformat = 'ssml'
                         ttstext = ttstext.replace('^', '=')
-                        ttstext = urllib.parse.quote_plus(ttstext)
+                        # ttstext = urllib.parse.quote_plus(ttstext)
                 success=True
                 try:
                     gctts = gcloudTTS(globals.tts_gapi_key)
