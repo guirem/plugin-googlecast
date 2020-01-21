@@ -160,7 +160,7 @@ if (isset($result['ttsproxy'])) {
         $ttsdata = file_get_contents(network::getNetworkAccess('internal') . '/core/api/tts.php?apikey=' . config::byKey('api', 'core') . $additionnalOptions . '&path=0&text=' . urlencode($ttsmsg));
 	}
 
-    if ($result['ttsproxy'] == 'ttsws') {
+    if ($result['ttsproxy'] == 'ttswebserver') {
 		log::add('googlecast','debug','[PROXY TTS] with webserver TTS engine (plugin)');
 
 		if (config::byKey('active', 'ttsWebServer', 0) == 1) {
@@ -172,7 +172,7 @@ if (isset($result['ttsproxy'])) {
 				list($ttsws_opt_id, $_ttsws_opt_voice) = explode('|', $ttsws_config);
 
 				if ($ttsws_opt_id > 0) {
-					$ttsws_options = array('eqLogicId' => $ttsws_opt_id, 'message' => $ttsmsg, 'returnType' => 'file', 'returnFormat' => 'mp3');
+					$ttsws_options = array('eqLogicId' => $ttsws_opt_id, 'message' => $ttsmsg, 'returnType' => 'path', 'returnFormat' => 'mp3');
 					if ($_ttsws_opt_voice != '') {
 						$ttsws_options['voice'] = $_ttsws_opt_voice;
 					}
