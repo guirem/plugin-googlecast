@@ -98,7 +98,7 @@ Table des matières
       - [Interactions](#interactions)
       - [Réponse type ask](#r-ponse-type--ask-)
       - [Custom CMD](#custom-cmd)
-- [Limitations et bug connus](#limitations-et-bug-connus)
+- [Limitations et bug connus](#limitations-et-bugs-connus)
 - [FAQ](#faq)
 - [Changelog](#changelog)
 
