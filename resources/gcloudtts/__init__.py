@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
-from .gcloudtts import gcloudTTS, WrongAPIKeyError
+from .gcloudtts import gcloudTTS, gcloudTTSError
 
-__all__ = ['gcloudTTS', 'WrongAPIKeyError']
+__all__ = ['gcloudTTS', 'gcloudTTSError']
