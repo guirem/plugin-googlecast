@@ -3,9 +3,9 @@ Controller to interface with the YouTube-app.
 Use the media controller to play, pause etc.
 """
 import threading
-from casttube import youtube_session
+from . import youtube_session
 
-from . import BaseController
+from ..controllers import BaseController
 from ..error import UnsupportedNamespace
 from ..config import APP_YOUTUBE
 
