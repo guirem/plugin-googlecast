@@ -1531,18 +1531,20 @@ class googlecastcmd extends cmd {
             array_push($datalist, $data);   // push in the sequence array (even if only one command)
         }
 
-        // generate the query to be sent
-        $fulldata = array(
-            'apikey' => jeedom::getApiKey('googlecast'),
-            'cmd' => 'action',
-            'device' => array(
-                'uuid' => $eqLogic->getLogicalId(),
-                'source' => 'googlecast',
-            ),
-            'command' => $datalist,
-        );
-		log::add('googlecast','debug',"Envoi de la commande [$originalLogicalId] depuis Jeedom");
-		googlecast::socket_connection( json_encode($fulldata) );
+		if ( count($datalist)>0 ) {
+        	// generate the query to be sent
+	        $fulldata = array(
+	            'apikey' => jeedom::getApiKey('googlecast'),
+	            'cmd' => 'action',
+	            'device' => array(
+	                'uuid' => $eqLogic->getLogicalId(),
+	                'source' => 'googlecast',
+	            ),
+	            'command' => $datalist,
+	        );
+			log::add('googlecast','debug',"Envoi de la commande [$originalLogicalId] depuis Jeedom");
+			googlecast::socket_connection( json_encode($fulldata) );
+		}
 	}
 
 
