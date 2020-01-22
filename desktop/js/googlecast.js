@@ -75,21 +75,19 @@ $('body').on('googlecast::includeState', function (_event,_options) {
                 $('.includeicon_text').css('color', '#94ca02').css('font-weight', 'normal');
 				$('.include.card span center').text('{{Lancer Scan}}');
 				$('.include.card').css('background-color','#ffffff');
+                window.location.reload();
 			}
 		}
 	}
 });
 
-$('body').on('googlecast::includeDevice', function (_event,_options) {
-    if (modifyWithoutSave) {
-        $('#div_inclusionAlert').showAlert({message: '{{Un GoogleCast vient d\'être inclu/exclu. Veuillez réactualiser la page}}', level: 'warning'});
-    } else {
-        if (_options == '') {
-            window.location.reload();
-        } else {
-            window.location.href = 'index.php?v=d&p=googlecast&m=googlecast&id=' + _options;
-        }
+$('body').on('googlecast::includeDevice', function (_event, _options) {
+    friendly_name = 'NONAME';
+    if ( _options && _options['friendly_name'] ) {
+        friendly_name = _options['friendly_name'];
     }
+    $('#div_inclusionAlert').showAlert({message: '{{Un GoogleCast vient d\'être inclu :}} "' + friendly_name + '".   {{Veuillez réactualiser la page}}', level: 'info'});
+    //window.location.reload();
 });
 
 function changeIncludeState(_state,_mode,_type='') {
