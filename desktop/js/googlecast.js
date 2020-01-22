@@ -130,9 +130,9 @@ function addCmdToTable(_cmd) {
        tr += '<span class="cmdAttr" data-l1key="display" data-l2key="icon" style="margin-left : 8px;display: inline-block;"></span>';
        tr += '<input class="cmdAttr form-control input-sm" style="width:140px;float:right;" data-l1key="name">';
        tr += '</div>';
-       tr += '<select class="cmdAttr form-control input-sm" data-l1key="value" style="display : none;margin-top : 0px;" title="La valeur de la commande vaut par défaut la commande">';
-       tr += '<option value="">Aucune</option>';
-       tr += '</select>';
+       //tr += '<select class="cmdAttr form-control input-sm" data-l1key="value" style="display : none;margin-top : 0px;" title="La valeur de la commande vaut par défaut la commande">';
+       //tr += '<option value="">Aucune</option>';
+       //tr += '</select>';
        tr += '</td>';
        tr += '<td>';
        tr += '<input class="cmdAttr form-control input-sm" data-l1key="id" style="display : none;" readonly>';
@@ -214,7 +214,7 @@ function addCmdToTable(_cmd) {
    $('#table_cmd tbody').append(tr);
    var tr = $('#table_cmd tbody tr:last');
    jeedom.eqLogic.builSelectCmd({
-       id: $(".li_eqLogic.active").attr('data-eqLogic_id'),
+       id: $('.eqLogicAttr[data-l1key=id]').value(),
        filter: {type: 'info'},
        error: function (error) {
            $('#div_alert').showAlert({message: error.message, level: 'danger'});
