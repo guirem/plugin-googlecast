@@ -106,14 +106,14 @@ if (isset($result['devices'])) {
 			if ($data['learn'] != 1) {
 				continue;
 			}
-			log::add('googlecast','info','New GoogleCast device detected ' . $data['uuid']);
+			log::add('googlecast','info','New GoogleCast device detected ' . $data['friendly_name'] . ' ('. $data['uuid'] . ')');
 			$googlecast = googlecast::createFromDef($data);
 			event::add('jeedom::alert', array(
 				'level' => 'warning',
 				'page' => 'googlecast',
 				'message' => '',
 			));
-			event::add('googlecast::includeDevice', $googlecast->getId());
+            event::add('googlecast::includeDevice', array( 'friendly_name' => $data['friendly_name'], 'id' => $googlecast->getId() ) );
 		}
 		else {
 			$flattenResults = array_flatten($data);
