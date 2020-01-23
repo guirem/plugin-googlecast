@@ -51,16 +51,17 @@ except ImportError:
 try:
     import pychromecast.pychromecast.controllers.dashcast as dashcast
     import pychromecast.pychromecast.controllers.spotify as spotify
-    import pychromecast.pychromecast.controllers.youtube as youtube
 except ImportError:
     logging.error("ERROR: One or several pychromecast controllers are not loaded !")
     print(traceback.format_exc())
+    sys.exit(1)
     pass
 
 try:
     import pychromecast.pychromecast.customcontrollers.plex2 as plex
+    import pychromecast.pychromecast.customcontrollers.youtube as youtube
 except ImportError:
-    logging.error("ERROR: Custom controller not loaded !")
+    logging.error("ERROR: Custom controllers not loaded !")
     logging.error(traceback.format_exc())
     pass
 
@@ -100,6 +101,7 @@ class JeedomChromeCast :
         self.scan_mode = scan_mode
         self.error_count = 0
         if scan_mode == False :
+            self.gcast.wait(timeout=globals.SCAN_TIMEOUT)
             self.being_shutdown = False
             self.is_recovering = False
             self.disable_notif = False
@@ -381,9 +383,9 @@ class JeedomChromeCast :
         try :
             self.gcast.socket_client.socket.shutdown(socket.SHUT_RDWR)
             self.gcast.socket_client.socket.close()
+            del self.gcast
         except Exception :
             pass
-        del self.gcast
         del self
 
     def loadPlayer(self, playername, params=None) :
@@ -443,7 +445,7 @@ class JeedomChromeCast :
         uuid = self.uuid
         status = self._internal_get_status()
         if _force or self._internal_status_different(status) :
-            logging.debug("Detected changes in status of " +self.device.friendly_name)
+            logging.debug("JEEDOMCHROMECAST------ Detected changes in status of " +self.device.friendly_name)
             globals.KNOWN_DEVICES[uuid]['status'] = status
             self.previous_status = status
             globals.KNOWN_DEVICES[uuid]['online'] = self.online
@@ -465,12 +467,13 @@ class JeedomChromeCast :
                 "volume_level" : int(self.gcast.status.volume_level*100),
                 "volume_muted" : self.gcast.status.volume_muted,
                 "app_id" : self.gcast.status.app_id,
+                "icon_url" : self.gcast.status.icon_url,
                 "display_name" : self.gcast.status.display_name if self.gcast.status.display_name is not None else globals.DEFAULT_NODISPLAY,
                 "status_text" : self.gcast.status.status_text if self.gcast.status.status_text!="" else globals.DEFAULT_NOSTATUS,
                 "is_busy" : not self.gcast.is_idle,
                 "title" : "" if playStatus.title is None else playStatus.title,
                 "artist" : "" if playStatus.artist is None else playStatus.artist,
-                'series_title': "" if playStatus.series_title is None else playStatus.series_title,
+                "series_title": "" if playStatus.series_title is None else playStatus.series_title,
                 "stream_type" : "" if playStatus.stream_type is None else playStatus.stream_type,
                 "player_state" : "" if playStatus.player_state is None else playStatus.player_state,
             }
@@ -480,7 +483,7 @@ class JeedomChromeCast :
                 "uuid" : self.uuid,
                 "is_stand_by" :  False, "is_active_input" : False,
                 "display_name" : globals.DEFAULT_NODISPLAY, "status_text" : globals.DEFAULT_NOSTATUS,
-                "app_id" : "", "is_busy" : False,
+                "app_id" : "", "icon_url" : "", "is_busy" : False,
                 "title" : "", "artist" : "", 'series_title': "", "stream_type" : "", "player_state" : "",
             }
 
@@ -520,7 +523,7 @@ class JeedomChromeCast :
                 "uuid" : self.uuid,
                 "title" : '' if new_nowplaying.title is None else new_nowplaying.title,
                 "artist" : '' if new_nowplaying.artist is None else new_nowplaying.artist,
-                'series_title': '' if new_nowplaying.series_title is None else new_nowplaying.series_title,
+                "series_title": '' if new_nowplaying.series_title is None else new_nowplaying.series_title,
                 "player_state" : '' if new_nowplaying.player_state is None else new_nowplaying.player_state,
             }
             logging.debug("JEEDOMCHROMECAST------ NOW PLAYING STATUS SEND " + str(mediastatus))
@@ -584,6 +587,7 @@ class JeedomChromeCast :
                 "volume_level" :  int(self.gcast.status.volume_level*100),     #"{0:.2f}".format(cast.status.volume_level),
                 "volume_muted" : self.gcast.status.volume_muted,
                 "app_id" : self.gcast.status.app_id,
+                "icon_url" : self.gcast.status.icon_url,
                 "display_name" : self.gcast.status.display_name if self.gcast.status.display_name is not None else globals.DEFAULT_NODISPLAY,
                 "status_text" : self.gcast.status.status_text if self.gcast.status.status_text!="" else globals.DEFAULT_NOSTATUS,
                 "is_busy" : not self.gcast.is_idle,
@@ -613,7 +617,9 @@ class JeedomChromeCast :
                 "uuid" : uuid,
                 "online" : False, "friendly_name" : "",
                 "is_active_input" : False, "is_stand_by" :  False,
-                "app_id" : "", "display_name" : globals.DEFAULT_NODISPLAY, "status_text" : globals.DEFAULT_NOSTATUS,
+                "app_id" : "", "icon_url" : "",
+                "display_name" : globals.DEFAULT_NODISPLAY,
+                "status_text" : globals.DEFAULT_NOSTATUS,
                 "is_busy" : False, "title" : "",
                 "album_artist" : "","metadata_type" : "",
                 "album_name" : "", "current_time" : 0,
@@ -768,7 +774,7 @@ def action_handler(message):
                     if cmd == 'NONE' :
                         cmd = 'play_media'
                     possibleCmd = ['play_media']
-                    if cmd in possibleCmd :
+                    if cmd in possibleCmd and value is not None :
                         if 'offset' in command and float(command['offset'])>0 and 'current_time' not in value :
                             value = value + ',current_time:'+ str(command['offset'])
                         if 'live' in command and 'stream_type' not in value :
@@ -776,14 +782,26 @@ def action_handler(message):
                                 value = value + ",stream_type:'LIVE'"
                             else :
                                 del command['live']
+                        forceplay = 0
+                        if 'forceplay' in command :
+                            try:
+                                forceplay = float(command['forceplay'])
+                            except Exception as e:
+                                forceplay = 2.0
+                            del command['forceplay']
 
                         value = value.replace('h:/', 'http://')
                         value = value.replace('hs:/', 'https://')
                         value = value.replace('local://', globals.JEEDOM_WEB+'/plugins/googlecast/'+globals.localmedia_folder+'/')
+                        value = value.replace('logo://', globals.JEEDOM_WEB+'/plugins/googlecast/desktop/images/')
                         fallbackMode=False
                         player = jcast.loadPlayer('media', { 'quitapp' : quit_app_before})
                         eval( 'player.' + cmd + '('+ gcast_prepareAppParam(value) +')' )
                         jcast.savePreviousPlayerCmd(command)
+                        if forceplay > 0.0 :
+                            time.sleep(forceplay)
+                            # logging.debug("FORCEPLAY------ ")
+                            player.play()
 
                 elif app == 'web':    # app=web|cmd=load_url|value=https://news.google.com,True,5
                     force_register=True
@@ -1035,6 +1053,21 @@ def action_handler(message):
                         logging.debug("ACTION------Mute off action")
                         gcast.set_volume_muted(False)
                         fallbackMode=False
+                    elif cmd == 'turn_on':
+                        logging.debug("ACTION------Turn on action")
+                        if gcast.is_idle:
+                            if gcast.app_id is not None :
+                                # Quit the previous app before starting splash screen
+                                gcast.quit_app()
+                            # The only way we can turn the Chromecast is on is by launching an app
+                            url = generate_warmupnotif()
+                            gcast.play_media(url, "BUFFERED")
+                        fallbackMode=False
+                    elif cmd == 'turn_off':
+                        logging.debug("ACTION------Turn off action")
+                        gcast.quit_app()
+                        jcast.resetPlayer()
+                        fallbackMode=False
 
                     elif cmd == 'notif':
                         logging.debug("ACTION------NOTIF action")
@@ -1075,9 +1108,9 @@ def action_handler(message):
                                 gcast.set_volume(vol/100)
                                 time.sleep(0.1)
                             if type == 'audio' :
-                                player.play_media(url, 'audio/mp3', 'NOTIF', thumb=thumb, add_delay=0.1, stream_type=streamtype)
+                                player.play_media(url, 'audio/mp3', 'NOTIF', thumb=thumb, stream_type=streamtype)
                             else :
-                                player.play_media(url, 'video/mp4', 'NOTIF', thumb=thumb, add_delay=0.1, stream_type=streamtype)
+                                player.play_media(url, 'video/mp4', 'NOTIF', thumb=thumb, stream_type=streamtype)
                             player.block_until_active(timeout=2);
                             jcast.disable_notif = False
                             sleep_done = False
@@ -1186,7 +1219,7 @@ def action_handler(message):
                                     time.sleep(0.1)
                                     gcast.set_volume(vol/100)
                                     time.sleep(0.1)
-                                player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, add_delay=0.1, stream_type=streamtype);
+                                player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, stream_type=streamtype);
                                 player.block_until_active(timeout=2);
                                 jcast.disable_notif = False
                                 vol_done = False
@@ -1253,7 +1286,16 @@ def action_handler(message):
                         fallbackMode=False
                     elif cmd == 'skip':
                         logging.debug("ACTION------Skip action")
-                        player.skip()
+                        # player.skip()
+                        player.queue_next()
+                        fallbackMode=False
+                    elif cmd == 'next':
+                        logging.debug("ACTION------Next action")
+                        player.queue_next()
+                        fallbackMode=False
+                    elif cmd == 'prev':
+                        logging.debug("ACTION------Previous action")
+                        player.queue_prev()
                         fallbackMode=False
                     elif cmd == 'seek':
                         logging.debug("ACTION------Seek action")
@@ -1635,7 +1677,7 @@ def logByTTS(text_id):
     url,duration,mp3filename=get_tts_data(text, language, engine, speed, False, False, 300)
     thumb=globals.JEEDOM_WEB + '/plugins/googlecast/desktop/images/tts.png'
     player = jcast.loadPlayer('media', { 'quitapp' : False, 'wait': 0})
-    player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, add_delay=0.1, stream_type="LIVE");
+    player.play_media(url, 'audio/mp3', 'TTS', thumb=thumb, stream_type="LIVE");
     player.block_until_active(timeout=2);
 
 
@@ -1692,7 +1734,9 @@ def start(cycle=2):
                 current_time = int(time.time())
                 if globals.LEARN_MODE and (globals.LEARN_BEGIN+globals.LEARN_TIMEOUT)  < current_time :
                     globals.LEARN_MODE = False
-                    logging.info('HEARTBEAT------Quitting learn mode (60s elapsed)')
+                    globals.ZEROCONF_RESTART = True
+                    globals.SCAN_LAST = 0
+                    logging.info('HEARTBEAT------Quitting learn mode (90s elapsed)')
                     globals.JEEDOM_COM.send_change_immediate({'learn_mode' : 0,'source' : globals.daemonname})
 
                 if (globals.LAST_BEAT + globals.HEARTBEAT_FREQUENCY/2)  < current_time :
@@ -1744,6 +1788,7 @@ def read_socket(cycle):
                                 'options' : message['device']['options']
                             }
                             globals.SCAN_LAST = 0
+                            globals.ZEROCONF_RESTART = True
                 elif message['cmd'] == 'remove':
                     logging.debug('SOCKET-READ------Remove device : '+str(message['device']))
                     if 'uuid' in message['device']:
@@ -1765,12 +1810,13 @@ def read_socket(cycle):
                         else :
                             logging.debug('SOCKET-READ------Now playing for ' +uuid+ ' not activated because is offline')
                 elif message['cmd'] == 'learnin':
-                    logging.debug('SOCKET-READ------Enter in learn mode')
+                    logging.info('SOCKET-READ------Enter in learn mode')
                     globals.LEARN_MODE = True
+                    globals.ZEROCONF_RESTART = True
                     globals.LEARN_BEGIN = int(time.time())
                     globals.JEEDOM_COM.send_change_immediate({'learn_mode' : 1,'source' : globals.daemonname});
                 elif message['cmd'] == 'learnout':
-                    logging.debug('SOCKET-READ------Leave learn mode')
+                    logging.info('SOCKET-READ------Leave learn mode')
                     globals.LEARN_MODE = False
                     globals.JEEDOM_COM.send_change_immediate({'learn_mode' : 0,'source' : globals.daemonname});
                 elif message['cmd'] == 'refresh':
@@ -1815,35 +1861,65 @@ def read_socket(cycle):
             logging.debug(traceback.format_exc())
         time.sleep(cycle)
 
+
+def zeroconfMonitoring_start():
+    try:
+        logging.debug("ZEROCONF------ Start zeroconf monitoring thread...")
+        globals.NETDISCOVERY_PENDING = True
+
+        def ccdiscovery_callback(chromecast):
+            cast = JeedomChromeCast(chromecast, scan_mode=True)
+            uuid = cast.uuid
+            logging.debug("ZEROCONF------ Signal detected from chromecast on zeroconf network : " + cast.friendly_name + "")
+            if uuid not in globals.GCAST_DEVICES:
+                logging.debug("ZEROCONF------ Signal from chromecast will be processed soon (" + cast.friendly_name + ")")
+                globals.SCAN_LAST = 0
+                globals.NETDISCOVERY_DEVICES[cast.uuid] = cast
+
+        globals.NETDISCOVERY_STOPFN = pychromecast.get_chromecasts(tries=1, retry_wait=2, timeout=globals.SCAN_TIMEOUT, blocking=False, callback=ccdiscovery_callback)
+    except Exception as e:
+        logging.error("ZEROCONF START------Exception on zeroconf monitoring : %s" % str(e))
+        logging.debug(traceback.format_exc())
+
+
+def zeroconfMonitoring_stop():
+    logging.debug("ZEROCONF------ Stopping zeroconf monitoring thread...")
+    try:
+        globals.NETDISCOVERY_PENDING = False
+        if globals.NETDISCOVERY_STOPFN is not None:
+            globals.NETDISCOVERY_STOPFN()
+        # globals.NETDISCOVERY_DEVICES = {}
+
+    except Exception as e:
+        # globals.NETDISCOVERY_DEVICES = {}
+        logging.error("ZEROCONF STOP------Exception on netdiscovery : %s" % str(e))
+        logging.debug(traceback.format_exc())
+
 def scanner(name):
     try:
         logging.debug("SCANNER------ Start scanning...")
         globals.SCAN_PENDING = True
         show_memory_usage()
 
-        rawcasts = None
         scanForced = False
         discoveryMode = False
         if (int(time.time())-globals.DISCOVERY_LAST)>globals.DISCOVERY_FREQUENCY :
             scanForced = True
             discoveryMode = True
-        else :
-            for known in globals.KNOWN_DEVICES :
-                if known not in globals.GCAST_DEVICES :
-                    scanForced = scanForced or True
 
-        if scanForced==True or globals.LEARN_MODE==True:
-            logging.debug("SCANNER------ Looking for googlecast devices on network... (" + str(len(globals.KNOWN_DEVICES) - len(globals.GCAST_DEVICES)) + " to be found out of " + str(len(globals.KNOWN_DEVICES)) + " registered devices)")
-            rawcasts = pychromecast.get_chromecasts(tries=1, retry_wait=2, timeout=globals.SCAN_TIMEOUT)
-            casts = []
-            for cast in rawcasts :
-                casts.append( JeedomChromeCast(cast, scan_mode=True) )
-        else :
-            logging.debug("SCANNER------ No need to scan network, all googlecast devices already being monitored (" + str(len(globals.GCAST_DEVICES)) + " registered and found devices)")
-            casts = list(globals.GCAST_DEVICES.values())
+        if globals.ZEROCONF_RESTART==True :
+            globals.ZEROCONF_RESTART = False
+            scanForced = True
 
-        uuid_newlyadded = []
-        for cast in casts :
+        if scanForced==True :
+            zeroconfMonitoring_stop()
+            zeroconfMonitoring_start()
+            time.sleep(1)
+
+        # go through discovered devices in case new appeared
+        tobecleaned = []
+        for uuid in globals.NETDISCOVERY_DEVICES :
+            cast = globals.NETDISCOVERY_DEVICES[uuid]
             uuid = cast.uuid
             current_time = int(time.time())
 
@@ -1853,8 +1929,7 @@ def scanner(name):
                 globals.KNOWN_DEVICES[uuid]["lastOnline"] = current_time
 
                 if uuid not in globals.GCAST_DEVICES :
-                    logging.info("SCANNER------ Detected chromecast : " + cast.friendly_name)
-                    uuid_newlyadded.append(uuid)
+                    logging.info("SCANNER------ Adding chromecast : " + cast.friendly_name)
                     globals.GCAST_DEVICES[uuid] = JeedomChromeCast(cast.gcast, globals.KNOWN_DEVICES[uuid]["options"])
 
                 if uuid in globals.NOWPLAYING_DEVICES :
@@ -1879,16 +1954,15 @@ def scanner(name):
                     logging.debug("SCANNER------ DISCOVERY MODE : New device : " + uuid + ' (' + cast.friendly_name + ')')
                     globals.JEEDOM_COM.send_change_immediate({'discovery' : 1, 'uuid' : uuid, 'friendly_name' : cast.friendly_name})
 
-        if discoveryMode==True :
-            globals.DISCOVERY_LAST = int(time.time())
+                tobecleaned.append(uuid)
 
         # memory cleaning
-        if rawcasts is not None :
-            for cast in casts :
-                if cast.uuid not in uuid_newlyadded :
-                    cast.disconnect()
-        del rawcasts, casts
-        del uuid_newlyadded
+        for uuid in list(globals.NETDISCOVERY_DEVICES.keys()):
+            if uuid in tobecleaned :
+                globals.NETDISCOVERY_DEVICES[uuid].disconnect()
+            if uuid in globals.NETDISCOVERY_DEVICES :
+                del globals.NETDISCOVERY_DEVICES[uuid]
+        del tobecleaned
 
         # loop through all known devices to find those not connected
         for known in globals.KNOWN_DEVICES :
@@ -1915,8 +1989,8 @@ def scanner(name):
                         "uuid" : known,
                         "is_stand_by" : False, "is_active_input" : False,
                         "display_name" : globals.DEFAULT_NODISPLAY, "status_text" : globals.DEFAULT_NOSTATUS,
-                        "app_id" : "", "is_busy" : False,
-                        "title" : "", "artist" : "", 'series_title': "", "stream_type" : "", "player_state" : "",
+                        "app_id" : "", "icon_url" : "", "is_busy" : False,
+                        "title" : "", "artist" : "", "series_title": "", "stream_type" : "", "player_state" : "",
                     }
                     #globals.JEEDOM_COM.add_changes('devices::'+known, globals.KNOWN_DEVICES[known])
                     globals.JEEDOM_COM.send_change_immediate_device(known, globals.KNOWN_DEVICES[known])
@@ -1928,11 +2002,11 @@ def scanner(name):
                             "online" : False, "friendly_name" : "",
                             "is_active_input" : False, "is_stand_by" : False,
                             "display_name" : globals.DEFAULT_NODISPLAY, "status_text" : globals.DEFAULT_NOSTATUS,
-                            "app_id" : "", "is_busy" : False, "title" : "",
+                            "app_id" : "", "icon_url" : "", "is_busy" : False, "title" : "",
                             "album_artist" : "", "metadata_type" : "",
                             "album_name" : "", "current_time" : 0,
                             "artist" : "", "image" : None,
-                            'series_title': "", 'season': "", 'episode': "",
+                            "series_title": "", "season": "", "episode": "",
                             "stream_type" : "", "track" : "",
                             "player_state" : "", "supported_media_commands" : 0,
                             "supports_pause" : "", "duration": 0,
@@ -1942,6 +2016,9 @@ def scanner(name):
 
             else :
                 globals.KNOWN_DEVICES[known]["lastScan"] = current_time
+
+        if discoveryMode==True :
+            globals.DISCOVERY_LAST = int(time.time())
 
     except Exception as e:
         logging.error("SCANNER------Exception on scanner : %s" % str(e))
@@ -2025,11 +2102,13 @@ def shutdown():
     except:
         pass
     try:
+        zeroconfMonitoring_stop()
         for uuid in globals.GCAST_DEVICES :
             globals.GCAST_DEVICES[uuid].disconnect()
         globals.JEEDOM_COM.send_change_immediate({'stopped' : 1,'source' : globals.daemonname});
         time.sleep(1)
         jeedom_socket.close()
+        logging.debug("GLOBAL------Shutdown completed !")
     except:
         pass
     logging.debug("Exit 0")
