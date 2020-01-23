@@ -271,10 +271,14 @@ Elles doivent être séparées par *|*
     * mute_off
     * quit_app
     * start_app : use value to pass app id
+    * turn_on : try to turn on device by opening basic app (may turn on device for some model)
+    * turn_off : equivalent to quit_app (may turn off device for some model)
     * play
     * stop
-    * rewind : go back to media start
-    * skip : got to next media
+    * rewind : go back to begining of the current media
+    * previous : got to previous media in playlist (if any)
+    * skip : got to next media in playlist (if any)
+    * next : same as skip
     * seek : use value in seconds. Can use +/- to use relative seek (ex: +20 to pass 20 seconds)
     * pause
     For application dependant commands
@@ -538,6 +542,7 @@ Les commandes suivantes peuvent être utilisées dans une commande 'info' ou sc�
 - *gh_get_donotdisturb* : retourne l'état de la fonction 'Do Not Disturb'.
 - *gh_get_alarms_volume* : récupère le volume des alarmes et timers.
 - *conf_pincode* : retourne le code pin d'association.
+- *castversion* : retourne le numero de version du firmware googlecast.
 - *conf_getbonded_bluetooth* : retourne tous les équipements bluetooth enregistrés.
 - *conf_getconnected_wifi* : retourne le nom du réseau wifi configuré.
 
@@ -585,17 +590,17 @@ app=media^value='http://urlFluxRadio3/flux.mp3','audio/mpeg','Radio 3'|Radio 3
 
 ### Création d'une commande *action* pour un webradio pré-enregistrées
 
-Pour créer une commande *action* qui lance une webradio pré-enregistrée (avec logo), la commande doit impérativement s'appeler *radio_XXXX* avec XXXX pouvant être remplacé par un nom de radio existante.
+Pour créer une commande *action* qui lance une webradio pré-enregistrée (avec logo), utiliser les commandes ci-dessous parmis la liste.
 
-Liste des webradios pré-enregistrées :    
-france_inter, africa_n1_paris, europe_1, france_bleue, radio_classique, rfi_monde, fip, jazz, voltage_lounge, rtl, fip_nouveaute, fip_jazz, fip_monde, france_culture, radio_suisse_classique, nippon_blue_heron, chinese_classical_music, jazz_ladies_crooners, pulsradio_trance, PulsRadio_Lounge, pulsradio_dance, pulsradio_club, pulsradio_hits, pulsradio_80, pulsradio_90, pulsradio_2000, mix_x_fm, sweet_fm, rtl_2, hotmix_80, hotmix_90, hotmix_2000, hotmix_dance, hotmix_frenchy, hotmix_funky, hotmix_game, hotmix-golds, hotmix_hiphop, hotmix_Hits, hotmix_hot, hotmix_lounge, Hotmix_metal, hotmix_new, hotmix_rock, hotmix_sunny, hotmix_vip
+radio_africa_n1_paris, radio_bfm_business, radio_cherie_fm, radio_europe_1, radio_fg, radio_fip, radio_fip_jazz, radio_fip_monde, radio_fip_nouveaute, radio_france_bleue, radio_france_culture, radio_france_info, radio_france_inter, radio_france_musique, radio_fun_radio, radio_hotmix-golds, radio_hotmix_2000, radio_hotmix_80, radio_hotmix_90, radio_hotmix_Hits, radio_hotmix_dance, radio_hotmix_frenchy, radio_hotmix_funky, radio_hotmix_game, radio_hotmix_hiphop, radio_hotmix_hot, radio_hotmix_lounge, radio_hotmix_metal, radio_hotmix_new, radio_hotmix_rock, radio_hotmix_sunny, radio_hotmix_vip, radio_jazz, radio_jazz_ladies_crooners, radio_jazz_radio, radio_latina, radio_m_radio, radio_mix_x_fm, radio_mouv, radio_nostalgie, radio_nova, radio_nrj, radio_nrj_uhd, radio_oui_fm, radio_phare_fm, radio_pulsradio_2000, radio_pulsradio_80, radio_pulsradio_90, radio_pulsradio_club, radio_pulsradio_dance, radio_pulsradio_hits, radio_pulsradio_lounge, radio_pulsradio_trance, radio_radio_classique, radio_radio_suisse_classique, radio_rcf, radio_rfi_monde, radio_rfi_monde_hd, radio_rfm, radio_rire_et_chanson, radio_rmc, radio_rtl, radio_rtl2_hd, radio_rtl_2, radio_rtl_hd, radio_skyrock, radio_sud_radio, radio_sweet_fm, radio_tsf_jazz, radio_vibration, radio_virage, radio_virgin_radio, radio_voltage, radio_voltage_lounge, radio_wit_fm
 
 ````
 Exemple : commande appelée 'radio_rtl'
 ````
 
 > **Note**   
-> Il est possible de rajouter des webradios dans un fichier appelé *custom.json* (à créer) dans le répertoire du plugin *webradios*. Le format doit être similaire au fichier *webradios/radiolist.json*. Ce fichier ne sera pas modifié lors des mises à jour du plugin.
+> Il est possible de rajouter des webradios dans un fichier appelé *custom.json* (à créer) dans le répertoire du plugin *webradios*. Le format doit être similaire au fichier *webradios/radiolist.json* (l'id de la radio devra être concatené avec *radio_* au début pour l'utiliser en commande; eg: id radio *XXXX* devra être appelé avec la commande *radio_XXXX*).
+Ce fichier ne sera pas modifié lors des mises à jour du plugin.
 A la création du fichier, s'assurer que le fichier à les bons droits avec la commande `sudo chown www-data:www-data custom.json && sudo chmod 775 custom.json`
 
 
