@@ -478,13 +478,13 @@ class googlecast extends eqLogic {
 		$cmd->setEqLogic_id($this->getId());
 		$cmd->save();
 
-		$cmd = $this->getCmd(null, 'rewind');
+        $cmd = $this->getCmd(null, 'prev');
 		if (!is_object($cmd)) {
 			$cmd = new googlecastCmd();
-			$cmd->setLogicalId('rewind');
-			$cmd->setName(__('Back', __FILE__));
+			$cmd->setLogicalId('prev');
+			$cmd->setName(__('Previous', __FILE__));
 			$cmd->setIsVisible(1);
-			$cmd->setDisplay('icon', '<i class="fa fa-step-backward"></i>');
+            $cmd->setDisplay('icon', '<i class="fa fa-step-backward"></i>');
 			$cmd->setConfiguration('googlecast_cmd', true);
 			$cmd->setOrder($order++);
 		}
@@ -497,7 +497,7 @@ class googlecast extends eqLogic {
 		if (!is_object($cmd)) {
 			$cmd = new googlecastCmd();
 			$cmd->setLogicalId('skip');
-			$cmd->setName(__('Skip', __FILE__));
+			$cmd->setName(__('Next', __FILE__));
 			$cmd->setIsVisible(1);
 			$cmd->setDisplay('icon', '<i class="fa fa-step-forward"></i>');
 			$cmd->setConfiguration('googlecast_cmd', true);
@@ -507,6 +507,21 @@ class googlecast extends eqLogic {
 		$cmd->setSubType('other');
 		$cmd->setEqLogic_id($this->getId());
 		$cmd->save();
+
+        $cmd = $this->getCmd(null, 'rewind');
+        if (!is_object($cmd)) {
+            $cmd = new googlecastCmd();
+            $cmd->setLogicalId('rewind');
+            $cmd->setName(__('Back', __FILE__));
+            $cmd->setIsVisible(1);
+            $cmd->setConfiguration('googlecast_cmd', true);
+            $cmd->setOrder($order++);
+        }
+        $cmd->setDisplay('icon', '<i class="fa fa-backward"></i>');
+        $cmd->setType('action');
+        $cmd->setSubType('other');
+        $cmd->setEqLogic_id($this->getId());
+        $cmd->save();
 
 		$cmd = $this->getCmd(null, 'play');
 		if (!is_object($cmd)) {
@@ -539,6 +554,20 @@ class googlecast extends eqLogic {
 		$cmd->setEqLogic_id($this->getId());
 		$cmd->save();
 
+        $cmd = $this->getCmd(null, 'castversion');
+        if (!is_object($cmd)) {
+            $cmd = new googlecastCmd();
+            $cmd->setLogicalId('castversion');
+            $cmd->setName(__('version', __FILE__));
+            $cmd->setIsVisible(1);
+            $cmd->setOrder($order++);
+            $cmd->setConfiguration('googlecast_cmd', true);
+        }
+        $cmd->setType('info');
+        $cmd->setSubType('string');
+        $cmd->setEqLogic_id($this->getId());
+        $cmd->save();
+
 		$cmd = $this->getCmd(null, 'speak');
 		if (!is_object($cmd)) {
 			$cmd = new googlecastCmd();
@@ -569,36 +598,55 @@ class googlecast extends eqLogic {
 		$cmd->setEqLogic_id($this->getId());
 		$cmd->save();
 
+        $cmd = $this->getCmd(null, 'cmdlist_radiolist');
+        if (!is_object($cmd)) {
+            $cmd = new googlecastCmd();
+            $cmd->setLogicalId('cmdlist_radiolist');
+            $cmd->setName(__('Radio', __FILE__));
+            $cmd->setIsVisible(1);
+            if ($order<=3) $order=50;
+            $cmd->setOrder($order++);
+            $cmd->setEqLogic_id($this->getId());
+            $radiolist = googlecast_utils::buildRadioSelectlist();
+            $cmd->setConfiguration('listValue', $radiolist);
+        }
+        $cmd->setType('action');
+        $cmd->setSubType('select');
+        $cmd->save();
 
+        $castType = $this->getConfiguration('cast_type');
 		if ($this->getConfiguration('firstTimeCreation', True)) {
             $order = 200;
-			$logid = "app=backdrop";
-			$cmd = $this->getCmd(null, $logid);
-			if (!is_object($cmd)) {
-				$cmd = new googlecastCmd();
-				$cmd->setLogicalId($logid);
-				$cmd->setName(__('Backdrop', __FILE__));
-				$cmd->setIsVisible(1);
-				$cmd->setOrder($order++);
-			}
-			$cmd->setType('action');
-			$cmd->setSubType('other');
-			$cmd->setEqLogic_id($this->getId());
-			$cmd->save();
 
-			$logid = "app=youtube|cmd=play_video|value=fra4QBLF3GU";
-			$cmd = $this->getCmd(null, $logid);
-			if (!is_object($cmd)) {
-				$cmd = new googlecastCmd();
-				$cmd->setLogicalId($logid);
-				$cmd->setName(__('YouTube', __FILE__));
-				$cmd->setIsVisible(1);
-				$cmd->setOrder($order++);
-			}
-			$cmd->setType('action');
-			$cmd->setSubType('other');
-			$cmd->setEqLogic_id($this->getId());
-			$cmd->save();
+            if ($castType=='cast') {
+    			$logid = "app=backdrop";
+    			$cmd = $this->getCmd(null, $logid);
+    			if (!is_object($cmd)) {
+    				$cmd = new googlecastCmd();
+    				$cmd->setLogicalId($logid);
+    				$cmd->setName(__('Backdrop', __FILE__));
+    				$cmd->setIsVisible(1);
+    				$cmd->setOrder($order++);
+                    $cmd->setType('action');
+        			$cmd->setSubType('other');
+                    $cmd->setEqLogic_id($this->getId());
+        			$cmd->save();
+    			}
+
+    			$logid = "app=youtube|cmd=play_video|value=fra4QBLF3GU";
+    			$cmd = $this->getCmd(null, $logid);
+    			if (!is_object($cmd)) {
+    				$cmd = new googlecastCmd();
+    				$cmd->setLogicalId($logid);
+    				$cmd->setName(__('YouTube', __FILE__));
+    				$cmd->setIsVisible(1);
+    				$cmd->setOrder($order++);
+                    $cmd->setType('action');
+        			$cmd->setSubType('other');
+        			$cmd->setEqLogic_id($this->getId());
+        			$cmd->save();
+    			}
+            }
 
 			$logid = "app=media|cmd=play_media|value='http://bit.ly/2JzYtfX','video/mp4','Mon film'";
 			$cmd = $this->getCmd(null, $logid);
