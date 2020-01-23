@@ -45,8 +45,14 @@
 			root.find('.picture').attr('src', playing['image']);
 		}
 		else {
-			root.find('.picture').attr('src','plugins/googlecast/desktop/images/chromecast2.png');
+			if ( playing['icon_url'] && playing['icon_url']!=="" ) {	// show app logo if exists
+				root.find('.picture').attr('src', playing['icon_url']);
+			}
+			else {
+				root.find('.picture').attr('src','plugins/googlecast/desktop/images/chromecast2.png');
+			}
 		}
+
 		if (playing['online']===true) {
 			if (playing['current_time'] && playing['duration'] && playing['duration']>0) {
 				calcP = Math.round(playing['current_time']/playing['duration']*100);
