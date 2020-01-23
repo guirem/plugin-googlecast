@@ -16,23 +16,28 @@ class googlecast_utils {
         elseif ( $logicalId == 'speak_forceresume' ) {
             $ret = 'cmd=tts|value=#message#|vol=#volume#|forceapplaunch=1';
         }
+        elseif ( $logicalId == 'castversion' ) {
+            $ret = 'cmd=getconfig|data=cast_build_revision';
+        }
         elseif ( strpos($logicalId, 'radio_') === 0 ) {
             try {
                 $streamtype='LIVE';
                 if ( substr($logicalId, -1)=='*' ) {
                     $streamtype = 'BUFFERED';
                 }
-                $radioname = strtolower( str_replace("radio_", "", str_replace("*", "", $logicalId) ) );
+                $radioname = str_replace("*", "", $logicalId);
+                $radioname = substr( $radioname , 6) ;  // remove start with "radio_"
+                $radioname = strtolower( $radioname );  // to lower just in case of typo
                 $radioArray = json_decode(file_get_contents(dirname(__FILE__) . "/../webradios/radiolist.json"), true);
                 if ( isset($radioArray[$radioname]) ) {
                     $radio = $radioArray[$radioname];
-                    $ret = "app=media|live=1|value='".$radio['location']."','audio/mpeg',title:'".$radio['title']."',thumb:'".$radio['image']."',stream_type:'".$streamtype."'";
+                    $ret = "app=media|forceplay=2|live=1|value='".$radio['location']."','audio/mpeg',title:'".$radio['title']."',thumb:'".$radio['image']."',stream_type:'".$streamtype."'";
                 }
                 if ( file_exists(dirname(__FILE__) . "/../webradios/custom.json") ) {
                     $radioArray = json_decode(file_get_contents(dirname(__FILE__) . "/../webradios/custom.json"), true);
                     if ( isset($radioArray[$radioname]) ) {
                         $radio = $radioArray[$radioname];
-                        $ret = "app=media|live=1|value='".$radio['location']."','audio/mpeg',title:'".$radio['title']."',thumb:'".$radio['image']."',stream_type:'".$streamtype."'";
+                        $ret = "app=media|forceplay=2|live=1|value='".$radio['location']."','audio/mpeg',title:'".$radio['title']."',thumb:'".$radio['image']."',stream_type:'".$streamtype."'";
                     }
                 }
             } catch (Exception $e) {}
@@ -141,6 +146,31 @@ class googlecast_utils {
         return $ret;
     }
 
+    public static function buildRadioSelectlist() {
+        $ret = '';
+        try {
+            $radioArray = array();
+            $radioFile = json_decode(file_get_contents(dirname(__FILE__) . "/../webradios/radiolist.json"), true);
+            foreach ($radioFile as $radio_id => $radio_data){
+                $radioArray[$radio_id] = $radio_data['title'];
+            }
+            if ( file_exists(dirname(__FILE__) . "/../webradios/custom.json") ) {
+                $radioFile = json_decode(file_get_contents(dirname(__FILE__) . "/../webradios/custom.json"), true);
+                foreach ($radioFile as $radio_id => $radio_data){
+                    $radioArray[$radio_id] = $radio_data['title'];
+                }
+            }
+            ksort($radioArray);
+            foreach ($radioArray as $radio_id => $radio_title){
+                $ret .= 'radio_' . $radio_id . '|' . $radio_title . ';';
+            }
+            if ( strlen($ret)>0 ) { // remove last ';' that cause empty line in select
+                $ret = substr($ret, 0, strlen($ret)-1);
+            }
+        } catch (Exception $e) {}
+
+        return $ret;
+    }
 
     public static function getCmdTranslation($cmd) {
         return $cmd;
