@@ -48,11 +48,16 @@ $('#bt_healthrefresh').on('click', function () {
     });
 });
 
-// $('.bt_sidebarToogle').on('click', function () {
-//     $('.sidebar-container').toggle();
-//     $('.equipement-container').toggleClass('col-lg-10');
-//     $('.equipement-container').toggleClass('col-lg-12');
-// });
+$('.has_googleassistant_form').on('change', manage_ga_token_input);
+function manage_ga_token_input() {
+    var value = $('.ga_token_input').prop('checked')
+    if (value) {
+        $('.ga_token_form').show();
+    }
+    else {
+        $('.ga_token_form').hide();
+    }
+}
 
 $('body').on('googlecast::includeState', function (_event,_options) {
 	if (_options['mode'] == 'learn') {
