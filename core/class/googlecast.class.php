@@ -30,19 +30,32 @@ class googlecast extends eqLogic {
     private $_lightsave = false;
 
 	const GCAST_MODELS = array(
-		'chromecast audio' => 'model_chromecast_audio.png',
-        'chromecast ultra'  => 'model_chromecast_video_ultra.png',
-		'chromecast' => 'model_chromecast_video.png',
-		'google home mini' => 'model_googlehome_mini.png',
-		'google nest mini' => 'model_googlehome_mini.png',
-		'google home hub' => 'model_googlehome_hub.png',
-		'google nest hub' => 'model_googlehome_hub.png',
-		'google home' => 'model_googlehome.png',
-		'google home max' => 'model_googlehome.png',
-		'google cast group' => 'model_castgroup.png',
-		'tv' => 'model_tv.png',
-        'shield' => 'model_androidtv.png',
-        'android' => 'model_androidtv.png',
+		'chromecast audio' =>
+            array('logo' => 'model_chromecast_audio.png', 'ga' => false),
+        'chromecast ultra'  =>
+            array('logo' => 'model_chromecast_video_ultra.png', 'ga' => false),
+		'chromecast' =>
+            array('logo' => 'model_chromecast_video.png', 'ga' => false),
+		'google home mini' =>
+            array('logo' => 'model_googlehome_mini.png', 'ga' => true),
+		'google nest mini' =>
+            array('logo' => 'model_googlehome_mini.png', 'ga' => true),
+		'google home hub' =>
+            array('logo' => 'model_googlehome_hub.png', 'ga' => true),
+		'google nest hub' =>
+            array('logo' => 'model_googlehome_hub.png', 'ga' => true),
+		'google home' =>
+            array('logo' => 'model_googlehome.png', 'ga' => true),
+		'google home max' =>
+            array('logo' => 'model_googlehome.png', 'ga' => true),
+		'google cast group' =>
+            array('logo' => 'model_castgroup.png', 'ga' => false),
+		'tv' =>
+            array('logo' => 'model_tv.png', 'ga' => false),
+        'shield' =>
+            array('logo' => 'model_androidtv.png', 'ga' => false),
+        'android' =>
+            array('logo' => 'model_androidtv.png', 'ga' => false)
 	);
 
 	/*     * ***********************Methode static*************************** */
@@ -82,14 +95,17 @@ class googlecast extends eqLogic {
 		$imgLogo = $imgRoot . 'model_default.png';
 		$modelName = strtolower( $this->getConfiguration('model_name','UNKOWN') );
 
+        $has_gassistant = false;
 		if ( array_key_exists($modelName, googlecast::GCAST_MODELS) ) {
-			$imgLogo = $imgRoot . googlecast::GCAST_MODELS[$modelName];
+			$imgLogo = $imgRoot . googlecast::GCAST_MODELS[$modelName]['logo'];
 			$found = True;
+            $has_gassistant = googlecast::GCAST_MODELS[$modelName]['ga'];
 		}
 		if (!$found) {	// try to guess based on model name aproximation
-			foreach (googlecast::GCAST_MODELS as $key => $logo) {
+			foreach (googlecast::GCAST_MODELS as $key => $data) {
 				if (strpos($key, $modelName) !== false) {
-					$imgLogo = $imgRoot . $logo;
+					$imgLogo = $imgRoot . $data['logo'];
+                    $has_gassistant = $data['ga'];
 					$found = True;
 					break;
 				}
@@ -115,11 +131,12 @@ class googlecast extends eqLogic {
 		}
 		$this->setConfiguration('logoDevice', $imgLogo);
 
-        if ($modelName=='google home mini' || $modelName=='google home') {
-            $this->setConfiguration('has_googleassistant', '1');
-        }
-        else {
-            $this->setConfiguration('has_googleassistant', '0');
+        if ( $this->getConfiguration('has_googleassistant', '')==='' ) {
+            // if not set
+            if ($has_gassistant===true)
+                $this->setConfiguration('has_googleassistant', '1');
+            else
+                $this->setConfiguration('has_googleassistant', '0');
         }
 
 	}
@@ -690,18 +707,18 @@ class googlecast extends eqLogic {
 			$cmd->setEqLogic_id($this->getId());
 			$cmd->save();
 
-            $cmd = $this->getCmd(null, 'cmd=getconfig|data=opencast_pin_code');
-    		if (!is_object($cmd)) {
-    			$cmd = new googlecastCmd();
-    			$cmd->setLogicalId('cmd=getconfig|data=opencast_pin_code');
-    			$cmd->setName(__('Pincode', __FILE__));
-    			$cmd->setIsVisible(0);
-    			$cmd->setOrder($order++);
-    		}
-    		$cmd->setType('info');
-    		$cmd->setSubType('string');
-    		$cmd->setEqLogic_id($this->getId());
-            $cmd->save();
+            // $cmd = $this->getCmd(null, 'cmd=getconfig|data=opencast_pin_code');
+    		// if (!is_object($cmd)) {
+    		// 	$cmd = new googlecastCmd();
+    		// 	$cmd->setLogicalId('cmd=getconfig|data=opencast_pin_code');
+    		// 	$cmd->setName(__('Pincode', __FILE__));
+    		// 	$cmd->setIsVisible(0);
+    		// 	$cmd->setOrder($order++);
+    		// }
+    		// $cmd->setType('info');
+    		// $cmd->setSubType('string');
+    		// $cmd->setEqLogic_id($this->getId());
+            // $cmd->save();
 
             $this->setConfiguration('firstTimeCreation', False);
     		$this->save();
@@ -1194,13 +1211,15 @@ class googlecast extends eqLogic {
                     $format = $data['format'];
                 }
                 $isPost = false;
-                if (isset($data['value'])) {
+				$isSSL = false;
+                if ( isset($data['value']) && $data['value']!='eureka_info' ) {
                     $uripath = $data['value'];
                     if (strpos($uripath, 'post:') === 0) {
                        $isPost = true;
                        $uripath = str_replace('post:', '', $uripath);
                     }
-                    $url = 'http://' . $uri . ':8008/setup/' . $uripath. '?options=detail';
+					$isSSL = True;
+                    $url = 'https://' . $uri . ':8443/setup/' . $uripath. '?options=detail';
                 }
                 else {
                     $url = 'http://' . $uri . ':8008/setup/eureka_info?options=detail';
@@ -1208,10 +1227,23 @@ class googlecast extends eqLogic {
                 $request_http = new com_http($url);
 
                 $has_error = false;
-                if ($isPost) {
-                    $request_http->setHeader(array('Connection: close', 'content-type: application/json'));
-                    $request_http->setPost('');
+				$headers = array();
+				if ($isSSL) {
+                    $gatoken = $this->getConfiguration('ga_token', '');
+                    if ( $gatoken == '' ) {
+                        log::add('googlecast','error',__('Le jeton/token Google Home n\'est pas configuré!', __FILE__));
+                        $gatoken = 'none';
+                    }
+                    $request_http->setNoSslCheck(true);
+					array_push($headers, 'cast-local-authorization-token: ' . $gatoken );
                 }
+                if ($isPost) {
+                    $request_http->setPost('');
+					array_push($headers, 'Connection: close', 'content-type: application/json');
+                }
+				if ( count($headers)>0 ) {
+					$request_http->setHeader($headers);
+				}
                 try {
                     $httpret = $request_http->exec($_timeout=1, $_maxRetry=1);
                     $arrayret = json_decode($httpret, true);
@@ -1224,7 +1256,7 @@ class googlecast extends eqLogic {
                 //$arrayret = json_decode($httpret, true);
 
                 if (isset($arrayret)) {
-                    log::add('googlecast','debug','Request content : ' . print_r($arrayret,true));
+                    log::add('googlecast','debug','Request response content : ' . print_r($arrayret,true));
                 }
                 if ($has_error===true or ($arrayret and count($arrayret)==0)) {
                     if ( $showError==true) {

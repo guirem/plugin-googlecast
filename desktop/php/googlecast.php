@@ -163,6 +163,18 @@ foreach (jeedom::getConfiguration('eqLogic:category') as $key => $value) {
 		  {{Si le statut 'Occupé' ne remonte pas bien}}
         </div>
       </div>
+	  <div class="form-group has_googleassistant_form">
+        <label class="col-lg-3 control-label">{{Compatible Google Assistant ?}}</label>
+        <div class="col-lg-4">
+          <input type="checkbox" class="eqLogicAttr ga_token_input" data-l1key="configuration" data-l2key="has_googleassistant"/>
+        </div>
+      </div>
+	  <div class="form-group ga_token_form">
+        <label class="col-lg-3 control-label">{{Jeton Google Assistant/Home}}</label>
+        <div class="col-lg-4">
+          <textarea type="textarea" rows="2" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="ga_token" placeholder="{{Optionnel - Permet d'avoir accès à certaines configurations Google Home (alarmes, timers...)}}"/>
+        </div>
+      </div>
     </fieldset>
   </form>
 </div>
