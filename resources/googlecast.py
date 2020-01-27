@@ -1721,7 +1721,7 @@ def start(cycle=2):
     jeedom_socket.open()
     logging.info("GLOBAL------Socket started and waiting for messages from Jeedom...")
     #logging.info("GLOBAL------Waiting for messages...")
-    thread.start_new_thread( read_socket, (globals.cycle,))
+    thread.start_new_thread( read_socket, (globals.cycle_event,))
     globals.JEEDOM_COM.send_change_immediate({'started' : 1,'source' : globals.daemonname});
     try:
         generate_warmupnotif()
@@ -1729,7 +1729,7 @@ def start(cycle=2):
         pass
 
     try:
-        while True :
+        while not globals.IS_SHUTTINGDOWN :
             try:
                 current_time = int(time.time())
                 if globals.LEARN_MODE and (globals.LEARN_BEGIN+globals.LEARN_TIMEOUT)  < current_time :
@@ -1743,11 +1743,11 @@ def start(cycle=2):
                     globals.JEEDOM_COM.send_change_immediate({'heartbeat' : 1,'source' : globals.daemonname})
                     globals.LAST_BEAT = current_time
 
-                if globals.LEARN_MODE and not globals.SCAN_PENDING :
-                    thread.start_new_thread( scanner, ('learn',))
-
-                if not globals.SCAN_PENDING and (current_time - globals.SCAN_LAST) > globals.SCAN_FREQUENCY :
-                    thread.start_new_thread( scanner, ('scanner',))
+                if not globals.SCAN_PENDING :
+                    if globals.LEARN_MODE :
+                        thread.start_new_thread( scanner, ('learnmode',))
+                    elif (current_time - globals.SCAN_LAST) > globals.SCAN_FREQUENCY :
+                        thread.start_new_thread( scanner, ('schedule',))
 
                 if (current_time - globals.NOWPLAYING_LAST)>globals.NOWPLAYING_FREQUENCY/2 and not globals.LEARN_MODE:
                     for uuid in globals.GCAST_DEVICES :
@@ -1757,7 +1757,7 @@ def start(cycle=2):
                 time.sleep(cycle)
 
             except Exception as e:
-                logging.error("GLOBAL------Exception on scanner")
+                logging.error("GLOBAL------Exception on main loop")
 
     except KeyboardInterrupt:
         logging.error("GLOBAL------KeyboardInterrupt, shutdown")
@@ -1765,7 +1765,7 @@ def start(cycle=2):
 
 
 def read_socket(cycle):
-    while True :
+    while not globals.IS_SHUTTINGDOWN :
         try:
             global JEEDOM_SOCKET_MESSAGE
             if not JEEDOM_SOCKET_MESSAGE.empty():
@@ -1895,9 +1895,9 @@ def zeroconfMonitoring_stop():
         logging.error("ZEROCONF STOP------Exception on netdiscovery : %s" % str(e))
         logging.debug(traceback.format_exc())
 
-def scanner(name):
+def scanner(name='UNKNOWN SOURCE'):
     try:
-        logging.debug("SCANNER------ Start scanning...")
+        logging.debug("SCANNER------ Start scanning... (" + name + ")")
         globals.SCAN_PENDING = True
         show_memory_usage()
 
@@ -2096,17 +2096,18 @@ def handler(signum=None, frame=None):
 
 def shutdown():
     logging.debug("GLOBAL------Shutdown")
+    globals.IS_SHUTTINGDOWN = True
     logging.debug("GLOBAL------Removing PID file " + str(globals.pidfile))
     try:
         os.remove(globals.pidfile)
     except:
         pass
     try:
+        globals.JEEDOM_COM.send_change_immediate({'stopped' : 1,'source' : globals.daemonname});
         zeroconfMonitoring_stop()
         for uuid in globals.GCAST_DEVICES :
             globals.GCAST_DEVICES[uuid].disconnect()
-        globals.JEEDOM_COM.send_change_immediate({'stopped' : 1,'source' : globals.daemonname});
-        time.sleep(1)
+        time.sleep(0.5)
         jeedom_socket.close()
         logging.debug("GLOBAL------Shutdown completed !")
     except:
@@ -2171,7 +2172,7 @@ if args.ttsgapikey:
 if args.gcttsvoice:
     globals.tts_gapi_voice = args.gcttsvoice
 if args.cycle:
-    globals.cycle = float(args.cycle)
+    globals.cycle_event = float(args.cycle)
 if args.cyclemain:
     globals.cycle_main = float(args.cyclemain)
 if args.cyclefactor:
@@ -2191,7 +2192,7 @@ globals.NOWPLAYING_FREQUENCY = int(globals.NOWPLAYING_FREQUENCY*globals.cycle_fa
 globals.SCAN_FREQUENCY = int(globals.SCAN_FREQUENCY*globals.cycle_factor)
 
 globals.socketport = int(globals.socketport)
-globals.cycle = float(globals.cycle*globals.cycle_factor)
+globals.cycle_event = float(globals.cycle_event*globals.cycle_factor)
 globals.cycle_main = float(globals.cycle_main*globals.cycle_factor)
 
 jeedom_utils.set_log_level(globals.log_level)
@@ -2217,7 +2218,7 @@ else :
     logging.info('GLOBAL------TTS Google API Key (optional) : NOK')
 logging.info('GLOBAL------Cache status : '+str(globals.tts_cacheenabled))
 logging.info('GLOBAL------Callback : '+str(globals.callback))
-logging.info('GLOBAL------Event cycle : '+str(globals.cycle))
+logging.info('GLOBAL------Event cycle : '+str(globals.cycle_event))
 logging.info('GLOBAL------Main cycle : '+str(globals.cycle_main))
 logging.info('GLOBAL------Default status message : '+str(globals.DEFAULT_NOSTATUS))
 logging.info('-----------------------------------------------------')
@@ -2227,7 +2228,7 @@ signal.signal(signal.SIGTERM, handler)
 
 try:
     jeedom_utils.write_pid(str(globals.pidfile))
-    globals.JEEDOM_COM = jeedom_com(apikey = globals.apikey,url = globals.callback,cycle=globals.cycle)
+    globals.JEEDOM_COM = jeedom_com(apikey = globals.apikey,url = globals.callback,cycle=globals.cycle_event)
     if not globals.JEEDOM_COM.test():
         logging.error('GLOBAL------Network communication issues. Please fix your Jeedom network configuration.')
         shutdown()

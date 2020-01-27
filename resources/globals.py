@@ -20,6 +20,8 @@ import os, os.path
 JEEDOM_COM = ''
 JEEDOM_WEB = ''
 
+IS_SHUTTINGDOWN = False
+
 KNOWN_DEVICES = {}
 NOWPLAYING_DEVICES = {}
 GCAST_DEVICES = {}
@@ -56,7 +58,7 @@ DEFAULT_NOSTATUS = ""
 DEFAULT_NODISPLAY = ""
 
 cycle_factor = 2
-cycle = 0.5
+cycle_event = 0.5
 cycle_main = 2
 
 disable_mediastatus = False
