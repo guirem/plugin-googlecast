@@ -83,12 +83,12 @@ Table des matières
       - [Paramètres possibles pour cmd *tts* :](#param-tres-possibles-pour-cmd--tts---)
       - [Paramètres possibles pour cmd *notif* :](#param-tres-possibles-pour-cmd--notif---)
       - [Séquence de commandes](#s-quence-de-commandes)
-      - [Configuration avancée des équipements](#configuration-avanc-e-des--quipements)
-        * [Récupérer une configuration](#r-cup-rer-une-configuration)
-          + [paramètres possibles pour cmd *getconfig* :](#param-tres-possibles-pour-cmd--getconfig---)
-        * [Modifier une configuration](#modifier-une-configuration)
-          + [paramètres possibles pour cmd *setconfig* :](#param-tres-possibles-pour-cmd--setconfig---)
-        * [Commande configuration pré-définies](#commande-configuration-pr--d-finies)
+    + [Configuration des fonctionnalités Google Home/Assistant](#configuration-des-fonctionnalit-s-google-home-assistant)
+      - [Récupérer une configuration](#r-cup-rer-une-configuration)
+        * [paramètres possibles pour cmd *getconfig* :](#param-tres-possibles-pour-cmd--getconfig---)
+      - [Modifier une configuration](#modifier-une-configuration)
+        *[paramètres possibles pour cmd *setconfig* :](#param-tres-possibles-pour-cmd--setconfig---)
+      - [Commande configuration pré-définies](#commande-configuration-pr--d-finies)
     + [Création dune commande *action* de type *Liste*](#cr-ation-dune-commande--action--de-type--liste-)
     + [Création d'une commande *action* pour un webradio pré-enregistrées](#cr-ation-d-une-commande--action--pour-un-webradio-pr--enregistr-es)
     + [Utilisation dans un scénario](#utilisation-dans-un-sc-nario)
@@ -141,8 +141,8 @@ Les paramètres de configuration n'ont généralement pas besoin d'être modifi�
 > - Une clé API est nécessaire qu'il faut avoir créé au préalable (voir [créer un clé API](gcloudttskey.md)).
 > - Il est possible de tester les voix sur la page principale https://cloud.google.com/text-to-speech
 > - L'utilisation est gratuite jusqu'à un certain quota d'utilisation qui est largement suffisant pour une utilisation domotique d'un particulier.
-    + Voix standards (hors WaveNet): Gratuit de 0 à 4 millions de caractères par mois (puis 4 USD/1 million de caractères supplémentaires)
-    + Voix WaveNet: gratuit de 0 à 1 million de caractères par mois (puis 16 USD/1 million de caractères supplémentaires)
+      + Voix standards (hors WaveNet): Gratuit de 0 à 4 millions de caractères par mois (puis 4 USD/1 million de caractères supplémentaires)
+      + Voix WaveNet: gratuit de 0 à 1 million de caractères par mois (puis 16 USD/1 million de caractères supplémentaires)
 
 
 ![Configuration Plugin](../images/configuration_plugin.png "Configuration Plugin")
@@ -466,22 +466,29 @@ ex Commande TTS sur plusieurs google cast en parallèle en s'assurant que le fic
 > **Note**   
 > adding 'uuid' parameter will redirect to this uuid device in new thread. This can be used to send a sequence to several device in one command.
 
-#### Configuration avancée des équipements
+### Configuration des fonctionnalités Google Home/Assistant
+
+Cela permet de récupérer (ou modifier) des informations tel que les alarmes, timers, configuration bluetooth...
 
 > **Important**   
-> Certaines informations tel que les informations sur les alarmes ne sont plus disponibles via ces commandes depuis septembre 2019 suite à une mise à jour du protocol Google Cast.
+> Depuis mi 2019, un jeton d'authorisation est nécessaire afin de pouvoir récupérer ou modifier la plupart de ces configurations.   
 
-##### Récupérer une configuration
+La procédure de récupération des jetons est ici : https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f#the-token
+
+Ce jeton doit être saisi sur la page de configuration de chaque Gooogle Home.
+
+#### Récupérer une configuration
 Certaines configurations peuvent être récupérées dans une commande de type info (*cmd=getconfig*).
 
 Ces commandes de ce type sont rafraichies toutes les 15 minutes ou manuellement via appel de la commande 'refreshconfig' (non visible par défaut)
 
-Une liste est disponible en se connectant sur l'équipement :
-http://IP:8008/setup/eureka_info?options=detail
+La liste non officielles des elements récupérables est disponible sur  https://rithvikvibhu.github.io/GHLocalApi/
 
-Pour plus d'info, voir  https://rithvikvibhu.github.io/GHLocalApi/
+> Note   
+> Quelques information récupérables sans jetons d'authenficiation sont visibles via l'url de l'équipement : http://IP:8008/setup/eureka_info?options=detail
 
-###### paramètres possibles pour cmd *getconfig* :
+
+##### paramètres possibles pour cmd *getconfig* :
 ```
 - value: str - uri base after 'setup/' based on API doc (default is 'eureka_info'). If starts with 'post:', a POST type request will be issued.
 - data: str - json path to be returned separated by '/'. To get several data, separate by ','. Alternatively, JsonPath format can be used ( http://goessner.net/articles/JsonPath).
@@ -508,12 +515,12 @@ cmd=setconfig|value=assistant/set_night_mode_params|data={"enabled": false}
 cmd=setconfig|value=assistant/set_night_mode_params|data={"led_brightness": 0.2}
 ```
 
-##### Modifier une configuration
+#### Modifier une configuration
 Certaines configurations peuvent être modifiées dans une commande de type action (*cmd=setconfig*).
 
 Voir l'api Google sur ce lien pour ce qui est modifiable : https://rithvikvibhu.github.io/GHLocalApi/
 
-###### paramètres possibles pour cmd *setconfig* :
+##### paramètres possibles pour cmd *setconfig* :
 ```
 - value: str - uri base after 'setup/' based on API doc.
 - data: str - json data.
@@ -525,7 +532,7 @@ cmd=setconfig|value=assistant/notifications|data={'notifications_enabled': false
 cmd=setconfig|value=assistant/alarms/volume|data={'volume': 1}
 ```
 
-##### Commande configuration pré-définies
+#### Commande configuration pré-définies
 
 Les commandes suivantes peuvent être utilisées dans une commande 'info' ou scénario (via fonction *getInfoHttpSimple()*) :
 
@@ -838,6 +845,11 @@ Exemple : *app=web|cmd=load_url|value='https://xxxxx.xxxxxxx.com:443/plugins/aut
 #### La clé API pour utiliser TTS 'Google Cloud Text-to-Speech' ne fonctionne plus
 
 Suite à la mise à jour de janvier 2020, il est probable que l'API 'Google Cloud Text-to-Speech' doivent être activée sur l'interface via Google Cloud. Avant cette mise à jour, une autre API était utilisée.
+
+#### Comment récupérer les alamers et timers d'un Google Home
+
+C'est possible mais il est nécessaire d'avoir un jeton d'authentification (https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f) configuré sur la page du googlecast. Voir la section de la doc dédiée.
+
 
 Changelog
 =============================
