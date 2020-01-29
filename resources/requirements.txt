@@ -1,0 +1,9 @@
+setuptools
+requests>=2.21.0
+protobuf
+zeroconf>=0.24.4
+click
+bs4
+six
+tqdm
+websocket-client
