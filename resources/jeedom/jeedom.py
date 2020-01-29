@@ -14,7 +14,6 @@
 # along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import time
 import logging
 import threading
 import _thread as thread
@@ -22,59 +21,67 @@ import requests
 from datetime import datetime
 import collections
 import os
-import socket
 import queue
 import json
 import socketserver as SocketServer
-from socketserver  import (TCPServer, StreamRequestHandler)
+from socketserver import (TCPServer, StreamRequestHandler)
 
 # ------------------------------------------------------------------------------
 
+
 class jeedom_com():
-    def __init__(self,apikey = '',url = '',cycle = 0.5,retry = 3):
+    def __init__(self, apikey='', url='', cycle=0.5, retry=3):
         self.apikey = apikey
         self.url = url
         self.cycle = cycle
         self.retry = retry
         self.changes = {}
-        if cycle > 0 :
+        if cycle > 0:
             self.send_changes_async()
         logging.debug('Init request module v%s' % (str(requests.__version__),))
 
     def send_changes_async(self):
         try:
             if len(self.changes) == 0:
-                resend_changes = threading.Timer(self.cycle, self.send_changes_async)
+                resend_changes = threading.Timer(
+                    self.cycle, self.send_changes_async)
                 resend_changes.start()
                 return
             start_time = datetime.now()
             changes = self.changes
             self.changes = {}
             logging.debug('SENDER------Send to jeedom : '+str(changes))
-            i=0
+            i = 0
             while i < self.retry:
                 try:
-                    r = requests.post(self.url + '?apikey=' + self.apikey, json=changes, timeout=(0.5, 120), verify=False)
+                    r = requests.post(self.url + '?apikey=' + self.apikey,
+                                      json=changes, timeout=(0.5, 120), verify=False)
                     if r.status_code == requests.codes.ok:
                         break
                 except Exception as error:
-                    logging.error('SENDER------Error on send request to jeedom ' + str(error)+' retry : '+str(i)+'/'+str(self.retry))
+                    logging.error('SENDER------Error on send request to jeedom ' +
+                                  str(error)+' retry : '+str(i)+'/'+str(self.retry))
                 i = i + 1
             if r.status_code != requests.codes.ok:
-                logging.error('SENDER------Error on send request to jeedom, return code %s' % (str(r.status_code),))
+                logging.error(
+                    'SENDER------Error on send request to jeedom, return code %s' % (str(r.status_code),))
             dt = datetime.now() - start_time
-            ms = (dt.days * 24 * 60 * 60 + dt.seconds) * 1000 + dt.microseconds / 1000.0
+            ms = (dt.days * 24 * 60 * 60 + dt.seconds) * \
+                1000 + dt.microseconds / 1000.0
             timer_duration = self.cycle - ms
             if timer_duration < 0.1:
                 timer_duration = 0.1
-            resend_changes = threading.Timer(timer_duration, self.send_changes_async)
+            resend_changes = threading.Timer(
+                timer_duration, self.send_changes_async)
             resend_changes.start()
         except Exception as error:
-            logging.error('SENDER------Critical error on  send_changes_async %s' % (str(error),))
-            resend_changes = threading.Timer(self.cycle, self.send_changes_async)
+            logging.error(
+                'SENDER------Critical error on  send_changes_async %s' % (str(error),))
+            resend_changes = threading.Timer(
+                self.cycle, self.send_changes_async)
             resend_changes.start()
 
-    def add_changes(self,key,value):
+    def add_changes(self, key, value):
         if key.find('::') != -1:
             tmp_changes = {}
             changes = value
@@ -87,127 +94,142 @@ class jeedom_com():
             if self.cycle <= 0:
                 self.send_change_immediate(changes)
             else:
-                self.merge_dict(self.changes,changes)
+                self.merge_dict(self.changes, changes)
         else:
             if self.cycle <= 0:
-                self.send_change_immediate({key:value})
+                self.send_change_immediate({key: value})
             else:
                 self.changes[key] = value
 
-    def send_change_immediate(self,change):
-        thread.start_new_thread( self.thread_change, (change,))
+    def send_change_immediate(self, change):
+        thread.start_new_thread(self.thread_change, (change,))
 
-    def send_change_immediate_device(self,uuid, change):
-        thread.start_new_thread( self.thread_change, ({'devices': {uuid: change}},))
+    def send_change_immediate_device(self, uuid, change):
+        thread.start_new_thread(
+            self.thread_change, ({'devices': {uuid: change}},))
 
-    def thread_change(self,change):
+    def thread_change(self, change):
         logging.debug('SENDER------Send to jeedom :  %s' % (str(change),))
-        i=0
+        i = 0
         while i < self.retry:
             try:
-                r = requests.post(self.url + '?apikey=' + self.apikey, json=change, timeout=(0.5, 120), verify=False)
+                r = requests.post(self.url + '?apikey=' + self.apikey,
+                                  json=change, timeout=(0.5, 120), verify=False)
                 if r.status_code == requests.codes.ok:
                     break
             except Exception as error:
-                logging.error('SENDER------Error on send request to jeedom ' + str(error)+' retry : '+str(i)+'/'+str(self.retry))
+                logging.error('SENDER------Error on send request to jeedom ' +
+                              str(error)+' retry : '+str(i)+'/'+str(self.retry))
             i = i + 1
 
-    def set_change(self,changes):
+    def set_change(self, changes):
         self.changes = changes
 
     def get_change(self):
         return self.changes
 
-    def merge_dict(self,d1, d2):
-        for k,v2 in d2.items():
-            v1 = d1.get(k) # returns None if v1 has no value for this key
-            if ( isinstance(v1, collections.Mapping) and
-                 isinstance(v2, collections.Mapping) ):
+    def merge_dict(self, d1, d2):
+        for k, v2 in d2.items():
+            v1 = d1.get(k)  # returns None if v1 has no value for this key
+            if (isinstance(v1, collections.Mapping) and
+                    isinstance(v2, collections.Mapping)):
                 self.merge_dict(v1, v2)
             else:
                 d1[k] = v2
 
     def proxytts(self, ttsengine, ttsmessage, options):
         filecontent = None
-        proxyttsdata = {'ttsproxy': ttsengine, 'ttsmsg': ttsmessage, 'options': options}
+        proxyttsdata = {'ttsproxy': ttsengine,
+                        'ttsmsg': ttsmessage, 'options': options}
         try:
-            response = requests.post(self.url + '?apikey=' + self.apikey, json=proxyttsdata, timeout=4, verify=False)
+            response = requests.post(
+                self.url + '?apikey=' + self.apikey, json=proxyttsdata, timeout=4, verify=False)
             filecontent = response.content
 
             if response.status_code != requests.codes.ok:
                 filecontent = None
-                logging.error('SENDER------PROXYTTS Callback error: %s'% (response.status_code,))
-            else :
-                logging.debug('SENDER------PROXYTTS Using Proxy tts request to jeedom server for ' + ttsengine + ' engine.')
+                logging.error('SENDER------PROXYTTS Callback error: %s' %
+                              (response.status_code,))
+            else:
+                logging.debug(
+                    'SENDER------PROXYTTS Using Proxy tts request to jeedom server for ' + ttsengine + ' engine.')
                 if len(response.content) < 254 and os.path.exists(response.content):
-                    logging.debug('SENDER------PROXYTTS Data returned is a file path. Downloading content now...')
-                    fc = open(response.content,"rb")
+                    logging.debug(
+                        'SENDER------PROXYTTS Data returned is a file path. Downloading content now...')
+                    fc = open(response.content, "rb")
                     filecontent = fc.read()
                     fc.close()
         except Exception as e:
-            logging.error('SENDER------PROXYTTS Callback result as a unknown error: %s. '% str(e))
+            logging.error(
+                'SENDER------PROXYTTS Callback result as a unknown error: %s. ' % str(e))
             filecontent = None
         return filecontent
 
     def test(self):
         try:
-            response = requests.get(self.url + '?apikey=' + self.apikey, verify=False)
+            response = requests.get(
+                self.url + '?apikey=' + self.apikey, verify=False)
             if response.status_code != requests.codes.ok:
-                logging.error('SENDER------Callback error: %s %s. Please check your network configuration page'% (response.status.code, response.status.message,))
+                logging.error('SENDER------Callback error: %s %s. Please check your network configuration page' %
+                              (response.status.code, response.status.message,))
                 return False
         except Exception as e:
-            logging.error('SENDER------Callback result as a unknown error: %s. Please check your network configuration page. '% str(e))
+            logging.error(
+                'SENDER------Callback result as a unknown error: %s. Please check your network configuration page. ' % str(e))
             return False
         return True
 
 # ------------------------------------------------------------------------------
 
+
 class jeedom_utils():
 
     @staticmethod
-    def convert_log_level(level = 'error'):
+    def convert_log_level(level='error'):
         LEVELS = {'debug': logging.DEBUG,
-          'info': logging.INFO,
-          'notice': logging.WARNING,
-          'warning': logging.WARNING,
-          'error': logging.ERROR,
-          'critical': logging.CRITICAL,
-          'none': logging.NOTSET}
+                  'info': logging.INFO,
+                  'notice': logging.WARNING,
+                  'warning': logging.WARNING,
+                  'error': logging.ERROR,
+                  'critical': logging.CRITICAL,
+                  'none': logging.NOTSET}
         return LEVELS.get(level, logging.NOTSET)
 
     @staticmethod
-    def set_log_level(level = 'error'):
+    def set_log_level(level='error'):
         FORMAT = '[%(asctime)-15s][%(levelname)s] : %(message)s'
-        if level=='default' :
-            level='info'
-        if level=='1000' :
-            level='critical'
-        if level=='none' :
-            level='critical'
+        if level == 'default':
+            level = 'info'
+        if level == '1000':
+            level = 'critical'
+        if level == 'none':
+            level = 'critical'
 
-        if level=='debug' :
+        if level == 'debug':
             logging.getLogger("pychromecast").setLevel(logging.ERROR)
             logging.getLogger("plexapi").setLevel(logging.DEBUG)
             logging.getLogger("pydub").setLevel(logging.ERROR)
             logging.getLogger("gtts").setLevel(logging.ERROR)
             logging.getLogger("requests").setLevel(logging.ERROR)
             logging.getLogger("urllib3").setLevel(logging.ERROR)
-            logging.getLogger("requests.packages.urllib3").setLevel(logging.ERROR)
-        else :
+            logging.getLogger(
+                "requests.packages.urllib3").setLevel(logging.ERROR)
+        else:
             logging.getLogger("pychromecast").setLevel(logging.CRITICAL)
             logging.getLogger("plexapi").setLevel(logging.ERROR)
             logging.getLogger("pydub").setLevel(logging.CRITICAL)
             logging.getLogger("gtts").setLevel(logging.CRITICAL)
             logging.getLogger("requests").setLevel(logging.CRITICAL)
             logging.getLogger("urllib3").setLevel(logging.CRITICAL)
-            logging.getLogger("requests.packages.urllib3").setLevel(logging.CRITICAL)
+            logging.getLogger("requests.packages.urllib3").setLevel(
+                logging.CRITICAL)
 
-        if level=='none' :
+        if level == 'none':
             logging.getLogger().disabled = True
-        else :
-            #logging.getLogger().disabled = False
-            logging.basicConfig(level=jeedom_utils.convert_log_level(level),format=FORMAT, datefmt="%Y-%m-%d %H:%M:%S")
-
+        else:
+            # logging.getLogger().disabled = False
+            logging.basicConfig(level=jeedom_utils.convert_log_level(
+                level), format=FORMAT, datefmt="%Y-%m-%d %H:%M:%S")
 
     @staticmethod
     def write_pid(path):
@@ -222,32 +244,38 @@ class jeedom_utils():
 
 JEEDOM_SOCKET_MESSAGE = queue.Queue()
 
+
 class jeedom_socket_handler(StreamRequestHandler):
     def handle(self):
         global JEEDOM_SOCKET_MESSAGE
-        logging.debug("SOCKETHANDLER------Client connected to [%s:%d]" % self.client_address)
+        logging.debug(
+            "SOCKETHANDLER------Client connected to [%s:%d]" % self.client_address)
         lg = self.rfile.readline().strip().decode("ascii")
         JEEDOM_SOCKET_MESSAGE.put(lg)
-        if logging.getLogger().isEnabledFor(logging.DEBUG) :
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
             try:
                 lgdebug = json.loads(lg)
                 if lgdebug and lgdebug['apikey']:
                     lgdebug['apikey'] = 'XXXXXXXXXXXXX'
-                logging.debug("SOCKETHANDLER------Message read from socket: " + json.dumps(lgdebug))
-            except Exception as e:
-                logging.debug("SOCKETHANDLER------Message read from socket: " + lg)
+                logging.debug(
+                    "SOCKETHANDLER------Message read from socket: " + json.dumps(lgdebug))
+            except Exception:
+                logging.debug(
+                    "SOCKETHANDLER------Message read from socket: " + lg)
         self.netAdapterClientConnected = False
-        logging.debug("SOCKETHANDLER------Client disconnected from [%s:%d]" % self.client_address)
+        logging.debug(
+            "SOCKETHANDLER------Client disconnected from [%s:%d]" % self.client_address)
 
 
 class jeedom_socket():
-    def __init__(self,address='localhost', port=55000):
+    def __init__(self, address='localhost', port=55000):
         self.address = address
         self.port = port
         SocketServer.TCPServer.allow_reuse_address = True
 
     def open(self):
-        self.netAdapter = TCPServer((self.address, self.port), jeedom_socket_handler)
+        self.netAdapter = TCPServer(
+            (self.address, self.port), jeedom_socket_handler)
         if self.netAdapter:
             logging.debug("SOCKETHANDLER------Socket interface started")
             threading.Thread(target=self.loopNetServer, args=()).start()
@@ -256,7 +284,8 @@ class jeedom_socket():
 
     def loopNetServer(self):
         logging.debug("SOCKETHANDLER------LoopNetServer Thread started")
-        logging.debug("SOCKETHANDLER------Listening on: [%s:%d]" % (self.address, self.port))
+        logging.debug(
+            "SOCKETHANDLER------Listening on: [%s:%d]" % (self.address, self.port))
         self.netAdapter.serve_forever()
         logging.debug("SOCKETHANDLER------LoopNetServer Thread stopped")
 
