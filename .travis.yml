@@ -1,19 +1,19 @@
 matrix:
   include:
-    - language:  php
-      php: 5.6
+    - language: php
+      php: 7.2
       before_script:
-          - find . -type f -name *.php | xargs -n1 php -l
-      script:        
-          - cd ${TRAVIS_BUILD_DIR}
-          - pwd
+        - find . -type f -name *.php | xargs -n1 php -l
+      script:
+        - cd ${TRAVIS_BUILD_DIR}
+        - pwd
       after_success:
-          - cd ${TRAVIS_BUILD_DIR}
-          - ls -latr
+        - cd ${TRAVIS_BUILD_DIR}
+        - ls -latr
       after_failure:
-          - cd ${TRAVIS_BUILD_DIR}
-          - ls -latr
-    
+        - cd ${TRAVIS_BUILD_DIR}
+        - ls -latr
+
     - language: python
       python: 2.7
       install:
@@ -30,6 +30,5 @@ matrix:
       script:
         - gem install mdl
         - cd ${TRAVIS_BUILD_DIR}
-        - ./tests/tools/setCustomMDWarnings.sh 
         - mdl -r $MDLWAR *.md docs/fr_FR/*.md
-        - ./tests/tools/spellCheckMD.sh 
+        - ./tests/tools/spellCheckMD.sh

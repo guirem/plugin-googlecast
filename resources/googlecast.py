@@ -83,7 +83,7 @@ except ImportError:
     pass
 
 try:
-    from jeedom.jeedom import jeedom_com, jeedom_socket, jeedom_utils
+    from jeedom.jeedom import jeedom_com, jeedom_socket, jeedom_utils, JEEDOM_SOCKET_MESSAGE
 except ImportError:
     print("Error: importing module from jeedom folder")
     sys.exit(1)
@@ -1920,7 +1920,7 @@ def start(cycle=2):
 def read_socket(cycle):
     while not globals.IS_SHUTTINGDOWN:
         try:
-            global JEEDOM_SOCKET_MESSAGE
+            # global JEEDOM_SOCKET_MESSAGE
             if not JEEDOM_SOCKET_MESSAGE.empty():
                 logging.debug(
                     "SOCKET-READ------Message received in socket JEEDOM_SOCKET_MESSAGE")
