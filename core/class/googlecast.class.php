@@ -916,7 +916,7 @@ class googlecast extends eqLogic
 
     public static function dependancy_runlightinstall()
     {
-        $shellret = shell_exec(system::getCmdSudo() . __DIR__ . '/../../resources/update.sh' . ' ' . __DIR__ . '/../../resources/requirements.txt 2>&1');
+        $shellret = shell_exec(system::getCmdSudo() . '/bin/bash ' . __DIR__ . '/../../resources/update.sh' . ' ' . __DIR__ . '/../../resources/requirements.txt 2>&1');
         log::add('googlecast', 'debug', "Light dependency update script logs :\n" . $shellret);
     }
 
