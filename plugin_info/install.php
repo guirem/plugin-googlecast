@@ -18,118 +18,121 @@
 
 require_once dirname(__FILE__) . '/../../../core/php/core.inc.php';
 
-function get_plugin_version() {
-	$data = json_decode(file_get_contents(dirname(__FILE__) . '/info.json'), true);
-    if (!is_array($data)) {
-        $core_version = 0;
-    }
-    try {
-        $core_version = $data['version'];
-    } catch (\Exception $e) {
-        $core_version = 0;
-    }
-	return $core_version;
-}
 
-function googlecast_update() {
-	linkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
+function googlecast_update()
+{
+    $daemonInfo = googlecast::deamon_info();
+    if ($daemonInfo['state'] == 'ok') {
+        googlecast::deamon_stop();
+    }
+
+    linkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
     linkTemplate('dashboard/cmd.action.message.googlecast_speak.html');
 
-	$core_version = get_plugin_version();
-	config::save('plugin_version', $core_version, 'googlecast');
+    $core_version = googlecast::getVersion();
+    config::save('plugin_version', $core_version, 'googlecast');
 
     createHtaccess();
 
-    if ( config::byKey('tts_engine', 'googlecast') == 'gttsapidev' ) {  // remove dev version of gtts
-		config::save('tts_engine','gttsapi', 'googlecast');
-	}
-    if ( config::byKey('gctts_voice', 'googlecast') == '' ) {
-		config::save('gctts_voice','fr-FR-Standard-A', 'googlecast');
-	}
+    if (config::byKey('tts_engine', 'googlecast') == 'gttsapidev') {  // remove dev version of gtts
+        config::save('tts_engine', 'gttsapi', 'googlecast');
+    }
+    if (config::byKey('gctts_voice', 'googlecast') == '') {
+        config::save('gctts_voice', 'fr-FR-Standard-A', 'googlecast');
+    }
 
-	foreach (googlecast::byType('googlecast') as $googlecast) {
-		try {
-			$googlecast->save();
-		} catch (Exception $e) {}
-	}
-	message::add('googlecast', 'Mise à jour du plugin Google Cast terminé (version ' . $core_version . ').', null, null);
+    foreach (googlecast::byType('googlecast') as $googlecast) {
+        try {
+            $googlecast->save();
+        } catch (Exception $e) {
+        }
+    }
+
+    //$cache = cache::byKey('dependancy' . 'googlecast');
+    //$cache->remove();
+    googlecast::dependancy_runlightinstall();
+
+    message::add('googlecast', 'Mise à jour du plugin Google Cast terminé (version ' . $core_version . ').', null, null);
+    googlecast::deamon_start();
 }
 
-function googlecast_install() {
-	$core_version = get_plugin_version();
-	config::save('plugin_version', $core_version, 'googlecast');
-	if ( config::byKey('socketport', 'googlecast') == '' ) {
-		config::save('socketport','55012', 'googlecast');
-	}
-	if ( config::byKey('fixdocker', 'googlecast') == '' ) {
-		config::save('fixdocker','0', 'googlecast');
-	}
-	if ( config::byKey('cyclefactor', 'googlecast') == '' ) {
-		config::save('cyclefactor','1', 'googlecast');
-	}
-	if ( config::byKey('tts_externalweb', 'googlecast') == '' ) {
-		config::save('tts_externalweb','0', 'googlecast');
-	}
-    if ( config::byKey('tts_language', 'googlecast') == '' ) {
-		config::save('tts_language','fr-FR', 'googlecast');
-	}
-    if ( config::byKey('gctts_voice', 'googlecast') == '' ) {
-		config::save('gctts_voice','fr-FR-Standard-A', 'googlecast');
-	}
-    if ( config::byKey('tts_engine', 'googlecast') == '' ) {
-		config::save('tts_engine','jeedomtts', 'googlecast');
-	}
-    if ( config::byKey('tts_engine', 'googlecast') == 'gttsapidev' ) {  // remove dev version of gtts
-		config::save('tts_engine','gttsapi', 'googlecast');
-	}
-	if ( config::byKey('tts_speed', 'googlecast') == '' ) {
-		config::save('tts_speed','1.2', 'googlecast');
-	}
-	if ( config::byKey('tts_cleancache_days', 'googlecast') == '' ) {
-		config::save('tts_cleancache_days','7', 'googlecast');
-	}
-    if ( config::byKey('tts_disablecache', 'googlecast') == '' ) {
-		config::save('tts_disablecache','0', 'googlecast');
-	}
+function googlecast_install()
+{
+    $core_version = googlecast::getVersion();
+    config::save('plugin_version', $core_version, 'googlecast');
+    if (config::byKey('socketport', 'googlecast') == '') {
+        config::save('socketport', '55012', 'googlecast');
+    }
+    if (config::byKey('fixdocker', 'googlecast') == '') {
+        config::save('fixdocker', '0', 'googlecast');
+    }
+    if (config::byKey('cyclefactor', 'googlecast') == '') {
+        config::save('cyclefactor', '1', 'googlecast');
+    }
+    if (config::byKey('tts_externalweb', 'googlecast') == '') {
+        config::save('tts_externalweb', '0', 'googlecast');
+    }
+    if (config::byKey('tts_language', 'googlecast') == '') {
+        config::save('tts_language', 'fr-FR', 'googlecast');
+    }
+    if (config::byKey('gctts_voice', 'googlecast') == '') {
+        config::save('gctts_voice', 'fr-FR-Standard-A', 'googlecast');
+    }
+    if (config::byKey('tts_engine', 'googlecast') == '') {
+        config::save('tts_engine', 'jeedomtts', 'googlecast');
+    }
+    if (config::byKey('tts_engine', 'googlecast') == 'gttsapidev') {  // remove dev version of gtts
+        config::save('tts_engine', 'gttsapi', 'googlecast');
+    }
+    if (config::byKey('tts_speed', 'googlecast') == '') {
+        config::save('tts_speed', '1.2', 'googlecast');
+    }
+    if (config::byKey('tts_cleancache_days', 'googlecast') == '') {
+        config::save('tts_cleancache_days', '7', 'googlecast');
+    }
+    if (config::byKey('tts_disablecache', 'googlecast') == '') {
+        config::save('tts_disablecache', '0', 'googlecast');
+    }
 
-	linkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
+    linkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
     linkTemplate('dashboard/cmd.action.message.googlecast_speak.html');
     createHtaccess();
 
-	message::removeAll('googlecast');
+    message::removeAll('googlecast');
     message::add('googlecast', 'Installation du plugin Google Cast terminé (version ' . $core_version . ').', null, null);
 }
 
-function googlecast_remove() {
-	unlinkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
+function googlecast_remove()
+{
+    unlinkTemplate('dashboard/cmd.info.string.googlecast_playing.html');
     unlinkTemplate('dashboard/cmd.action.message.googlecast_speak.html');
 }
 
-function linkTemplate($templateFilename) {
-	#log::add('googlecast','info',"Création du lien sur template " . $templateFilename);
-	$pathSrc = dirname(__FILE__) . '/../core/template/'.$templateFilename;
-	$pathDest = dirname(__FILE__) . '/../../../core/template/'.$templateFilename;
+function linkTemplate($templateFilename)
+{
+    $pathSrc = dirname(__FILE__) . '/../core/template/'.$templateFilename;
+    $pathDest = dirname(__FILE__) . '/../../../core/template/'.$templateFilename;
 
-	if (!file_exists($pathDest)) {
-		shell_exec('ln -s '.$pathSrc. ' '. $pathDest);
-	}
+    if (!file_exists($pathDest)) {
+        shell_exec('ln -s '.$pathSrc. ' '. $pathDest);
+    }
 }
 
-function createHtaccess() {
-	$htaccess = dirname(__FILE__) . '/../.htaccess';
+function createHtaccess()
+{
+    $htaccess = dirname(__FILE__) . '/../.htaccess';
 
-	if (!file_exists($htaccess)) {
+    if (!file_exists($htaccess)) {
         $content = "Options +FollowSymLinks\n";
         file_put_contents($htaccess, $content);
-	}
+    }
 }
 
-function unlinkTemplate($templateFilename) {
-	#log::add('googlecast','info',"Suppression du lien du template " . $templateFilename);
-	$path = dirname(__FILE__) . '/../../../core/template/'.$templateFilename;
+function unlinkTemplate($templateFilename)
+{
+    $path = dirname(__FILE__) . '/../../../core/template/'.$templateFilename;
 
-	if (file_exists($path)) {
-		unlink($path);
-	}
+    if (file_exists($path)) {
+        unlink($path);
+    }
 }
-?>
