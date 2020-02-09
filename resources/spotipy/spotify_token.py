@@ -1,58 +1,80 @@
 """Utility module that helps get a webplayer access token"""
 import os
 import requests
-import threading
-import time
-import logging
+from bs4 import BeautifulSoup
+import json
 
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) \
-AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) \
+AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36"
+
+# source : https://github.com/enriquegh/spotify-webplayer-token
+
+def _get_csrf(session, cookies):
+    """ Get CSRF token for Spotify login. """
+    headers = {'user-agent': USER_AGENT}
+
+    response = session.get("https://accounts.spotify.com/login",
+                           headers=headers, cookies=cookies)
+    response.raise_for_status()
+
+    return response.cookies['csrf_token']
 
 
-class SpotifyWpToken():
+# pylint: disable=too-many-arguments
+def _login(session, cookies, username, password, csrf_token):
+    """ Logs in with CSRF token and cookie within session. """
+    headers = {'user-agent': USER_AGENT}
 
-    def __init__(self, username, password):
-        self.__value__ = None
-        self.status = threading.Event()
-        self.username = username
-        self.password = password
-        threading.Thread(target=self.__fetch__).start() #run in parallel
+    data = {"remember": False, "username": username, "password": password,
+            "csrf_token": csrf_token}
 
-    def __fetch__(self):
-        start_time = time.time()
+    response = session.post("https://accounts.spotify.com/api/login",
+                            data=data, cookies=cookies, headers=headers)
 
-        try:
-            GOTO = ["https://accounts.spotify.com/en/login", "https://accounts.spotify.com/api/login", "https://open.spotify.com/browse"]
+    response.raise_for_status()
 
-            browser_session = requests.session()
-            browser_session.cookies.set('__bon' , 'MHwwfDE0NTYxNzA5NzV8NjExNTkxODA5NTB8MXwxfDF8MQ==', domain='accounts.spotify.com')
-            headers = { 'User-Agent': USER_AGENT }
 
-            #1. get csrf
-            response = browser_session.get(GOTO[0], headers=headers)
-            response.raise_for_status()
-            csrf_token = browser_session.cookies['csrf_token']
+def _get_access_token(session, cookies):
+    """ Gets access token after login has been successful. """
+    headers = {'user-agent': USER_AGENT}
 
-            #2. Login
-            login_data = dict(username=self.username, password=self.password, csrf_token=csrf_token)
-            headers['Referer'] = GOTO[0]
-            response = browser_session.post(GOTO[1], data=login_data, headers=headers)
-            response.raise_for_status()
+    response = session.get("https://open.spotify.com/browse",
+                           headers=headers, cookies=cookies)
+    response.raise_for_status()
+    data = response.content.decode("utf-8")
 
-            #3. get token
-            response = browser_session.get(GOTO[2], headers=headers)
-            response.raise_for_status()
-            self.__value__ = browser_session.cookies['wp_access_token']
+    xml_tree = BeautifulSoup(data, 'lxml')
+    script_node = xml_tree.find("script", id="config")
+    config = json.loads(script_node.string)
 
-        except Exception as e:
-            logging.error(e)
+    access_token = config['accessToken']
+    expires_timestamp = config['accessTokenExpirationTimestampMs']
+    expiration_date = int(expires_timestamp) // 1000
 
-        self.status.set() #unlock
-        logging.info ("wp_access_token fetch took [%s] seconds", ( time.time() - start_time ))
+    return access_token, expiration_date
 
-    @property
-    def value(self):
-        logging.debug ( "Waiting for wp_access_token..." )
-        self.status.wait(10) #wait for lock
-        logging.debug ( "Received wp_access_token [%s]", self.__value__)
-        return self.__value__
+
+
+def start_session(username=None, password=None):
+    """ Starts session to get access token. """
+
+    # arbitrary value and can be static
+    cookies = {"__bon": "MHwwfC01ODc4MjExMzJ8LTI0Njg4NDg3NTQ0fDF8MXwxfDE="}
+
+    if username is None:
+        username = os.getenv("SPOTIFY_USERNAME")
+
+    if password is None:
+        password = os.getenv("SPOTIFY_PASS")
+
+    if username is None or password is None:
+        raise Exception("No username or password")
+
+    session = requests.Session()
+    token = _get_csrf(session, cookies)
+
+    _login(session, cookies, username, password, token)
+    access_token, expiration_date = _get_access_token(session, cookies)
+
+    data = [access_token, expiration_date]
+    return data

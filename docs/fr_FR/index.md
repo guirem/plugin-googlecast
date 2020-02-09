@@ -1,10 +1,8 @@
-Plugin GoogleCast (googlecast)
-=============================
+# Plugin GoogleCast (googlecast)
 
 ![Logo plugin](../images/logoplugin.png "Logo plugin")
 
 Plugin pour commander les équipements compatibles Google Cast et Google Assistant.
-
 
 **Fonctionnalités :**
 
@@ -17,25 +15,26 @@ Plugin pour commander les équipements compatibles Google Cast et Google Assista
 - Affichage de la lecture en cours
 - Text To Speech (TTS)
 - Pour les équipements 'Google Assistant' (ex: Google Home)
-    - DoNotDisturb (on/off)
-    - recupération/configuration d'autres paramètres
-
+  - DoNotDisturb (on/off)
+  - recupération/configuration d'autres paramètres
 
 ![Logo plugin](../images/chromecast.png "Chromecast")
 
 **Modèles compatibles Google Cast**
+
 - Chromecast Audio/Video
 - Google Home (ou compatible Google Assistant)
 - Android TV, Nexus Player, TV (Vizio, Sharp, Sony, Toshiba, Philips)
 - Soundbars and speakers (Vizio, Sony, LG, Philips
-B&O Play, Grundig, Polk Audio, Bang & Olufsen, Onkyo, Pioneer...)
-- Autres modèles labelisés *Google Cast*
+  B&O Play, Grundig, Polk Audio, Bang & Olufsen, Onkyo, Pioneer...)
+- Autres modèles labelisés _Google Cast_
 - Certaines Box internet (ex: Bouygues)
 
 ![GoogleCast Logo](../images/googlecast_logo.png "GoogleCast Logo")
 ![Android TV](../images/tv.png "Android TV")
 
 **Autres liens**
+
 - Wikipedia <a target="_blank" href="https://en.wikipedia.org/wiki/Google_Cast">GoogleCast</a>
 - <a target="_blank" href="https://en.wikipedia.org/wiki/List_of_apps_with_Google_Cast_support">Applications</a> pouvant diffuser sur un équipement GoogleCast
 
@@ -43,75 +42,88 @@ B&O Play, Grundig, Polk Audio, Bang & Olufsen, Onkyo, Pioneer...)
 
 ![Summary](../images/summary.png "Summary")
 
-Dashboard
-=======================
+# Dashboard
 
 ![Visuel du dashboard](../images/dashboard.png "Visuel du dashboard")
 ![Visuel du dashboard 2](../images/dashboard2.png "Visuel du dashboard 2")
 
-Quick Start
-=======================
+# Quick Start
 
 Le plugin est normalement fonctionnel dès l'installation avec le paramétrage par défaut.
 
 En quelques étapes :
+
 1. Installer le plugin du market, les dépendances puis démarrer le démon,
 2. Lancer un scan des Google Cast disponibles sur le réseau,
 3. Sauvegarder les équipements trouvés,
 4. Aller sur le dashboard et tester les boutons 'démo' (media, web...),
 5. Pour changer/adapter le paramétrage, lire le reste de la documentation.
 
-Table des matières
-=======================
+# Table des matières 
 
-- [Plugin GoogleCast (googlecast)](#plugin-googlecast--googlecast-)
+- [Plugin GoogleCast (googlecast)](#plugin-googlecast-googlecast)
 - [Dashboard](#dashboard)
 - [Quick Start](#quick-start)
-- [Table des matières](#toble-des-matieres)
+- [Table des matières](#table-des-mati%c3%a8res)
 - [Configuration du plugin](#configuration-du-plugin)
-- [Configuration des équipements](#configuration-des--quipements)
-    + [Onglet Commandes](#onglet-commandes)
-    + [Afficheur Lecture en cours (widget)](#afficheur-lecture-en-cours--widget-)
-    + [Widget TTS pour saisie de texte et control du volume](#widget-tts-pour-saisie-de-texte-et-control-du-volume)
-- [Commandes personnalisées](#commandes-personnalis-es)
-    + [Applications spéciales](#applications-sp-ciales)
-    + [Commandes avancées](#commandes-avanc-es)
+- [Configuration des équipements](#configuration-des-%c3%a9quipements)
+    - [Onglet Commandes](#onglet-commandes)
+    - [Afficheur Lecture en cours (widget)](#afficheur-lecture-en-cours-widget)
+    - [Widget TTS pour saisie de texte et control du volume](#widget-tts-pour-saisie-de-texte-et-control-du-volume)
+- [Commandes personnalisées](#commandes-personnalis%c3%a9es)
+    - [Applications spéciales](#applications-sp%c3%a9ciales)
+    - [Commandes avancées](#commandes-avanc%c3%a9es)
       - [Syntaxe des commandes brutes](#syntaxe-des-commandes-brutes)
-      - [Paramètres possibles pour *play_media* en mode *media* :](#param-tres-possibles-pour--play-media--en-mode--media---)
-      - [Paramètres possibles pour *load_url* en mode *web* :](#param-tres-possibles-pour--load-url--en-mode--web---)
-      - [Paramètres possibles pour *play_media* en mode *plex* :](#param-tres-possibles-pour--play-media--en-mode--plex---)
-      - [Paramètres possibles pour cmd *tts* :](#param-tres-possibles-pour-cmd--tts---)
-      - [Paramètres possibles pour cmd *notif* :](#param-tres-possibles-pour-cmd--notif---)
-      - [Séquence de commandes](#s-quence-de-commandes)
-      - [Configuration avancée des équipements](#configuration-avanc-e-des--quipements)
-        * [Récupérer une configuration](#r-cup-rer-une-configuration)
-          + [paramètres possibles pour cmd *getconfig* :](#param-tres-possibles-pour-cmd--getconfig---)
-        * [Modifier une configuration](#modifier-une-configuration)
-          + [paramètres possibles pour cmd *setconfig* :](#param-tres-possibles-pour-cmd--setconfig---)
-        * [Commande configuration pré-définies](#commande-configuration-pr--d-finies)
-    + [Création dune commande *action* de type *Liste*](#cr-ation-dune-commande--action--de-type--liste-)
-    + [Création d'une commande *action* pour un webradio pré-enregistrées](#cr-ation-d-une-commande--action--pour-un-webradio-pr--enregistr-es)
-    + [Utilisation dans un scénario](#utilisation-dans-un-sc-nario)
-      - [Avec commande dédiée *Custom Cmd*](#avec-commande-d-di-e--custom-cmd-)
+      - [Paramètres possibles pour _play_media_ en mode _media_ :](#param%c3%a8tres-possibles-pour-playmedia-en-mode-media)
+      - [Paramètres possibles pour _load_url_ en mode _web_ :](#param%c3%a8tres-possibles-pour-loadurl-en-mode-web)
+      - [Paramètres possibles pour _play_media_ en mode _plex_ :](#param%c3%a8tres-possibles-pour-playmedia-en-mode-plex)
+      - [Paramètres possibles pour _play_media_ en mode _spotify_ (experimental) :](#param%c3%a8tres-possibles-pour-playmedia-en-mode-spotify-experimental)
+      - [Paramètres possibles pour cmd _tts_ :](#param%c3%a8tres-possibles-pour-cmd-tts)
+      - [Paramètres possibles pour cmd _notif_ :](#param%c3%a8tres-possibles-pour-cmd-notif)
+      - [Séquence de commandes](#s%c3%a9quence-de-commandes)
+    - [Configuration des fonctionnalités Google Home/Assistant](#configuration-des-fonctionnalit%c3%a9s-google-homeassistant)
+      - [Récupérer une configuration](#r%c3%a9cup%c3%a9rer-une-configuration)
+        - [paramètres possibles pour cmd _getconfig_ :](#param%c3%a8tres-possibles-pour-cmd-getconfig)
+      - [Modifier une configuration](#modifier-une-configuration)
+        - [paramètres possibles pour cmd _setconfig_ :](#param%c3%a8tres-possibles-pour-cmd-setconfig)
+      - [Commande configuration pré-définies](#commande-configuration-pr%c3%a9-d%c3%a9finies)
+    - [Création dune commande _action_ de type _Liste_](#cr%c3%a9ation-dune-commande-action-de-type-liste)
+    - [Création d'une commande _action_ pour un webradio pré-enregistrées](#cr%c3%a9ation-dune-commande-action-pour-un-webradio-pr%c3%a9-enregistr%c3%a9es)
+    - [Utilisation dans un scénario](#utilisation-dans-un-sc%c3%a9nario)
+      - [Avec commande dédiée _Custom Cmd_](#avec-commande-d%c3%a9di%c3%a9e-custom-cmd)
       - [Avec bloc code php](#avec-bloc-code-php)
-    + [Utilisation avec interactions et IFTTT](#utilisation-avec-interactions-et-ifttt)
+    - [Utilisation avec interactions et IFTTT](#utilisation-avec-interactions-et-ifttt)
       - [Interactions](#interactions)
-      - [Réponse type ask](#r-ponse-type--ask-)
+      - [Réponse type _ask_](#r%c3%a9ponse-type-ask)
       - [Custom CMD](#custom-cmd)
-- [Limitations et bug connus](#limitations-et-bug-connus)
+- [Limitations et bugs connus](#limitations-et-bugs-connus)
 - [FAQ](#faq)
+      - [Aucune détection lors du scan](#aucune-d%c3%a9tection-lors-du-scan)
+      - [Aucune commande ne semble fonctionner](#aucune-commande-ne-semble-fonctionner)
+      - [Certaines commandes ne fonctionnent pas](#certaines-commandes-ne-fonctionnent-pas)
+      - [Les dépendances ne s'installent pas](#les-d%c3%a9pendances-ne-sinstallent-pas)
+      - [Les dépendances sont 'ok' mais le démon ne se lance pas](#les-d%c3%a9pendances-sont-ok-mais-le-d%c3%a9mon-ne-se-lance-pas)
+      - [Le Text To Speech (TTS) ne fonctionne pas](#le-text-to-speech-tts-ne-fonctionne-pas)
+      - [Le Text To Speech (TTS) fonctionne mais a des coupures pendant le message ou se termine trop tôt](#le-text-to-speech-tts-fonctionne-mais-a-des-coupures-pendant-le-message-ou-se-termine-trop-t%c3%b4t)
+      - [Les fichiers nouvellement placés dans le repertoire 'localmedia' ne fonctionnent pas](#les-fichiers-nouvellement-plac%c3%a9s-dans-le-repertoire-localmedia-ne-fonctionnent-pas)
+      - [Diffuser Jeedom sans authentification sur un Google Cast](#diffuser-jeedom-sans-authentification-sur-un-google-cast)
+      - [La commande est tronquée au dela de 128 caractères](#la-commande-est-tronqu%c3%a9e-au-dela-de-128-caract%c3%a8res)
+      - [Récupérer une clé API pour utiliser TTS 'Google Cloud Text-to-Speech'](#r%c3%a9cup%c3%a9rer-une-cl%c3%a9-api-pour-utiliser-tts-google-cloud-text-to-speech)
+      - [La clé API pour utiliser TTS 'Google Cloud Text-to-Speech' ne fonctionne plus](#la-cl%c3%a9-api-pour-utiliser-tts-google-cloud-text-to-speech-ne-fonctionne-plus)
+      - [Comment récupérer les alamers et timers d'un Google Home](#comment-r%c3%a9cup%c3%a9rer-les-alamers-et-timers-dun-google-home)
 - [Changelog](#changelog)
 
-Configuration du plugin
-=======================
+# Configuration du plugin
 
 Après téléchargement du plugin :
+
 - Activer le plugin
 - Lancer l'installation des dépendances
 - Niveau de log recommandé : info
 - Lancer le démon.
 
 Les paramètres de configuration n'ont généralement pas besoin d'être modifiés
+
 - **Démon**
   - Port du socket interne de communication. Ne modifier que si nécessaire (ex: s'il est déjà pris par un autres plugin)
   - Configuration spéciale (eg: Docker, VM). Ne modifier que si ça ne fonctionne pas sans l'option.
@@ -129,28 +141,29 @@ Les paramètres de configuration n'ont généralement pas besoin d'être modifi�
 - **Notifications**
   - Désactiver notifs pour nouveaux Google Cast : ce sont des notifications lors de la découverte de nouveaux Google Cast non configurés
 
-> **Notes pour TTS (Text To Speech)**  
+> **Notes pour TTS (Text To Speech)**
+>
 > - Jeedom TTS est le moteur TTS utilisé par Jeedom. Cela rend compatible l'utilisation du plugin officiel 'Song'. Il ne nécessite pas de connexion internet.
 > - TTSWebserveur nécessite l'installation et configuration d'un autre plugin dédié ('TTS Web Server' - payant).
 > - PicoTTS ne nécessite pas de connexion internet, l'API Google Translate nécessite un accès web et le rendu est meilleur.
 > - Un mécanisme de cache permet de ne générer le rendu sonore que s'il n'existe pas déjà en mémoire (RAM). La cache est donc supprimé au redémarrage du serveur.
 > - En cas d'échec sur un des moteurs autre que picotts (ex: problème de connexion internet), la commande sera lancée via picotts.
 
-> **Notes sur le moteur 'Google Cloud Text-to-Speech'**  
+> **Notes sur le moteur 'Google Cloud Text-to-Speech'**
+>
 > - C'est le moteur TTS de Google (https://cloud.google.com/text-to-speech). Il est entre autres utilisé par la voix de Google Assistant. La qualité est bien supréieure aux autres moteurs TTS.
 > - Une clé API est nécessaire qu'il faut avoir créé au préalable (voir [créer un clé API](gcloudttskey.md)).
 > - Il est possible de tester les voix sur la page principale https://cloud.google.com/text-to-speech
 > - L'utilisation est gratuite jusqu'à un certain quota d'utilisation qui est largement suffisant pour une utilisation domotique d'un particulier.
-    + Voix standards (hors WaveNet): Gratuit de 0 à 4 millions de caractères par mois (puis 4 USD/1 million de caractères supplémentaires)
-    + Voix WaveNet: gratuit de 0 à 1 million de caractères par mois (puis 16 USD/1 million de caractères supplémentaires)
 
+      + Voix standards (hors WaveNet): Gratuit de 0 à 4 millions de caractères par mois (puis 4 USD/1 million de caractères supplémentaires)
+      + Voix WaveNet: gratuit de 0 à 1 million de caractères par mois (puis 16 USD/1 million de caractères supplémentaires)
 
 ![Configuration Plugin](../images/configuration_plugin.png "Configuration Plugin")
 
-Configuration des équipements
-=============================
+# Configuration des équipements
 
-La configuration des équipements Google Cast est accessible à partir du menu *Plugins > Multimedia > Google Cast*.
+La configuration des équipements Google Cast est accessible à partir du menu _Plugins > Multimedia > Google Cast_.
 
 ![Configuration](../images/configuration.png "Configuration")
 
@@ -158,7 +171,7 @@ Une fois les équipements branchés, lancer un scan pour les détecter et les aj
 
 La vue 'Santé'' permet d'avoir une vue synthétique des équipements et de leurs états.
 
-> **Note**    
+> **Note**  
 > Il n'est pas possible d'ajouter manuellement un Google Cast
 
 ### Onglet Commandes
@@ -170,22 +183,23 @@ Vous pouvez également ajouter de nouvelles commandes (voir section ci-dessous).
 ![Alt text](../images/commands.png "Custom command")
 
 Liste des commandes non visibles par défaut :
-- *Statut Player* : info affichant l'état de lecture Média (ex: PLAYING/PAUSED) ;
-- *Titre* : Titre du média en cours ;
-- *Artist* : Artist du média en cours ;
-- *Custom Cmd* : Ce composant est destiné à être utilisé via un scénario ou pour test (voir section [Utilisation dans un scénario](#utilisation-dans-un-scénario));
-- *Pincode* : pincode pour association rapide (exemple de configuration avancée)
+
+- _Statut Player_ : info affichant l'état de lecture Média (ex: PLAYING/PAUSED) ;
+- _Titre_ : Titre du média en cours ;
+- _Artist_ : Artist du média en cours ;
+- _Custom Cmd_ : Ce composant est destiné à être utilisé via un scénario ou pour test (voir section [Utilisation dans un scénario](#utilisation-dans-un-scénario));
+- _Pincode_ : pincode pour association rapide (exemple de configuration avancée)
 
 Pour les voir sur le dashboard, il faut activer 'Afficher' dans l'onglet des commandes.
 
-> **Notes sur commande info 'Statut' (*status_text*)**
-> - *status_text* renvoie le statut en cours du Google Cast.    
-> - En cas d'erreur au lancement d'une commande, *status_text* est à
-> 'CMD UNKNOWN' si la commande n'existe pas,
-> 'NOT CONNECTED' si offline ou
-> 'ERROR' pour les autres erreurs
-> - Au repos (pas d'action en cours), *status_text* = `&nbsp;`
-
+> **Notes sur commande info 'Statut' (_status_text_)**
+>
+> - _status_text_ renvoie le statut en cours du Google Cast.
+> - En cas d'erreur au lancement d'une commande, _status_text_ est à
+>   'CMD UNKNOWN' si la commande n'existe pas,
+>   'NOT CONNECTED' si offline ou
+>   'ERROR' pour les autres erreurs
+> - Au repos (pas d'action en cours), _status_text_ = `&nbsp;`
 
 ### Afficheur Lecture en cours (widget)
 
@@ -196,22 +210,24 @@ L'afficheur se rafraichit toutes les 20 secondes par défaut.
 ![Display 1](../images/display1.png "Display 1")
 
 Installation / configuration :
-- Affiché par défaut après installation. Désactiver l'affichage pour cacher.
-- Pour une utilisation dans un dashboard, iL est possible d'utiliser un virtuel en créant une commande de type *info / autres* avec pour valeur la commande *Playing Widget* (non interne *nowplaying*) du Google Cast. Appliquer alors le widget dashboard *googlecast_playing* (via onglet *Affichage* de la configuration avancée de la commande)
-- Pour une utilisation dans un design, ajouter la commande *Playing Widget* directement dans le design.
 
-paramètres CSS optionnels (via '*Paramètres optionnels widget*'):
-- *fontSize* (ex: 35px, défaut=25px) : taille de police de base
-- *fontColor* (ex: blue, défaut=white) : couleur de l'afficheur
-- *fontFamily* (ex: 'Arial') : change la police de l'afficheur
-- *backColor* (ex: blue, défaut=black) : couleur du fond de l'afficheur
-- *playingSize* (ex: 300px, défaut 250px) : largeur et hauteur de l'image de lecture en cours
-- *contentSize* (ex: 70px,défaut 50px) : hauteur de la partie textuelle
-- *additionalCss* (format css, ex: '.blabla {...}') : pour ajouter/modifier d'autres CSS (utilisateur avancé)
+- Affiché par défaut après installation. Désactiver l'affichage pour cacher.
+- Pour une utilisation dans un dashboard, iL est possible d'utiliser un virtuel en créant une commande de type _info / autres_ avec pour valeur la commande _Playing Widget_ (non interne _nowplaying_) du Google Cast. Appliquer alors le widget dashboard _googlecast_playing_ (via onglet _Affichage_ de la configuration avancée de la commande)
+- Pour une utilisation dans un design, ajouter la commande _Playing Widget_ directement dans le design.
+
+paramètres CSS optionnels (via '_Paramètres optionnels widget_'):
+
+- _fontSize_ (ex: 35px, défaut=25px) : taille de police de base
+- _fontColor_ (ex: blue, défaut=white) : couleur de l'afficheur
+- _fontFamily_ (ex: 'Arial') : change la police de l'afficheur
+- _backColor_ (ex: blue, défaut=black) : couleur du fond de l'afficheur
+- _playingSize_ (ex: 300px, défaut 250px) : largeur et hauteur de l'image de lecture en cours
+- _contentSize_ (ex: 70px,défaut 50px) : hauteur de la partie textuelle
+- _additionalCss_ (format css, ex: '.blabla {...}') : pour ajouter/modifier d'autres CSS (utilisateur avancé)
 
 ![Configuration CSS](../images/configuration_css.png "Configuration CSS")
 
-> **Notes**   
+> **Notes**  
 > Non disponible pour mobile pour le moment
 
 ### Widget TTS pour saisie de texte et control du volume
@@ -221,40 +237,42 @@ Un widget est disponible pour les commandes de type action et sous-type message 
 ![Speak Widget](../images/widget_speak.png "Speak Widget")
 
 Installation / configuration :
+
 - Un exemple est affiché par défaut après installation pour tester la fonction TTS.
-- Pour une utilisation dans un dashboard, iL est possible d'utiliser un virtuel en créant une commande de type *action / message* avec pour valeur la commande *Custom Cmd* du Google Cast. Appliquer alors le widget dashboard *googlecast_speak* (via onglet *Affichage* de la configuration avancée de la commande)
-- Le contenu de la commande action (sous-type message) peut contenir les variables *#message#* et *#volume#*
+- Pour une utilisation dans un dashboard, iL est possible d'utiliser un virtuel en créant une commande de type _action / message_ avec pour valeur la commande _Custom Cmd_ du Google Cast. Appliquer alors le widget dashboard _googlecast_speak_ (via onglet _Affichage_ de la configuration avancée de la commande)
+- Le contenu de la commande action (sous-type message) peut contenir les variables _#message#_ et _#volume#_
 
-paramètres CSS optionnels (via '*Paramètres optionnels widget*'):
-- *width* (ex: 35px, défaut=150px) : taille du widget
-- *default_volume* (ex: blue, défaut=100) : volume par défaut
-- *default_message* (ex: 'Test') : texte par défaut dans le widget
-- *additionalCss* (format css, ex: '.blabla {...}') : pour ajouter/modifier d'autres CSS (utilisateur avancé)
+paramètres CSS optionnels (via '_Paramètres optionnels widget_'):
 
-> **Notes**   
+- _width_ (ex: 35px, défaut=150px) : taille du widget
+- _default_volume_ (ex: blue, défaut=100) : volume par défaut
+- _default_message_ (ex: 'Test') : texte par défaut dans le widget
+- _additionalCss_ (format css, ex: '.blabla {...}') : pour ajouter/modifier d'autres CSS (utilisateur avancé)
+
+> **Notes**  
 > Non disponible pour mobile pour le moment
 
-
-Commandes personnalisées
-=============================
+# Commandes personnalisées
 
 ### Applications spéciales
 
-- *Web* : afficher une page web sur un Google Cast. Les paramètres disponibles sont l'url, forcer, et le délai de rechargement (ex: value='https://google.com',False,0 pour charger Google sans forcer (nécessaire pour certains sites) et sans rechargement)
-- *Media* : lire un fichier audio ou vidéo à partir d'une URL
-- *YouTube* : afficher une vidéo à partir d'un ID de vidéo (en fin d'url) => Ne fonctionne pas pour le moment
-- *Backdrop* : afficher le fond d'écran ou économiseur d'écran Google Cast (selon les modèles)
-- *Plex* : jouer un fichier ou une playlist à partir d'un serveur Plex
+- _Web_ : afficher une page web sur un Google Cast. Les paramètres disponibles sont l'url, forcer, et le délai de rechargement (ex: value='https://google.com',False,0 pour charger Google sans forcer (nécessaire pour certains sites) et sans rechargement)
+- _Media_ : lire un fichier audio ou vidéo à partir d'une URL
+- _YouTube_ : afficher une vidéo à partir d'un ID de vidéo (en fin d'url) => Ne fonctionne pas pour le moment
+- _Backdrop_ : afficher le fond d'écran ou économiseur d'écran Google Cast (selon les modèles)
+- _Plex_ : jouer un fichier ou une playlist à partir d'un serveur Plex
 
-> **Notes**   
-> - Voir les boutons créés par défaut pour un exemple d'utilisation    
+> **Notes**
+>
+> - Voir les boutons créés par défaut pour un exemple d'utilisation
 > - Youtube est non fonctionnel pour le moment
-
 
 ### Commandes avancées
 
 #### Syntaxe des commandes brutes
-Elles doivent être séparées par *|*
+
+Elles doivent être séparées par _|_
+
 ```
 - app : name of application (web/backdrop/youtube/media)
 - cmd : name of command (depend of application)
@@ -271,10 +289,14 @@ Elles doivent être séparées par *|*
     * mute_off
     * quit_app
     * start_app : use value to pass app id
+    * turn_on : try to turn on device by opening basic app (may turn on device for some model)
+    * turn_off : equivalent to quit_app (may turn off device for some model)
     * play
     * stop
-    * rewind : go back to media start
-    * skip : got to next media
+    * rewind : go back to begining of the current media
+    * previous : got to previous media in playlist (if any)
+    * skip : got to next media in playlist (if any)
+    * next : same as skip
     * seek : use value in seconds. Can use +/- to use relative seek (ex: +20 to pass 20 seconds)
     * pause
     For application dependant commands
@@ -300,10 +322,11 @@ ex broadcast : cmd=quit_app|broadcast=all
 ex storecmd and resume : app=web|cmd=load_url|vol=90|value='http://pictoplasma.sound-creatures.com'|storecmd=1$$cmd=sleep|value=10$$cmd=resume
 ```
 
-> **Notes**     
+> **Notes**  
 > les chaînes de caractères pour les commandes sont limitées dans Jeedom à 128 caractères. Utiliser les scénarios (voir plus bas pour passer outre cette limitation) ou voir la FAQ pour optimiser la commande.
 
-#### Paramètres possibles pour *play_media* en mode *media* :
+#### Paramètres possibles pour _play_media_ en mode _media_ :
+
 ```
 - value: str - seperated by ',' (see notes)
     * url: str - url of the media (mandatory).
@@ -333,12 +356,14 @@ ex long : app=media|cmd=play_media|value='http://contentlink','video/mp4',title:
    subtitles_mime:'text/vtt'
 ```
 
-> **Notes**   
+> **Notes**
+>
 > - Les url et chaînes de caractères sont entourées de guillemets simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
 > - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
-> - Un média local situé dans le répertoire *<jeedom>/plugins/googlecast/localmedia/* peut être utilisé en appelant l'url *local://<nomdufichier>* (ex: local://bigben1.mp3)
+> - Un média local situé dans le répertoire _<jeedom>/plugins/googlecast/localmedia/_ peut être utilisé en appelant l'url _local://<nomdufichier>_ (ex: local://bigben1.mp3)
 
-#### Paramètres possibles pour *load_url* en mode *web* :
+#### Paramètres possibles pour _load_url_ en mode _web_ :
+
 ```
 - value: str - seperated by ',' (see notes)
     * url: str - website url. Must start with http, https...
@@ -350,12 +375,14 @@ ex 2 : app=web|cmd=load_url|value='http://mywebsite/index.php?apikey%3Dmyapikey'
 ex 3 : app=web|value='http://mywebsite/index.php?apikey%3Dmyapikey' (implicit load_url command call)
 ```
 
-> **Notes**   
+> **Notes**
+>
 > - Les url et chaînes de caractères sont entourées de guillemets simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
 > - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
 > - Pour la diffusion de flux caméra, la caméra doit pouvoir fournir le flux via http (rtsp n'est pas compatible google cast)
 
-#### Paramètres possibles pour *play_media* en mode *plex* :
+#### Paramètres possibles pour _play_media_ en mode _plex_ :
+
 ```
 - value: str - search query. It could be individual title, playlist or other type of content handled by Plex (it will play the first element returned).
 - type: str - type of content. Example: 'video/audio' (optional, default=video).
@@ -367,38 +394,40 @@ ex 3 : app=web|value='http://mywebsite/index.php?apikey%3Dmyapikey' (implicit lo
 - repeat: 0/1 - repeat media (optional, default=0).
 - offset: int - media offset (optional, default=0).
 
-ex using user & pass :   
+ex using user & pass :
    app=plex|cmd=play_media|user=XXXXXX|pass=XXXXXXXXXXX|server=MyPlexServer|value=Playlist Jeedom|shuffle=1|type=audio
-ex using token :   
+ex using token :
    app=plex|cmd=play_media|token=XXXXXXXXX|server=http://IP:32400|value=Playlist Jeedom
-ex using token with implicit play_media command call :   
+ex using token with implicit play_media command call :
    app=plex|token=XXXXXXXXX|server=http://IP:32400|value=Playlist Jeedom
 ```
 
-> **Notes**   
+> **Notes**
+>
 > - When using user & pass, internet access is required
 > - Token value is displayed in logs (debug) when user & pass has been used the first time. Token is then persistent.
 > - you can simulate result of search query (value) in main search field of Plex web UI
 
+#### Paramètres possibles pour _play_media_ en mode _spotify_ (experimental) :
 
-#### Paramètres possibles pour *play_media* en mode *spotify* (experimental) :
-
-!! Le plus dur est de récupérer un token valable !!    
+!! Le plus dur est de récupérer un token valable !!  
 Pas de support sur cette fonctionnalité
 
 ```
 - value: str - media id. Format : 'track:<id>', 'album:<id>', 'playlist:<id>'.
 - token: str - token (required).
 
-ex using valid token :   
+ex using valid token :
    app=spotify|token=XXXXXX|value=track:3Zwu2K0Qa5sT6teCCHPShP
 ```
 
-> **Notes**   
-> - Token is too long to be passed through regular command. Use *CustomCmd*.
+> **Notes**
+>
+> - Token is too long to be passed through regular command. Use _CustomCmd_.
 > - For test, you can use a web token (open spotify in browser, log in and look for 'wp_access_token' value to use as token).
 
-#### Paramètres possibles pour cmd *tts* :
+#### Paramètres possibles pour cmd _tts_ :
+
 ```
 - value: str - text
 - lang: str - fr-FR/en-US or any compatible language (optional, default is configuration)
@@ -425,11 +454,13 @@ ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
 ex voice/ssml : cmd=tts|engine=gttsapi|voice=fr-CA-Standard-A|value=<speak>Etape 1<break time^"3s"/>Etape 2</speak>
 ```
 
-> **Notes**   
+> **Notes**
+>
 > - By default, the plugin will try to resume previous app launched (will only work when previous application has been launched by the plugin).
 > - You can try to force resume to any application using 'forceapplaunch=1' but there is a good chance that it will not resume correctly.
 
-#### Paramètres possibles pour cmd *notif* :
+#### Paramètres possibles pour cmd _notif_ :
+
 ```
 - value: str - local media filename (located in '<jeedom>/plugins/googlecast/localmedia/' folder)
 - quit: 0/1 - quit app after notif action.
@@ -444,40 +475,51 @@ ex : cmd=notif|value=bigben1.mp3|vol=100
 ex : cmd=notif|value=tornado_siren.mp3|vol=100|duration=11
 ```
 
-> **Notes**  
+> **Notes**
+>
 > - By default, the plugin will try to resume previous app launched (will only work when previous application has been launched by the plugin).
 > - You can try to force resume to any application using 'forceapplaunch=1' but there is a good chance of failure.
 > - Existing sounds in plugin : house_firealarm.mp3, railroad_crossing_bell.mp3, submarine_diving.mp3, tornado_siren.mp3, bigben1.mp3, bigben2.mp3
 > - files added to localmedia folder must have approriate rights
 
 #### Séquence de commandes
-Il est possible de lancer plusieurs commandes à la suite en séparant par *$$*
+
+Il est possible de lancer plusieurs commandes à la suite en séparant par _\$\$_
 
 ```
 ex 1 : cmd=tts|sleep=2|value=Je lance ma vidéo$$app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name'
 ex 2 : app=media|cmd=play_video|value='http://contentlink','video/mp4','Video name',current_time:148|sleep=10$$cmd=quit_app
-ex Commande TTS sur plusieurs google cast en parallèle en s'assurant que le fichier est déjà en cache :   
+ex Commande TTS sur plusieurs google cast en parallèle en s'assurant que le fichier est déjà en cache :
     cmd=tts|value=My TTS message|generateonly=1$$uuid=XXXXXXXXXXX|cmd=tts|value=My TTS message$$uuid=YYYYYYYYYYY|cmd=tts|value=My TTS message
 ```
-> **Note**   
+
+> **Note**  
 > adding 'uuid' parameter will redirect to this uuid device in new thread. This can be used to send a sequence to several device in one command.
 
-#### Configuration avancée des équipements
+### Configuration des fonctionnalités Google Home/Assistant
 
-> **Important**   
-> Certaines informations tel que les informations sur les alarmes ne sont plus disponibles via ces commandes depuis septembre 2019 suite à une mise à jour du protocol Google Cast.
+Cela permet de récupérer (ou modifier) des informations tel que les alarmes, timers, configuration bluetooth...
 
-##### Récupérer une configuration
-Certaines configurations peuvent être récupérées dans une commande de type info (*cmd=getconfig*).
+> **Important**  
+> Depuis mi 2019, un jeton d'authorisation est nécessaire afin de pouvoir récupérer ou modifier la plupart de ces configurations.
+
+La procédure de récupération des jetons est ici : https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f#the-token
+
+Ce jeton doit être saisi sur la page de configuration de chaque Gooogle Home.
+
+#### Récupérer une configuration
+
+Certaines configurations peuvent être récupérées dans une commande de type info (_cmd=getconfig_).
 
 Ces commandes de ce type sont rafraichies toutes les 15 minutes ou manuellement via appel de la commande 'refreshconfig' (non visible par défaut)
 
-Une liste est disponible en se connectant sur l'équipement :
-http://IP:8008/setup/eureka_info?options=detail
+La liste non officielles des elements récupérables est disponible sur https://rithvikvibhu.github.io/GHLocalApi/
 
-Pour plus d'info, voir  https://rithvikvibhu.github.io/GHLocalApi/
+> Note  
+> Quelques information récupérables sans jetons d'authenficiation sont visibles via l'url de l'équipement : http://IP:8008/setup/eureka_info?options=detail
 
-###### paramètres possibles pour cmd *getconfig* :
+##### paramètres possibles pour cmd _getconfig_ :
+
 ```
 - value: str - uri base after 'setup/' based on API doc (default is 'eureka_info'). If starts with 'post:', a POST type request will be issued.
 - data: str - json path to be returned separated by '/'. To get several data, separate by ','. Alternatively, JsonPath format can be used ( http://goessner.net/articles/JsonPath).
@@ -504,12 +546,14 @@ cmd=setconfig|value=assistant/set_night_mode_params|data={"enabled": false}
 cmd=setconfig|value=assistant/set_night_mode_params|data={"led_brightness": 0.2}
 ```
 
-##### Modifier une configuration
-Certaines configurations peuvent être modifiées dans une commande de type action (*cmd=setconfig*).
+#### Modifier une configuration
+
+Certaines configurations peuvent être modifiées dans une commande de type action (_cmd=setconfig_).
 
 Voir l'api Google sur ce lien pour ce qui est modifiable : https://rithvikvibhu.github.io/GHLocalApi/
 
-###### paramètres possibles pour cmd *setconfig* :
+##### paramètres possibles pour cmd _setconfig_ :
+
 ```
 - value: str - uri base after 'setup/' based on API doc.
 - data: str - json data.
@@ -521,35 +565,36 @@ cmd=setconfig|value=assistant/notifications|data={'notifications_enabled': false
 cmd=setconfig|value=assistant/alarms/volume|data={'volume': 1}
 ```
 
-##### Commande configuration pré-définies
+#### Commande configuration pré-définies
 
-Les commandes suivantes peuvent être utilisées dans une commande 'info' ou scénario (via fonction *getInfoHttpSimple()*) :
+Les commandes suivantes peuvent être utilisées dans une commande 'info' ou scénario (via fonction _getInfoHttpSimple()_) :
 
-- *gh_get_alarms_date* : retourne la date de toutes les alarmes.
-- *gh_get_alarms_id* : retourne les identifiants uniques de toutes les alarmes et timers.
-- *gh_get_alarm_date_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format dd-mm-yyyy HH:mm.
-- *gh_get_alarm_datenice_#* (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format {'Aujourdhui'|'Demain'|dd-mm-yyyy} HH:mm.
-- *gh_get_alarm_timestamp_#* (#=numéro, commence par 0) : retourne le timestamp de la prochaine alarme.
-- *gh_get_alarm_status_#* (#=numéro, commence par 0) : statut de l'alarme (1 = configuré,  2 = sonne).
-- *gh_get_timer_timesec_#* (#=numéro, commence par 0) : retourne le nombre de secondes avant déclenchement du timer.
-- *gh_get_timer_time_#* (#=numéro, commence par 0) : retourne la date de déclenchement du timer.
-- *gh_get_timer_duration_#* (#=numéro, commence par 0) : retourne la durée originale configurée du timer.
-- *gh_get_timer_status_#* (#=numéro, commence par 0) : statut du timer (1 = configuré,  3 = sonne).
-- *gh_get_donotdisturb* : retourne l'état de la fonction 'Do Not Disturb'.
-- *gh_get_alarms_volume* : récupère le volume des alarmes et timers.
-- *conf_pincode* : retourne le code pin d'association.
-- *conf_getbonded_bluetooth* : retourne tous les équipements bluetooth enregistrés.
-- *conf_getconnected_wifi* : retourne le nom du réseau wifi configuré.
+- _gh_get_alarms_date_ : retourne la date de toutes les alarmes.
+- _gh_get_alarms_id_ : retourne les identifiants uniques de toutes les alarmes et timers.
+- _gh*get_alarm_date*#_ (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format dd-mm-yyyy HH:mm.
+- _gh*get_alarm_datenice*#_ (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format {'Aujourdhui'|'Demain'|dd-mm-yyyy} HH:mm.
+- _gh*get_alarm_timestamp*#_ (#=numéro, commence par 0) : retourne le timestamp de la prochaine alarme.
+- _gh*get_alarm_status*#_ (#=numéro, commence par 0) : statut de l'alarme (1 = configuré, 2 = sonne).
+- _gh*get_timer_timesec*#_ (#=numéro, commence par 0) : retourne le nombre de secondes avant déclenchement du timer.
+- _gh*get_timer_time*#_ (#=numéro, commence par 0) : retourne la date de déclenchement du timer.
+- _gh*get_timer_duration*#_ (#=numéro, commence par 0) : retourne la durée originale configurée du timer.
+- _gh*get_timer_status*#_ (#=numéro, commence par 0) : statut du timer (1 = configuré, 3 = sonne).
+- _gh_get_donotdisturb_ : retourne l'état de la fonction 'Do Not Disturb'.
+- _gh_get_alarms_volume_ : récupère le volume des alarmes et timers.
+- _conf_pincode_ : retourne le code pin d'association.
+- _castversion_ : retourne le numero de version du firmware googlecast.
+- _conf_getbonded_bluetooth_ : retourne tous les équipements bluetooth enregistrés.
+- _conf_getconnected_wifi_ : retourne le nom du réseau wifi configuré.
 
-Les commandes suivantes peuvent être utilisées dans une commande 'action' ou scénario (via fonction *setInfoHttpSimple()* ou commande *Custom Cmd*) :
+Les commandes suivantes peuvent être utilisées dans une commande 'action' ou scénario (via fonction _setInfoHttpSimple()_ ou commande _Custom Cmd_) :
 
-- *gh_set_donotdisturb_on* : active la fonction 'Do Not Disturb'.
-- *gh_set_donotdisturb_off* : désactive la fonction 'Do Not Disturb'.
-- *gh_set_donotdisturb_#* (#=true/false) : active/désactive la fonction 'Do Not Disturb'
-- *gh_set_alarms_volume_#* (# = entre 0 et 100 (eg: 10)) : configure le volume des alarmes et timers.
-- *bt_connectdefault* : connecte l'équipement bluetooth configuré par défaut.
-- *bt_connect_X* (#=adresse mac au format xx:xx:xx:xx:xx:xx) : connecte l'équipement bluetooth donné en paramètre.
-- *bt_disconnectdefault* : déconnecte l'équipement bluetooth configuré par défaut.
+- _gh_set_donotdisturb_on_ : active la fonction 'Do Not Disturb'.
+- _gh_set_donotdisturb_off_ : désactive la fonction 'Do Not Disturb'.
+- _gh*set_donotdisturb*#_ (#=true/false) : active/désactive la fonction 'Do Not Disturb'
+- _gh*set_alarms_volume*#_ (# = entre 0 et 100 (eg: 10)) : configure le volume des alarmes et timers.
+- _bt_connectdefault_ : connecte l'équipement bluetooth configuré par défaut.
+- _bt_connect_X_ (#=adresse mac au format xx:xx:xx:xx:xx:xx) : connecte l'équipement bluetooth donné en paramètre.
+- _bt_disconnectdefault_ : déconnecte l'équipement bluetooth configuré par défaut.
 
 ```
 Exemples:
@@ -559,14 +604,14 @@ gh_get_alarm_date_0
 gh_set_alarms_volume_80
 ```
 
-### Création dune commande *action* de type *Liste*
+### Création dune commande _action_ de type _Liste_
 
-Pour créer une commande *action* de type *Liste* dont plusieurs paramètres changent, la commande doit impérativement s'appeler *cmdlist_XXXX* avec XXXX pouvant être remplacé par un nom (example cmdlist_radio).
+Pour créer une commande _action_ de type _Liste_ dont plusieurs paramètres changent, la commande doit impérativement s'appeler _cmdlist_XXXX_ avec XXXX pouvant être remplacé par un nom (example cmdlist_radio).
 
-Le champs *Liste de valeurs* doit contenir la liste de commandes entière et suivre le format `<commandes>|<texte affiché>;<commandes>|<texte affiché>;...`   
+Le champs _Liste de valeurs_ doit contenir la liste de commandes entière et suivre le format `<commandes>|<texte affiché>;<commandes>|<texte affiché>;...`  
 Le séparateur de commande devra être changé de '|' pour '^'.
 
-````
+```
 Exemple site web :
 app=web^cmd=load_url^value='https://google.com'|Google;
 app=web^cmd=load_url^value='https://facebook.com'|Facebook
@@ -575,36 +620,37 @@ Exemple pour webradio :
 app=media^value='http://urlFluxRadio1/flux.mp3','audio/mpeg','Radio 1'|Radio 1;
 app=media^value='http://urlFluxRadio2/flux.mp3','audio/mpeg','Radio 2'|Radio 2;
 app=media^value='http://urlFluxRadio3/flux.mp3','audio/mpeg','Radio 3'|Radio 3
-````
+```
 
 ![Command action of type list](../images/commands_list.png "Command action of type list")
 
-> **Note**   
-> Pour des commandes plus simples (un seul paramètre change), il est toujours possible d'utiliser le placeholder *#listValue#* dans une commande.    
+> **Note**  
+> Pour des commandes plus simples (un seul paramètre change), il est toujours possible d'utiliser le placeholder _#listValue#_ dans une commande.  
 > Exemple : `app=web|cmd=load_url|value=#listValue#` avec comme liste de valeurs `https://google.com|Google;https://facebook.com|Facebook`
 
-### Création d'une commande *action* pour un webradio pré-enregistrées
+### Création d'une commande _action_ pour un webradio pré-enregistrées
 
-Pour créer une commande *action* qui lance une webradio pré-enregistrée (avec logo), la commande doit impérativement s'appeler *radio_XXXX* avec XXXX pouvant être remplacé par un nom de radio existante.
+Pour créer une commande _action_ qui lance une webradio pré-enregistrée (avec logo), utiliser les commandes ci-dessous parmis la liste.
 
-Liste des webradios pré-enregistrées :    
-france_inter, africa_n1_paris, europe_1, france_bleue, radio_classique, rfi_monde, fip, jazz, voltage_lounge, rtl, fip_nouveaute, fip_jazz, fip_monde, france_culture, radio_suisse_classique, nippon_blue_heron, chinese_classical_music, jazz_ladies_crooners, pulsradio_trance, PulsRadio_Lounge, pulsradio_dance, pulsradio_club, pulsradio_hits, pulsradio_80, pulsradio_90, pulsradio_2000, mix_x_fm, sweet_fm, rtl_2, hotmix_80, hotmix_90, hotmix_2000, hotmix_dance, hotmix_frenchy, hotmix_funky, hotmix_game, hotmix-golds, hotmix_hiphop, hotmix_Hits, hotmix_hot, hotmix_lounge, Hotmix_metal, hotmix_new, hotmix_rock, hotmix_sunny, hotmix_vip
+radio_africa_n1_paris, radio_bfm_business, radio_cherie_fm, radio_europe_1, radio_fg, radio_fip, radio_fip_jazz, radio_fip_monde, radio_fip_nouveaute, radio_france_bleue, radio_france_culture, radio_france_info, radio_france_inter, radio_france_musique, radio_fun_radio, radio_hotmix-golds, radio_hotmix_2000, radio_hotmix_80, radio_hotmix_90, radio_hotmix_Hits, radio_hotmix_dance, radio_hotmix_frenchy, radio_hotmix_funky, radio_hotmix_game, radio_hotmix_hiphop, radio_hotmix_hot, radio_hotmix_lounge, radio_hotmix_metal, radio_hotmix_new, radio_hotmix_rock, radio_hotmix_sunny, radio_hotmix_vip, radio_jazz, radio_jazz_ladies_crooners, radio_jazz_radio, radio_latina, radio_m_radio, radio_mix_x_fm, radio_mouv, radio_nostalgie, radio_nova, radio_nrj, radio_nrj_uhd, radio_oui_fm, radio_phare_fm, radio_pulsradio_2000, radio_pulsradio_80, radio_pulsradio_90, radio_pulsradio_club, radio_pulsradio_dance, radio_pulsradio_hits, radio_pulsradio_lounge, radio_pulsradio_trance, radio_radio_classique, radio_radio_suisse_classique, radio_rcf, radio_rfi_monde, radio_rfi_monde_hd, radio_rfm, radio_rire_et_chanson, radio_rmc, radio_rtl, radio_rtl2_hd, radio_rtl_2, radio_rtl_hd, radio_skyrock, radio_sud_radio, radio_sweet_fm, radio_tsf_jazz, radio_vibration, radio_virage, radio_virgin_radio, radio_voltage, radio_voltage_lounge, radio_wit_fm
 
-````
+```
 Exemple : commande appelée 'radio_rtl'
-````
+```
 
-> **Note**   
-> Il est possible de rajouter des webradios dans un fichier appelé *custom.json* (à créer) dans le répertoire du plugin *webradios*. Le format doit être similaire au fichier *webradios/radiolist.json*. Ce fichier ne sera pas modifié lors des mises à jour du plugin.
-A la création du fichier, s'assurer que le fichier à les bons droits avec la commande `sudo chown www-data:www-data custom.json && sudo chmod 775 custom.json`
-
+> **Note**  
+> Il est possible de rajouter des webradios dans un fichier appelé _custom.json_ (à créer) dans le répertoire du plugin _webradios_. Le format doit être similaire au fichier _webradios/radiolist.json_ (l'id de la radio devra être concatené avec _radio\__ au début pour l'utiliser en commande; eg: id radio _XXXX_ devra être appelé avec la commande _radio_XXXX_).
+> Ce fichier ne sera pas modifié lors des mises à jour du plugin.
+> A la création du fichier, s'assurer que le fichier à les bons droits avec la commande `sudo chown www-data:www-data custom.json && sudo chmod 775 custom.json`
 
 ### Utilisation dans un scénario
 
-#### Avec commande dédiée *Custom Cmd*
-La commande nommée *Custom Cmd* permet de lancer une commande brute à partir d'un scénario.
+#### Avec commande dédiée _Custom Cmd_
+
+La commande nommée _Custom Cmd_ permet de lancer une commande brute à partir d'un scénario.
 
 Par exemple, pour lancer Google sur un Google Cast à partir d'un scénario, ajouter la commande avec la valeur souhaitée dans le champs 'message'.
+
 ```
 app=web|cmd=load_url|value='https://google.com',True,10
 ```
@@ -700,24 +746,30 @@ $ret = $googlecast->helperSendNotifandWait('XXXXXXXX', 'cmd=tts|value=Test Scén
 ### Utilisation avec interactions et IFTTT
 
 Trois types d'actions sont possibles :
+
 - Intéraction TTS (Text To Speech)
 - Réponse à action de type ask
 - Lancer une commande personnalisée
 
 #### Interactions
-Compatibilité avec interaction IFTTT de type *TTS* en utilisant l'url suivante dans la configuration (GET ou POST) :
+
+Compatibilité avec interaction IFTTT de type _TTS_ en utilisant l'url suivante dans la configuration (GET ou POST) :
+
 ```
 http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=#GCAST_UUID#&query=<<{{TextField}}>>
-Optional :   
-  &vol=X (between 1 and 100)    
-  &noresume=1 (will not try to resume previous app)    
-  &quit=1        
+Optional :
+  &vol=X (between 1 and 100)
+  &noresume=1 (will not try to resume previous app)
+  &quit=1
   &silence=X (in milliseconds, ex: 1000 for 1 sec)
 ```
+
 Documentation Jeedom et IFTTT : https://jeedom.github.io/plugin-gcast
 
-#### Réponse type *ask*
-Compatibilité avec IFTTT et réponse à une requête de type *ask* (scénarios) en utilisant l'url suivante dans la configuration (GET ou POST) :
+#### Réponse type _ask_
+
+Compatibilité avec IFTTT et réponse à une requête de type _ask_ (scénarios) en utilisant l'url suivante dans la configuration (GET ou POST) :
+
 ```
 # on specific device UUID
 http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=#GCAST_UUID#&action=askreply&query=<<{{TextField}}>>
@@ -726,33 +778,33 @@ http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#
 http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=any&action=askreply&query=<<{{TextField}}>>
 ```
 
-> **Notes**   
-> - uuid peut avoir la valeur *any* pour tester tous les équipements Google Cast en attente potentielle de réponse.
-> - l'action ask du scénario peut utiliser soit la commande *Custom Cmd* (ex: cmd=tts|value="Confirmer commande ?"|vol=60) soit la commande *Parle !*.
+> **Notes**
+>
+> - uuid peut avoir la valeur _any_ pour tester tous les équipements Google Cast en attente potentielle de réponse.
+> - l'action ask du scénario peut utiliser soit la commande _Custom Cmd_ (ex: cmd=tts|value="Confirmer commande ?"|vol=60) soit la commande _Parle !_.
 
 #### Custom CMD
+
 Envoyer une commande à partir d'un webhook (GET ou POST)
+
 ```
 http(s)://#JEEDOM_DNS#/plugins/googlecast/core/php/googlecast.ifttt.php?apikey=#GCASTPLUGIN_APIKEY#&uuid=#GCAST_UUID#&action=customcmd&query=#CUSTOM_CMD#
-Notes :   
-  #CUSTOM_CMD# : as defined in documentation (eg : app=web|cmd=load_url|value='http://pictoplasma.sound-creatures.com')    
+Notes :
+  #CUSTOM_CMD# : as defined in documentation (eg : app=web|cmd=load_url|value='http://pictoplasma.sound-creatures.com')
   It may be necessary to encode #CUSTOM_CMD# using https://www.url-encode-decode.com/
 ```
 
-Limitations et bugs connus
-=============================
+# Limitations et bugs connus
 
 - Moteur PicoTTS ne gère pas les phrases accentuées (ils sont supprimés)
 
-
-FAQ
-=============================
+# FAQ
 
 #### Aucune détection lors du scan
 
 - Vérifier que le Google Cast est disponible à partir d'une application permettant la visualisation des appareils compatibles ;
-- Jeedom doit se trouver sur le même réseau que les équipements Google Cast    
-(pour Docker, le container doit être configuré pour être sur le même réseau ; en VM, la machine est en mode bridge) ;
+- Jeedom doit se trouver sur le même réseau que les équipements Google Cast  
+  (pour Docker, le container doit être configuré pour être sur le même réseau ; en VM, la machine est en mode bridge) ;
 - Vérifier qu'il n'y a pas de blocages au niveau du firewall pour la découverte via le protocole 'Zeroconf' ;
 - Pour mettre Docker sur le même réseau, voir https://github.com/guirem/plugin-googlecast/issues/8
 
@@ -767,25 +819,30 @@ FAQ
 
 #### Les dépendances ne s'installent pas
 
-Vérifier dans les logs (*Googlecast_update*) la provenance de l'erreur. Le plugin nécessite l'installation de python3, pip3.
+Vérifier dans les logs (_Googlecast_update_) la provenance de l'erreur. Le plugin nécessite l'installation de python3, pip3.
 
-Si le log contient le message *Error: Cound not found pip3 program to install python dependencies !*, tenter de lancer les lignes de commandes en ssh :
+Si le log contient le message _Error: Cound not found pip3 program to install python dependencies !_, tenter de lancer les lignes de commandes en ssh :
+
 - `python3 -V` doit retourner la version de python 3 installée.
 - `compgen -ac | grep -E '^pip-?3' | sort -r | head -1` doit retourner une ligne (ex: pip3)
-- Si aucun retour sur la ligne précédente, tenter une réinstallation de pip3   
+- Si aucun retour sur la ligne précédente, tenter une réinstallation de pip3
+
 ```
 sudo python3 -m pip uninstall -y pip
 sudo apt-get -y --reinstall install python3-pip
 ```
+
 - Relancer l'installation des dépendances
 
 #### Les dépendances sont 'ok' mais le démon ne se lance pas
 
 Un des modules est peut etre corrompu.
 Pour désinstaller les modules utiliser la commande
+
 ```
 sudo pip3 uninstall -y requests zeroconf click bs4 six tqdm websocket-client
 ```
+
 Puis relancer l'installation des dépendances.
 
 #### Le Text To Speech (TTS) ne fonctionne pas
@@ -797,6 +854,7 @@ Puis relancer l'installation des dépendances.
 #### Le Text To Speech (TTS) fonctionne mais a des coupures pendant le message ou se termine trop tôt
 
 Le type d'équipements utilisés (wifi, serveur Jeedom) ou la longueur du message peut avoir un impact sur le rendu TTS.
+
 - Ajouter le paramêtre 'sleep' pour ajouter un délai supplémentaire à la fin du message (ex: |sleep=0.8 pour 0.8 seconde).
 - Tester avec le paramètre 'buffered=1' pour voir si cela règle le problème.
 - Utiliser le paramêtre 'forcetts' durant les tests pour être certain que le cache n'est pas utilisé.
@@ -804,27 +862,28 @@ Le type d'équipements utilisés (wifi, serveur Jeedom) ou la longueur du messag
 #### Les fichiers nouvellement placés dans le repertoire 'localmedia' ne fonctionnent pas
 
 Les nouveaux fichiers doivent avoir les droits de lecture
-A partir du répertoire localmedia, corriger les droits avec la commande :     
+A partir du répertoire localmedia, corriger les droits avec la commande :  
 `sudo chown www-data:www-data * && sudo chmod 775 *`
 
 #### Diffuser Jeedom sans authentification sur un Google Cast
 
-C'est possible via le mode web. Pour gérer l'authentification automatiquement, utiliser le plugin 'autologin' (voir doc du plugin).    
+C'est possible via le mode web. Pour gérer l'authentification automatiquement, utiliser le plugin 'autologin' (voir doc du plugin).  
 Note : Les champs de commandes sont limités a 128, voir ci-dessous pour optimiser la longueur de la commande.
 
 #### La commande est tronquée au dela de 128 caractères
 
-C'est une limitation Jeedom. L'alternative est d'utiliser la commande *custom cmd* via un scénario qui n'a pas de limitation.    
+C'est une limitation Jeedom. L'alternative est d'utiliser la commande _custom cmd_ via un scénario qui n'a pas de limitation.
 
 Cependant, il est possible d'optimiser la longueur de la commande :
-- *value=* peut être réduit en *v=*
-- Pour le mode *web* et *media*, *cmd=X* est inutile car implicite (ex: *app=web|cmd=load_url|v=.....* identique à *app=web|v=.....*)
-- Les booleans *True*/*False* peuvent être réduits à *T*/*F*
+
+- _value=_ peut être réduit en _v=_
+- Pour le mode _web_ et _media_, _cmd=X_ est inutile car implicite (ex: _app=web|cmd=load_url|v=....._ identique à _app=web|v=....._)
+- Les booleans _True_/_False_ peuvent être réduits à _T_/_F_
 - Enlever le port si 80 ou 443 (http://addresseweb:80/contenu => http://addresseweb/contenu)
-- Pour les url, *http://* peut être réduit en *h:/* et *https://* peut être réduit en *hs:/*
+- Pour les url, _http://_ peut être réduit en _h:/_ et _https://_ peut être réduit en _hs:/_
 - Pour les url longues, utiliser des services web tel que bitly pour les réduire drastiquement
 
-Exemple : *app=web|cmd=load_url|value='https://xxxxx.xxxxxxx.com:443/plugins/autologin/core/php/go.php?apikey%3Dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&id%3D999',True* réduit en *app=web|v=hs:/xxxxx.xxxxxxx.com/plugins/autologin/core/php/go.php?apikey%3Dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&id%3D999,T*
+Exemple : _app=web|cmd=load_url|value='https://xxxxx.xxxxxxx.com:443/plugins/autologin/core/php/go.php?apikey%3Dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&id%3D999',True_ réduit en _app=web|v=hs:/xxxxx.xxxxxxx.com/plugins/autologin/core/php/go.php?apikey%3Dxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&id%3D999,T_
 
 #### Récupérer une clé API pour utiliser TTS 'Google Cloud Text-to-Speech'
 
@@ -834,7 +893,10 @@ Exemple : *app=web|cmd=load_url|value='https://xxxxx.xxxxxxx.com:443/plugins/aut
 
 Suite à la mise à jour de janvier 2020, il est probable que l'API 'Google Cloud Text-to-Speech' doivent être activée sur l'interface via Google Cloud. Avant cette mise à jour, une autre API était utilisée.
 
-Changelog
-=============================
+#### Comment récupérer les alamers et timers d'un Google Home
+
+C'est possible mais il est nécessaire d'avoir un jeton d'authentification (https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f) configuré sur la page du googlecast. Voir la section de la doc dédiée.
+
+# Changelog
 
 [Voir la page dédiée](changelog.md).

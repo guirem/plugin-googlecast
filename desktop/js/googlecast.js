@@ -48,11 +48,16 @@ $('#bt_healthrefresh').on('click', function () {
     });
 });
 
-// $('.bt_sidebarToogle').on('click', function () {
-//     $('.sidebar-container').toggle();
-//     $('.equipement-container').toggleClass('col-lg-10');
-//     $('.equipement-container').toggleClass('col-lg-12');
-// });
+$('.has_googleassistant_form').on('change', manage_ga_token_input);
+function manage_ga_token_input() {
+    var value = $('.ga_token_input').prop('checked')
+    if (value) {
+        $('.ga_token_form').show();
+    }
+    else {
+        $('.ga_token_form').hide();
+    }
+}
 
 $('body').on('googlecast::includeState', function (_event,_options) {
 	if (_options['mode'] == 'learn') {
@@ -75,21 +80,19 @@ $('body').on('googlecast::includeState', function (_event,_options) {
                 $('.includeicon_text').css('color', '#94ca02').css('font-weight', 'normal');
 				$('.include.card span center').text('{{Lancer Scan}}');
 				$('.include.card').css('background-color','#ffffff');
+                window.location.reload();
 			}
 		}
 	}
 });
 
-$('body').on('googlecast::includeDevice', function (_event,_options) {
-    if (modifyWithoutSave) {
-        $('#div_inclusionAlert').showAlert({message: '{{Un GoogleCast vient d\'être inclu/exclu. Veuillez réactualiser la page}}', level: 'warning'});
-    } else {
-        if (_options == '') {
-            window.location.reload();
-        } else {
-            window.location.href = 'index.php?v=d&p=googlecast&m=googlecast&id=' + _options;
-        }
+$('body').on('googlecast::includeDevice', function (_event, _options) {
+    friendly_name = 'NONAME';
+    if ( _options && _options['friendly_name'] ) {
+        friendly_name = _options['friendly_name'];
     }
+    $('#div_inclusionAlert').showAlert({message: '{{Un GoogleCast vient d\'être inclu :}} "' + friendly_name + '".   {{Veuillez réactualiser la page}}', level: 'info'});
+    //window.location.reload();
 });
 
 function changeIncludeState(_state,_mode,_type='') {
@@ -130,9 +133,9 @@ function addCmdToTable(_cmd) {
        tr += '<span class="cmdAttr" data-l1key="display" data-l2key="icon" style="margin-left : 8px;display: inline-block;"></span>';
        tr += '<input class="cmdAttr form-control input-sm" style="width:140px;float:right;" data-l1key="name">';
        tr += '</div>';
-       tr += '<select class="cmdAttr form-control input-sm" data-l1key="value" style="display : none;margin-top : 0px;" title="La valeur de la commande vaut par défaut la commande">';
-       tr += '<option value="">Aucune</option>';
-       tr += '</select>';
+       //tr += '<select class="cmdAttr form-control input-sm" data-l1key="value" style="display : none;margin-top : 0px;" title="La valeur de la commande vaut par défaut la commande">';
+       //tr += '<option value="">Aucune</option>';
+       //tr += '</select>';
        tr += '</td>';
        tr += '<td>';
        tr += '<input class="cmdAttr form-control input-sm" data-l1key="id" style="display : none;" readonly>';
@@ -214,7 +217,7 @@ function addCmdToTable(_cmd) {
    $('#table_cmd tbody').append(tr);
    var tr = $('#table_cmd tbody tr:last');
    jeedom.eqLogic.builSelectCmd({
-       id: $(".li_eqLogic.active").attr('data-eqLogic_id'),
+       id: $('.eqLogicAttr[data-l1key=id]').value(),
        filter: {type: 'info'},
        error: function (error) {
            $('#div_alert').showAlert({message: error.message, level: 'danger'});

@@ -1,0 +1,4 @@
+[flake8]
+per-file-ignores =
+    resources/googlecast.py: E501
+    resources/jeedom/jeedom.py: E501

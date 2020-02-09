@@ -15,10 +15,13 @@
 #
 
 import time
-import os, os.path
+import os
+import os.path
 
 JEEDOM_COM = ''
 JEEDOM_WEB = ''
+
+IS_SHUTTINGDOWN = False
 
 KNOWN_DEVICES = {}
 NOWPLAYING_DEVICES = {}
@@ -31,7 +34,9 @@ NOWPLAYING_LAST = 0
 
 LEARN_BEGIN = int(time.time())
 LEARN_MODE = False          # is learn mode ?
-LEARN_TIMEOUT = 60
+LEARN_TIMEOUT = 90
+
+ZEROCONF_RESTART = True
 
 HEARTBEAT_FREQUENCY = 900   # 15 minutes
 LAST_BEAT = int(time.time())
@@ -39,18 +44,23 @@ LAST_BEAT = int(time.time())
 SCAN_FREQUENCY = 60         # in seconds
 SCAN_PENDING = False        # is scanner running?
 SCAN_LAST = 0               # when last started
-SCAN_TIMEOUT = 10           # timout of gcast scan
+SCAN_TIMEOUT = 5           # timout of gcast scan
+
+NETDISCOVERY_PENDING = False    # is net discovery running?
+NETDISCOVERY_STOPFN = None      # stop function for net discovery thread
+NETDISCOVERY_DEVICES = {}
 
 DISCOVERY_FREQUENCY = 14400         # every 4 hours
 DISCOVERY_LAST = int(time.time())   # when last started
 
-LOSTDEVICE_RESENDNOTIFDELAY = 60*15        # Resent offline msg after 15 minutes
+# Resent offline msg after 15 minutes
+LOSTDEVICE_RESENDNOTIFDELAY = 60*15
 
 DEFAULT_NOSTATUS = ""
 DEFAULT_NODISPLAY = ""
 
 cycle_factor = 2
-cycle = 0.5
+cycle_event = 0.5
 cycle_main = 2
 
 disable_mediastatus = False
@@ -59,7 +69,8 @@ tts_language = 'fr-FR'
 tts_engine = 'picotts'
 tts_cacheenabled = True
 tts_speed = 1.2
-tts_cachefolderweb = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'tmp'))
+tts_cachefolderweb = os.path.abspath(os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), 'tmp'))
 tts_cachefoldertmp = os.path.join('/tmp/jeedom/', 'googlecast_tts')
 tts_gapi_url = 'https://www.google.com/speech-api/'
 tts_gapi_key = 'none'
@@ -67,12 +78,13 @@ tts_gapi_voice = 'fr-FR-Standard-A'
 tts_gapi_haskey = False
 
 localmedia_folder = 'localmedia'
-localmedia_fullpath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), localmedia_folder))
+localmedia_fullpath = os.path.abspath(os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), localmedia_folder))
 
 log_level = "info"
 pidfile = '/tmp/googlecast.pid'
 apikey = ''
 callback = ''
-daemonname=''
-socketport=55012
-sockethost='127.0.0.1'
+daemonname = ''
+socketport = 55012
+sockethost = '127.0.0.1'
