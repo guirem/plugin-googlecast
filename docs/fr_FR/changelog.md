@@ -4,7 +4,7 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
-# Version du 30 janvier 2020 (beta) - 2.15
+# Version du 09 février 2020 (beta/stable) - 2.15
 
 - récupération des alarmes/timers et autres config refonctionne si le jeton est bien renseigné
 https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f#the-token
