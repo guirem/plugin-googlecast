@@ -255,10 +255,14 @@ They must be seperated by *|*
     * mute_off
     * quit_app
     * start_app : use value to pass app id
+    * turn_on : try to turn on device by opening basic app (may turn on device for some model)
+    * turn_off : equivalent to quit_app (may turn off device for some model)
     * play
     * stop
-    * rewind : go back to media start
-    * skip : got to next media
+    * rewind : go back to begining of the current media
+    * previous : got to previous media in playlist (if any)
+    * skip : got to next media in playlist (if any)
+    * next : same as skip
     * seek : use value in seconds. Can use +/- to use relative seek (ex: +20 to pass 20 seconds)
     * pause
     For application dependant commands

@@ -27,6 +27,32 @@ if (init('test') != '') {
 	die();
 }
 $result = json_decode(file_get_contents("php://input"), true);
+
+$action = init('action');
+if ( $action === 'setgatoken' ) {
+    $uuid = init('uuid');
+	if ( $uuid !== '' && init('token') !== '' ) {
+
+        $googlecast = googlecast::byLogicalId($uuid, 'googlecast');
+        if (is_object($googlecast)) {
+            $googlecast->setConfiguration('ga_token', init('token') );
+            $googlecast->save();
+            http_response_code(200);
+            //echo init('token') . '<br>';
+            echo "Google Home token successfully updated!";
+        }
+        else {
+            http_response_code(400);
+            echo "googlecast with this uuid does not exist";
+        }
+	}
+    else {
+        http_response_code(400);
+        echo "uuid or token not set";
+    }
+    die();
+}
+
 if (!is_array($result)) {
 	die();
 }
@@ -55,8 +81,8 @@ if (isset($result['discovery'])) {
 		$googlecast = googlecast::byLogicalId($result['uuid'], 'googlecast');
 		if (!is_object($googlecast) or $googlecast->getIsEnable() != false) {
 			$msg = 'Un nouveau GoogleCast ('. $result['friendly_name'] .") existe sur le réseau ! Vous pouvez lancer un scan via le plugin pour l'ajouter.";
-			$action = 'Lancer un scan';
-			message::add('Google Cast', $msg, $action, null);
+			$actionMsg = 'Lancer un scan';
+			message::add('Google Cast', $msg, $actionMsg, null);
 		}
 	}
 }
@@ -106,14 +132,14 @@ if (isset($result['devices'])) {
 			if ($data['learn'] != 1) {
 				continue;
 			}
-			log::add('googlecast','info','New GoogleCast device detected ' . $data['uuid']);
+			log::add('googlecast','info','New GoogleCast device detected ' . $data['friendly_name'] . ' ('. $data['uuid'] . ')');
 			$googlecast = googlecast::createFromDef($data);
 			event::add('jeedom::alert', array(
 				'level' => 'warning',
 				'page' => 'googlecast',
 				'message' => '',
 			));
-			event::add('googlecast::includeDevice', $googlecast->getId());
+            event::add('googlecast::includeDevice', array( 'friendly_name' => $data['friendly_name'], 'id' => $googlecast->getId() ) );
 		}
 		else {
 			$flattenResults = array_flatten($data);

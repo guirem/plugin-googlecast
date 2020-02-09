@@ -4,6 +4,17 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
+# Version du 09 février 2020 (beta/stable) - 2.15
+
+- récupération des alarmes/timers et autres config refonctionne si le jeton est bien renseigné
+https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f#the-token
+- optimisation de la detection de googlecast
+- correction bug de mise à jour du volume
+- ajout d'un bouton pour aller au média précédant d'une playlist
+- mise à jour des radios (75) et ajout d'un selecteur sur widget
+- mise à jour de la librairie pychromecast
+- nettoyage de code
+
 # Version du 20 janvier 2020 (beta/stable) - 2.14
 
 - correction bug ssml (google cloud ttts)
