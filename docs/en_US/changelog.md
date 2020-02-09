@@ -4,7 +4,7 @@ Version list of googlecast plugin.
 
 *[Back to documentation] (index.md)*
 
-# Version of January 30, 2020 (beta) - 2.15
+# Version of February 09, 2020 (beta/stable) - 2.15
 
 - added possibility to get alamrs and timers if token is provided
 https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f#the-token
