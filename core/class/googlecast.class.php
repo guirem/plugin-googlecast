@@ -632,7 +632,8 @@ class googlecast extends eqLogic
         if (!is_object($cmd)) {
             $cmd = new googlecastCmd();
             $cmd->setLogicalId('cmdlist_radiolist');
-            $cmd->setName(__('Radio', __FILE__));
+            $cmdname = $this->getNonExistCmdName(__('Radio', __FILE__));
+            $cmd->setName($cmdname);
             $cmd->setIsVisible(1);
             if ($order<=3) {
                 $order=50;
@@ -808,6 +809,15 @@ class googlecast extends eqLogic
             'message' => __('Module inclu avec succès ' .$_def['friendly_name'], __FILE__),
         ));
         return $eqLogic;
+    }
+
+    public function getNonExistCmdName($cmdname)
+    {
+        $new_cmdname = $cmdname;
+        if (cmd::byEqLogicIdCmdName($this->getId(), $new_cmdname)) {
+            $new_cmdname = 'Radio_' . strtotime("now");
+        }
+        return $new_cmdname;
     }
 
     public function getChromecastIPfromURI()
