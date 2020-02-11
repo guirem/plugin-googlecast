@@ -2,7 +2,7 @@
 
 ![Logo plugin](../images/logoplugin.png "Logo plugin")
 
-Plugin pour commander les équipements compatibles Google Cast et Google Assistant.
+Ce plugin [Jeedom](https://www.jeedom.com) à pour objectif de gérer les équipements compatibles Google Cast et Google Assistant.
 
 **Fonctionnalités :**
 
@@ -74,12 +74,12 @@ En quelques étapes :
     - [Applications spéciales](#applications-sp%c3%a9ciales)
     - [Commandes avancées](#commandes-avanc%c3%a9es)
       - [Syntaxe des commandes brutes](#syntaxe-des-commandes-brutes)
-      - [Paramètres possibles pour _play_media_ en mode _media_ :](#param%c3%a8tres-possibles-pour-playmedia-en-mode-media)
-      - [Paramètres possibles pour _load_url_ en mode _web_ :](#param%c3%a8tres-possibles-pour-loadurl-en-mode-web)
-      - [Paramètres possibles pour _play_media_ en mode _plex_ :](#param%c3%a8tres-possibles-pour-playmedia-en-mode-plex)
-      - [Paramètres possibles pour _play_media_ en mode _spotify_ (experimental) :](#param%c3%a8tres-possibles-pour-playmedia-en-mode-spotify-experimental)
-      - [Paramètres possibles pour cmd _tts_ :](#param%c3%a8tres-possibles-pour-cmd-tts)
-      - [Paramètres possibles pour cmd _notif_ :](#param%c3%a8tres-possibles-pour-cmd-notif)
+      - [Paramètres possibles pour _play_media_ en mode _media_](#param%c3%a8tres-possibles-pour-playmedia-en-mode-media)
+      - [Paramètres possibles pour _load_url_ en mode _web_](#param%c3%a8tres-possibles-pour-loadurl-en-mode-web)
+      - [Paramètres possibles pour _play_media_ en mode _plex_](#param%c3%a8tres-possibles-pour-playmedia-en-mode-plex)
+      - [Paramètres possibles pour _play_media_ en mode _spotify_ (experimental)](#param%c3%a8tres-possibles-pour-playmedia-en-mode-spotify-experimental)
+      - [Paramètres possibles pour cmd _tts_](#param%c3%a8tres-possibles-pour-cmd-tts)
+      - [Paramètres possibles pour cmd _notif_](#param%c3%a8tres-possibles-pour-cmd-notif)
       - [Séquence de commandes](#s%c3%a9quence-de-commandes)
     - [Configuration des fonctionnalités Google Home/Assistant](#configuration-des-fonctionnalit%c3%a9s-google-homeassistant)
       - [Récupérer une configuration](#r%c3%a9cup%c3%a9rer-une-configuration)
@@ -254,6 +254,8 @@ paramètres CSS optionnels (via '_Paramètres optionnels widget_'):
 
 # Commandes personnalisées
 
+L'utilisation des commandes personnalisées se fait soit via l'interface utilisateur sur la page de gestion des commandes, soit via l'utilisation de la commande _Custom Cmd_ (ex: pour les scénarios)
+
 ### Applications spéciales
 
 - _Web_ : afficher une page web sur un Google Cast. Les paramètres disponibles sont l'url, forcer, et le délai de rechargement (ex: value='https://google.com',False,0 pour charger Google sans forcer (nécessaire pour certains sites) et sans rechargement)
@@ -265,7 +267,6 @@ paramètres CSS optionnels (via '_Paramètres optionnels widget_'):
 > **Notes**
 >
 > - Voir les boutons créés par défaut pour un exemple d'utilisation
-> - Youtube est non fonctionnel pour le moment
 
 ### Commandes avancées
 
@@ -325,7 +326,7 @@ ex storecmd and resume : app=web|cmd=load_url|vol=90|value='http://pictoplasma.s
 > **Notes**  
 > les chaînes de caractères pour les commandes sont limitées dans Jeedom à 128 caractères. Utiliser les scénarios (voir plus bas pour passer outre cette limitation) ou voir la FAQ pour optimiser la commande.
 
-#### Paramètres possibles pour _play_media_ en mode _media_ :
+#### Paramètres possibles pour _play_media_ en mode _media_
 
 ```
 - value: str - seperated by ',' (see notes)
@@ -362,7 +363,7 @@ ex long : app=media|cmd=play_media|value='http://contentlink','video/mp4',title:
 > - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
 > - Un média local situé dans le répertoire _<jeedom>/plugins/googlecast/localmedia/_ peut être utilisé en appelant l'url _local://<nomdufichier>_ (ex: local://bigben1.mp3)
 
-#### Paramètres possibles pour _load_url_ en mode _web_ :
+#### Paramètres possibles pour _load_url_ en mode _web_
 
 ```
 - value: str - seperated by ',' (see notes)
@@ -381,7 +382,7 @@ ex 3 : app=web|value='http://mywebsite/index.php?apikey%3Dmyapikey' (implicit lo
 > - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
 > - Pour la diffusion de flux caméra, la caméra doit pouvoir fournir le flux via http (rtsp n'est pas compatible google cast)
 
-#### Paramètres possibles pour _play_media_ en mode _plex_ :
+#### Paramètres possibles pour _play_media_ en mode _plex_
 
 ```
 - value: str - search query. It could be individual title, playlist or other type of content handled by Plex (it will play the first element returned).
@@ -408,7 +409,7 @@ ex using token with implicit play_media command call :
 > - Token value is displayed in logs (debug) when user & pass has been used the first time. Token is then persistent.
 > - you can simulate result of search query (value) in main search field of Plex web UI
 
-#### Paramètres possibles pour _play_media_ en mode _spotify_ (experimental) :
+#### Paramètres possibles pour _play_media_ en mode _spotify_ (experimental)
 
 !! Le plus dur est de récupérer un token valable !!  
 Pas de support sur cette fonctionnalité
@@ -426,7 +427,7 @@ ex using valid token :
 > - Token is too long to be passed through regular command. Use _CustomCmd_.
 > - For test, you can use a web token (open spotify in browser, log in and look for 'wp_access_token' value to use as token).
 
-#### Paramètres possibles pour cmd _tts_ :
+#### Paramètres possibles pour cmd _tts_
 
 ```
 - value: str - text
@@ -459,7 +460,7 @@ ex voice/ssml : cmd=tts|engine=gttsapi|voice=fr-CA-Standard-A|value=<speak>Etape
 > - By default, the plugin will try to resume previous app launched (will only work when previous application has been launched by the plugin).
 > - You can try to force resume to any application using 'forceapplaunch=1' but there is a good chance that it will not resume correctly.
 
-#### Paramètres possibles pour cmd _notif_ :
+#### Paramètres possibles pour cmd _notif_
 
 ```
 - value: str - local media filename (located in '<jeedom>/plugins/googlecast/localmedia/' folder)
@@ -505,7 +506,7 @@ Cela permet de récupérer (ou modifier) des informations tel que les alarmes, t
 
 La procédure de récupération des jetons est ici : https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f#the-token
 
-Ce jeton doit être saisi sur la page de configuration de chaque Gooogle Home.
+Ce jeton doit être saisi sur la page de configuration de chaque équipement Gooogle Home.
 
 #### Récupérer une configuration
 
@@ -649,10 +650,12 @@ Exemple : commande appelée 'radio_rtl'
 
 La commande nommée _Custom Cmd_ permet de lancer une commande brute à partir d'un scénario.
 
-Par exemple, pour lancer Google sur un Google Cast à partir d'un scénario, ajouter la commande avec la valeur souhaitée dans le champs 'message'.
+Dans le scénario, ajouter la commande _Custom Cmd_ et saisir la commande à envoyer tel que décrit dans la section [Commandes personnalisées](#commandes-personnalis%c3%a9es) dans le champs 'message'.
 
 ```
+Exemples : 
 app=web|cmd=load_url|value='https://google.com',True,10
+cmd=tts|vol=100|value=Mon text a dire
 ```
 
 ![Scenario](../images/scenario.png "Scenario")
@@ -796,7 +799,8 @@ Notes :
 
 # Limitations et bugs connus
 
-- Moteur PicoTTS ne gère pas les phrases accentuées (ils sont supprimés)
+- Moteur PicoTTS ne gère pas les phrases accentuées (ils sont supprimés);
+- L'accès à certaines fonctionnalité Google Assistant requière depuis fin 2019 un token d'authentification (voir [Configuration des fonctionnalités Google Home/Assistant](#configuration-des-fonctionnalit%c3%a9s-google-homeassistant));
 
 # FAQ
 
@@ -895,7 +899,7 @@ Suite à la mise à jour de janvier 2020, il est probable que l'API 'Google Clou
 
 #### Comment récupérer les alamers et timers d'un Google Home
 
-C'est possible mais il est nécessaire d'avoir un jeton d'authentification (https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f) configuré sur la page du googlecast. Voir la section de la doc dédiée.
+C'est possible mais il est nécessaire d'avoir un jeton d'authentification (https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f) configuré sur la page du googlecast. Voir la section de la doc [Configuration des fonctionnalités Google Home/Assistant](#configuration-des-fonctionnalit%c3%a9s-google-homeassistant).
 
 # Changelog
 
