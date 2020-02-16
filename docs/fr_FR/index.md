@@ -1,4 +1,4 @@
-# Plugin GoogleCast (googlecast)
+# Plugin GoogleCast (googlecast) <!-- omit in toc -->
 
 ![Logo plugin](../images/logoplugin.png "Logo plugin")
 
@@ -42,12 +42,12 @@ Ce plugin [Jeedom](https://www.jeedom.com) à pour objectif de gérer les équip
 
 ![Summary](../images/summary.png "Summary")
 
-# Dashboard
+# Dashboard <!-- omit in toc -->
 
 ![Visuel du dashboard](../images/dashboard.png "Visuel du dashboard")
 ![Visuel du dashboard 2](../images/dashboard2.png "Visuel du dashboard 2")
 
-# Quick Start
+# Quick Start <!-- omit in toc -->
 
 Le plugin est normalement fonctionnel dès l'installation avec le paramétrage par défaut.
 
@@ -55,16 +55,12 @@ En quelques étapes :
 
 1. Installer le plugin du market, les dépendances puis démarrer le démon,
 2. Lancer un scan des Google Cast disponibles sur le réseau,
-3. Sauvegarder les équipements trouvés,
+3. Configurer l'objet parent (dahsboard) pour chaque équipement si nécessaire,
 4. Aller sur le dashboard et tester les boutons 'démo' (media, web...),
 5. Pour changer/adapter le paramétrage, lire le reste de la documentation.
 
-# Table des matières 
+# Table des matières <!-- omit in toc -->
 
-- [Plugin GoogleCast (googlecast)](#plugin-googlecast-googlecast)
-- [Dashboard](#dashboard)
-- [Quick Start](#quick-start)
-- [Table des matières](#table-des-mati%c3%a8res)
 - [Configuration du plugin](#configuration-du-plugin)
 - [Configuration des équipements](#configuration-des-%c3%a9quipements)
     - [Onglet Commandes](#onglet-commandes)
@@ -640,7 +636,7 @@ Exemple : commande appelée 'radio_rtl'
 ```
 
 > **Note**  
-> Il est possible de rajouter des webradios dans un fichier appelé _custom.json_ (à créer) dans le répertoire du plugin _webradios_. Le format doit être similaire au fichier _webradios/radiolist.json_ (l'id de la radio devra être concatené avec _radio\__ au début pour l'utiliser en commande; eg: id radio _XXXX_ devra être appelé avec la commande _radio_XXXX_).
+> Il est possible de rajouter des webradios dans un fichier appelé _custom.json_ (à créer) dans le répertoire du plugin _webradios_. Le format doit être similaire au fichier _webradios/radiolist.json_ (l'id de la radio devra être concatené avec \_radio\__ au début pour l'utiliser en commande; eg: id radio \_XXXX_ devra être appelé avec la commande _radio_XXXX_).
 > Ce fichier ne sera pas modifié lors des mises à jour du plugin.
 > A la création du fichier, s'assurer que le fichier à les bons droits avec la commande `sudo chown www-data:www-data custom.json && sudo chmod 775 custom.json`
 
@@ -653,7 +649,7 @@ La commande nommée _Custom Cmd_ permet de lancer une commande brute à partir d
 Dans le scénario, ajouter la commande _Custom Cmd_ et saisir la commande à envoyer tel que décrit dans la section [Commandes personnalisées](#commandes-personnalis%c3%a9es) dans le champs 'message'.
 
 ```
-Exemples : 
+Exemples :
 app=web|cmd=load_url|value='https://google.com',True,10
 cmd=tts|vol=100|value=Mon text a dire
 ```
