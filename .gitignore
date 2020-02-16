@@ -5,3 +5,5 @@ Thumbs.db
 __pycache__
 *.bak
 tmp/
+
+.vscode/
