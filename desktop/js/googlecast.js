@@ -125,7 +125,7 @@ function addCmdToTable(_cmd) {
        var _cmd = {configuration: {}};
    }
    var tr = '';
-   if ( (_cmd.logicalId != null) && _cmd.configuration.googlecast_cmd!==undefined ) {
+   if ( (_cmd.logicalId != null) && _cmd.configuration.googlecast_cmd===true ) {
        tr = '<tr class="cmd" data-cmd_id="' + init(_cmd.id) + '" style="background:#F2F2F2">';
        tr += '<td>';
        tr += '<div style="width:250px;">';
@@ -209,7 +209,7 @@ function addCmdToTable(_cmd) {
             tr += '<a class="btn btn-default btn-xs cmdAction" data-action="configure"><i class="fa fa-cogs"></i></a> ';
             tr += '<a class="btn btn-default btn-xs cmdAction" data-action="test"><i class="fa fa-rss"></i> Tester</a>';
         }
-        if (_cmd.configuration.googlecast_cmd_mod===undefined) {
+        if (_cmd.configuration.googlecast_cmd_mod!==true) {
             tr += '<br><center><i class="fa fa-minus-circle cmdAction cursor" style="margin-top:10px;font-size:18px;color:red" data-action="remove"></i></center></td>';
         }
     }
