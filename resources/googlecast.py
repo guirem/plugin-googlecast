@@ -26,7 +26,7 @@ import logging
 import sys
 import argparse
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 import signal
 import json
 import traceback
@@ -913,8 +913,6 @@ def action_handler(message):
                         if 'spdc' in command and 'spkey' in command:
                             spdc = command['spdc']
                             spkey = command['spkey']
-                            spdc = "AQCgatcbOEWKU9btY2uaCYa-f40OilLICq-hzBoQRxhdCTfMTrmgxyVC0h-WCQ-H3aa4Cq4V-woqmRz3Fx8AL_RRutLHo38vk_iXNsY1YPw"
-                            spkey = "cdb4b966-a7dc-4813-ad95-b55361902e8c"
                             data = stoken.start_session(spdc, spkey)
                             access_token = data[0]
                             expires = data[1] - int(time.time())
