@@ -131,6 +131,8 @@ Les paramètres de configuration n'ont généralement pas besoin d'être modifi�
   - Key Google Cloud Text-to-Speech (uniquement si le moteur 'Google Cloud Text-to-Speech' est selectionné) : Clé API nécessaire à l'utilisation de ce moteur.
   - Voix par défaut pour Google Cloud Text-to-Speech (uniquement si le moteur 'Google Cloud Text-to-Speech' est selectionné) : voix par défaut qui sera utilisé par ce moteur TTS.
   - Vitesse de parole : rapidité de prononciation du texte
+  - Delai avant restauration du volume initial : temps additionnel ajouté après le tts et avant de remettre le volume au niveau initial (en ms - defaut: 1300)
+  - Durée de Silence ajouté avant la notification : durée d'un silence ajouté avant le tts (en ms - defaut: 300)
   - Ne pas utiliser le cache : désactive l'utilisation du cache Jeedom (déconseillé)
   - Nettoyer cache : nettoie le répertoire temporaire de géneration des fichiers son
   - Suppression automatique du cache de plus de X jours : supprime les fichiers son TTS non utilisés depuis X jours (tâche lancée tous les jours). 0 supprime tout le cache.
@@ -365,7 +367,7 @@ ex long : app=media|cmd=play_media|value='http://contentlink','video/mp4',title:
 - value: str - seperated by ',' (see notes)
     * url: str - website url. Must start with http, https...
     * force: bool - force mode. To be used if default is not working. (optional, default False).
-    * reload: int - reload time in seconds. 0 = no reload. (optional, default 0)
+    * reload: int - reload time in seconds. 0 = no reload. (optional, default 0). Works only if force is set to false.
 
 ex 1 : app=web|cmd=load_url|value='http://pictoplasma.sound-creatures.com',True,10
 ex 2 : app=web|cmd=load_url|value='http://mywebsite/index.php?apikey%3Dmyapikey'
@@ -407,21 +409,32 @@ ex using token with implicit play_media command call :
 
 #### Paramètres possibles pour _play_media_ en mode _spotify_ (experimental)
 
-!! Le plus dur est de récupérer un token valable !!  
-Pas de support sur cette fonctionnalité
+Pas de support sur cette fonctionalité !
 
 ```
-- value: str - media id. Format : 'track:<id>', 'album:<id>', 'playlist:<id>'.
-- token: str - token (required).
+- value: str - media id (spotify uri). Format : 'track:<id>', 'album:<id>', 'playlist:<id>'.
+- spdc: str - valeur de sp_dc du cookie - voir ci-dessous (required).
+- spkey: str - valeur de sp_key du cookie - voir ci-dessous (required).
 
 ex using valid token :
-   app=spotify|token=XXXXXX|value=track:3Zwu2K0Qa5sT6teCCHPShP
+   app=spotify|spdc=XXXXXX|spkey=YYYYYY|value=track:3Zwu2K0Qa5sT6teCCHPShP
 ```
+
+> **Récupération de spdc et spkey**
+> 
+> (credits: https://github.com/enriquegh/spotify-webplayer-token)
+> To obtain the cookies (valid for 1 year):
+>    
+> - Open a new Incognito window in Chrome (or another browser) at https://accounts.spotify.com/en/login?continue=https:%2F%2Fopen.spotify.com%2F
+> - Open Developer Tools in your browser (might require developer menu to be enabled in some browsers)
+> - Login to Spotify.
+> - Search/Filter for get_access_token in Developer tools under Network.
+> - Under cookies for the request save the values for sp_dc and sp_key.
+> - Close the window without logging out (Otherwise the cookies are made invalid).
 
 > **Notes**
 >
 > - Token is too long to be passed through regular command. Use _CustomCmd_.
-> - For test, you can use a web token (open spotify in browser, log in and look for 'wp_access_token' value to use as token).
 
 #### Paramètres possibles pour cmd _tts_
 
@@ -854,7 +867,8 @@ Puis relancer l'installation des dépendances.
 #### Le Text To Speech (TTS) fonctionne mais a des coupures pendant le message ou se termine trop tôt
 
 Le type d'équipements utilisés (wifi, serveur Jeedom) ou la longueur du message peut avoir un impact sur le rendu TTS.
-
+ 
+- Augmenter les valeurs des paramètres de configuration 'Delai avant restauration du volume initial' et/ou 'Durée de Silence ajouté avant la notification'
 - Ajouter le paramêtre 'sleep' pour ajouter un délai supplémentaire à la fin du message (ex: |sleep=0.8 pour 0.8 seconde).
 - Tester avec le paramètre 'buffered=1' pour voir si cela règle le problème.
 - Utiliser le paramêtre 'forcetts' durant les tests pour être certain que le cache n'est pas utilisé.

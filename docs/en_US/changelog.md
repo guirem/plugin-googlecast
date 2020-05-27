@@ -4,7 +4,11 @@ Version list of googlecast plugin.
 
 *[Back to documentation] (index.md)*
 
-# Version of February 09, 2020 (beta/stable) - 2.15
+## Version of April 16, 2020 (beta/stable) - 2.16
+
+- fix deconnection issue on chromecast device
+
+## Version of February 09, 2020 (beta/stable) - 2.15
 
 - added possibility to get alamrs and timers if token is provided
 https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f#the-token
@@ -15,13 +19,13 @@ https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f#the-token
 - pychromecast library update
 - code cleaning
   
-# Version of January 20, 2020 (beta/stable) - 2.14
+## Version of January 20, 2020 (beta/stable) - 2.14
 
 - fix bug ssml (google cloud ttts)
 - fix tts webserver integration
 - minor optimizations
 
-# Version du January 11, 2020 (stable)
+## Version du January 11, 2020 (stable)
 
 - push 2.11, 2.12 et 2.13 beta to stable.
 

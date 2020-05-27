@@ -350,7 +350,7 @@
       "image":"logo://radio_nologo.png"
    },
    "virgin_radio":{
-      "location":"http://vr-live-mp3-128.scdn.arkena.com/virginradio.mp3",
+      "location":"http://ais-live.cloud-services.paris:8000/virgin.mp3",
       "title":"Virgin Radio",
       "image":"logo://radio_nologo.png"
    },
