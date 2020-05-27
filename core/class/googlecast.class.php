@@ -120,17 +120,17 @@ class googlecast extends eqLogic
         if (!$found) {	// try to guess based on manufacturer
             $castType = $this->getConfiguration('cast_type');
             $manufName = strtolower($this->getConfiguration('manufacturer', 'UNKOWN'));
-            if (strpos($manufName, 'google') !== false) {
-                if ($castType=='audio') {
-                    $imgLogo = $imgRoot . 'model_googlehome.png';
-                }
-                if ($castType=='cast') {
-                    $imgLogo = $imgRoot . 'model_chromecast_video.png';
-                }
-                if ($castType=='group') {
-                    $imgLogo = $imgRoot . 'model_castgroup.png';
-                }
-            }
+            // if (strpos($manufName, 'google') !== false) {
+            //     if ($castType=='audio') {
+            //         $imgLogo = $imgRoot . 'model_googlehome.png';
+            //     }
+            //     if ($castType=='cast') {
+            //         $imgLogo = $imgRoot . 'model_chromecast_video.png';
+            //     }
+            //     if ($castType=='group') {
+            //         $imgLogo = $imgRoot . 'model_castgroup.png';
+            //     }
+            // }
             if (strpos($manufName, 'xiaomi') !== false) {
                 $imgLogo = $imgRoot . 'model_androidtv.png';
             }
@@ -962,6 +962,8 @@ class googlecast extends eqLogic
         }
         $cmd .= ' --ttsgapikey ' . config::byKey('tts_gapikey', 'googlecast', 'none');
         $cmd .= ' --gcttsvoice ' . config::byKey('gctts_voice', 'googlecast', 'fr-FR-Standard-A');
+        $cmd .= ' --ttsdefaultrestoretime ' . config::byKey('tts_default_restoretime', 'googlecast', '1300');
+        $cmd .= ' --ttsdefaultsilenceduration ' . config::byKey('tts_default_silence_duration', 'googlecast', '300');
         $cmd .= ' --daemonname local';
         $cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', 'googlecast', '1');
         $cmd .= ' --defaultstatus ' . "'". config::byKey('defaultsatus', 'googlecast', "&nbsp;") ."'";

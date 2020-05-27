@@ -320,16 +320,27 @@ if (!isConnect('admin')) {
             </select>
 	    </div>
     </div>
+	<div class="form-group">
+		<label class="col-lg-4 control-label">{{Delai avant restauration du volume initial}}</label>
+	    <div class="col-lg-2">
+	        <input class="configKey form-control" type="number" data-l1key="tts_default_restoretime" min="-1000" max="10000" placeholder="{{Durée en milisecondes}}" />
+	    </div>
+		<div class="col-lg-2">ms (défaut: 1000)</div>
+    </div>
+	<div class="form-group">
+		<label class="col-lg-4 control-label">{{Durée du silence ajouté avant la notification}}</label>
+	    <div class="col-lg-2">
+	        <input class="configKey form-control" type="number" data-l1key="tts_default_silence_duration" min="0" max="10000" placeholder="{{Durée en milisecondes}}" />
+	    </div>
+		<div class="col-lg-2">ms (défaut: 300)</div>
+    </div>
     <div class="form-group">
 	    <label class="col-lg-4 control-label">{{Ne pas utiliser le cache (déconseillé)}}</label>
 	    <div class="col-lg-2">
 	        <input  type="checkbox" class="configKey" data-l1key="tts_disablecache"/>
 	    </div>
-    </div>
-    <div class="form-group">
-	    <label class="col-lg-4 control-label"></label>
-	    <div class="col-lg-2">
-            <a class="btn btn-success cleanTTScache">{{Nettoyer tout le cache}}</a>
+		<div class="col-lg-2">
+            <a class="btn btn-warning cleanTTScache">{{Nettoyer tout le cache}}</a>
 	    </div>
     </div>
 	<div class="form-group">

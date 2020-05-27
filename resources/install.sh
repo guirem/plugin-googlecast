@@ -93,7 +93,7 @@ if [[ ! -z  $pip3cmd ]]; then     # pip3 found
     echo 87 > /tmp/dependancy_googlecast_in_progress
     echo ""
     echo "-- Installation of python library 'zeroconf' with command $pip3cmd"
-    $(sudo $pip3cmd install 'zeroconf<0.24.4,>=0.22.0' > /tmp/dependancy_googlecast)
+    $(sudo $pip3cmd install 'zeroconf>=0.25.1' > /tmp/dependancy_googlecast)
     cat /tmp/dependancy_googlecast
     echo 92 > /tmp/dependancy_googlecast_in_progress
     echo ""
@@ -102,8 +102,8 @@ if [[ ! -z  $pip3cmd ]]; then     # pip3 found
     cat /tmp/dependancy_googlecast
     echo 96 > /tmp/dependancy_googlecast_in_progress
     echo ""
-    echo "-- Installation of python library 'tqdm, websocket-client' for plex with command $pip3cmd"
-    $(sudo $pip3cmd install tqdm websocket-client > /tmp/dependancy_googlecast)
+    echo "-- Installation of python library 'tqdm, websocket-client, casttube' for plex/youtube with command $pip3cmd"
+    $(sudo $pip3cmd install tqdm websocket-client casttube > /tmp/dependancy_googlecast)
     cat /tmp/dependancy_googlecast
     echo 100 > /tmp/dependancy_googlecast_in_progress
     echo ""

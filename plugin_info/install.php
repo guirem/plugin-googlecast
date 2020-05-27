@@ -40,6 +40,12 @@ function googlecast_update()
     if (config::byKey('gctts_voice', 'googlecast') == '') {
         config::save('gctts_voice', 'fr-FR-Standard-A', 'googlecast');
     }
+    if (config::byKey('tts_default_restoretime', 'googlecast') == '') {
+        config::save('tts_default_restoretime', '1300', 'googlecast');
+    }
+    if (config::byKey('tts_default_silence_duration', 'googlecast') == '') {
+        config::save('tts_default_silence_duration', '300', 'googlecast');
+    }
 
     foreach (googlecast::byType('googlecast') as $googlecast) {
         try {
@@ -92,6 +98,12 @@ function googlecast_install()
     }
     if (config::byKey('tts_disablecache', 'googlecast') == '') {
         config::save('tts_disablecache', '0', 'googlecast');
+    }
+    if (config::byKey('tts_default_restoretime', 'googlecast') == '') {
+        config::save('tts_default_restoretime', '1300', 'googlecast');
+    }
+    if (config::byKey('tts_default_silence_duration', 'googlecast') == '') {
+        config::save('tts_default_silence_duration', '300', 'googlecast');
     }
 
     linkTemplate('dashboard/cmd.info.string.googlecast_playing.html');

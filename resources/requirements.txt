@@ -1,9 +1,10 @@
 setuptools
 requests>=2.21.0
-protobuf
-zeroconf<0.24.4,>=0.22.0
 click
 bs4
 six
 tqdm
 websocket-client
+protobuf>=3.0.0
+zeroconf>=0.25.1
+casttube>=0.2.0
