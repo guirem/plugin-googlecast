@@ -172,7 +172,7 @@ foreach (jeedom::getConfiguration('eqLogic:category') as $key => $value) {
 	  <div class="form-group ga_token_form">
         <label class="col-lg-3 control-label">{{Jeton Google Assistant/Home}}</label>
         <div class="col-lg-4">
-          <textarea type="textarea" rows="2" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="ga_token" placeholder="{{Optionnel - Permet d'avoir accès à certaines configurations Google Home (alarmes, timers...)}}"/>
+          <textarea type="textarea" rows="2" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="ga_token" placeholder="{{Optionnel - Permet d'avoir accès à certaines configurations Google Home (alarmes, timers...)}}"></textarea>
         </div>
       </div>
     </fieldset>
