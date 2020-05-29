@@ -9,7 +9,7 @@ fi
 
 if [[ ! -z  $pip3cmd ]]; then     # pip3 found
     echo "-- Updating requirements :"
-    echo $($pip3cmd install -r $1)
+    echo $(sudo $pip3cmd install -r $1)
 else
     echo "Error: Cound not found pip3 program to update python dependencies !"
 fi
