@@ -212,6 +212,7 @@ class jeedom_utils():
             logging.getLogger("gtts").setLevel(logging.ERROR)
             logging.getLogger("requests").setLevel(logging.ERROR)
             logging.getLogger("urllib3").setLevel(logging.ERROR)
+            logging.getLogger("zeroconf").setLevel(logging.ERROR)
             logging.getLogger(
                 "requests.packages.urllib3").setLevel(logging.ERROR)
         else:
@@ -221,6 +222,7 @@ class jeedom_utils():
             logging.getLogger("gtts").setLevel(logging.CRITICAL)
             logging.getLogger("requests").setLevel(logging.CRITICAL)
             logging.getLogger("urllib3").setLevel(logging.CRITICAL)
+            logging.getLogger("zeroconf").setLevel(logging.CRITICAL)
             logging.getLogger("requests.packages.urllib3").setLevel(
                 logging.CRITICAL)
 
