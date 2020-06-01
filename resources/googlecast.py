@@ -410,14 +410,14 @@ class JeedomChromeCast:
             reset = True
             pass
 
-        if reset:
-            for channel in castsocket._open_channels:
-                castsocket.disconnect_channel(channel)
-            try:
-                castsocket.initialize_connection()
-            except Exception:
-                castsocket.stop.set()
-                pass
+        # if reset:
+        #     for channel in castsocket._open_channels:
+        #         castsocket.disconnect_channel(channel)
+        #     try:
+        #         castsocket.initialize_connection()
+        #     except Exception:
+        #         castsocket.stop.set()
+        #         pass
 
         return not reset
 
@@ -2176,12 +2176,14 @@ def scanner(name='UNKNOWN SOURCE'):
 
             if known in globals.GCAST_DEVICES:
                 if globals.GCAST_DEVICES[known].is_connected is True:
-                    is_not_available = False
-
+                    
                     # try to ping it to confirm it's well connected
                     con_ok = globals.GCAST_DEVICES[known].check_connection()
-                    if not con_ok:
-                        logging.debug("SCANNER------Seen as connected but ping failed, trying to reconnect " + known)
+                    if con_ok:
+                        is_not_available = False
+                    else:
+                        globals.GCAST_DEVICES[known].disconnect()
+                        logging.debug("SCANNER------Seen as connected but ping failed for " + known)
                 else:
                     # something went wrong so disconnect completely
                     globals.GCAST_DEVICES[known].disconnect()
