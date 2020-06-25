@@ -251,7 +251,7 @@ class JeedomChromeCast:
         if new_status.status == "DISCONNECTED" and self.being_shutdown is False:
             self.disconnect()
             logging.info(
-                "JEEDOMCHROMECAST------ Chromecast has beend disconnected : " + self.friendly_name)
+                "JEEDOMCHROMECAST------ Chromecast has been disconnected : " + self.friendly_name)
         if new_status.status == "LOST":
             self.is_recovering = True
             self._internal_refresh_status(True)
@@ -2183,7 +2183,7 @@ def scanner(name='UNKNOWN SOURCE'):
                         is_not_available = False
                     else:
                         globals.GCAST_DEVICES[known].disconnect()
-                        logging.debug("SCANNER------Seen as connected but ping failed for " + known)
+                        logging.warn("SCANNER------Seen as connected but ping failed for " + known)
                 else:
                     # something went wrong so disconnect completely
                     globals.GCAST_DEVICES[known].disconnect()
