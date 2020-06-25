@@ -459,6 +459,7 @@ ex using valid token :
 - pitch (gttsapi only): 0 - speaking pitch, in the range [-20.0, 20.0]. 20 means increase 20 semitones from the original pitch. -20 means decrease 20 semitones from the original pitch.
 - volgain (gttsapi only): 0 - volume gain (in dB) of the normal native volume supported by the specific voice, in the range [-96.0, 16.0].
 
+ex : cmd=tts|value=My text|vol=50
 ex : cmd=tts|value=My text|lang=en-US|engine=gtts|quit=1
 ex : cmd=tts|value=Mon texte|engine=gtts|speed=0.8|forcetts=1
 ex voice/ssml : cmd=tts|engine=gttsapi|voice=fr-CA-Standard-A|value=<speak>Etape 1<break time^"3s"/>Etape 2</speak>
@@ -579,32 +580,32 @@ cmd=setconfig|value=assistant/alarms/volume|data={'volume': 1}
 
 Les commandes suivantes peuvent être utilisées dans une commande 'info' ou scénario (via fonction _getInfoHttpSimple()_) :
 
-- _gh_get_alarms_date_ : retourne la date de toutes les alarmes.
-- _gh_get_alarms_id_ : retourne les identifiants uniques de toutes les alarmes et timers.
-- _gh*get_alarm_date*#_ (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format dd-mm-yyyy HH:mm.
-- _gh*get_alarm_datenice*#_ (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format {'Aujourdhui'|'Demain'|dd-mm-yyyy} HH:mm.
-- _gh*get_alarm_timestamp*#_ (#=numéro, commence par 0) : retourne le timestamp de la prochaine alarme.
-- _gh*get_alarm_status*#_ (#=numéro, commence par 0) : statut de l'alarme (1 = configuré, 2 = sonne).
-- _gh*get_timer_timesec*#_ (#=numéro, commence par 0) : retourne le nombre de secondes avant déclenchement du timer.
-- _gh*get_timer_time*#_ (#=numéro, commence par 0) : retourne la date de déclenchement du timer.
-- _gh*get_timer_duration*#_ (#=numéro, commence par 0) : retourne la durée originale configurée du timer.
-- _gh*get_timer_status*#_ (#=numéro, commence par 0) : statut du timer (1 = configuré, 3 = sonne).
-- _gh_get_donotdisturb_ : retourne l'état de la fonction 'Do Not Disturb'.
-- _gh_get_alarms_volume_ : récupère le volume des alarmes et timers.
-- _conf_pincode_ : retourne le code pin d'association.
+- _gh\_get\_alarms\_date_ : retourne la date de toutes les alarmes.
+- _gh\_get\_alarms\_id_ : retourne les identifiants uniques de toutes les alarmes et timers.
+- _gh\_get\_alarm\_date\_#_ (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format dd-mm-yyyy HH:mm.
+- _gh\_get\_alarm\_datenice\_#_ (#=numéro, commence par 0) : retourne la date de la prochaine alarme au format {'Aujourdhui'|'Demain'|dd-mm-yyyy} HH:mm.
+- _gh\_get\_alarm\_timestamp\_#_ (#=numéro, commence par 0) : retourne le timestamp de la prochaine alarme.
+- _gh\_get\_alarm\_status\_#_ (#=numéro, commence par 0) : statut de l'alarme (1 = configuré, 2 = sonne).
+- _gh\_get\_timer\_timesec\_#_ (#=numéro, commence par 0) : retourne le nombre de secondes avant déclenchement du timer.
+- _gh\_get\_timer\_time\_#_ (#=numéro, commence par 0) : retourne la date de déclenchement du timer.
+- _gh\_get\_timer\_duration\_#_ (#=numéro, commence par 0) : retourne la durée originale configurée du timer.
+- _gh\_get\_timer\_status*#_ (#=numéro, commence par 0) : statut du timer (1 = configuré, 3 = sonne).
+- _gh\_get\_donotdisturb_ : retourne l'état de la fonction 'Do Not Disturb'.
+- _gh\_get\_alarms\_volume_ : récupère le volume des alarmes et timers.
+- _conf\_pincode_ : retourne le code pin d'association.
 - _castversion_ : retourne le numero de version du firmware googlecast.
-- _conf_getbonded_bluetooth_ : retourne tous les équipements bluetooth enregistrés.
-- _conf_getconnected_wifi_ : retourne le nom du réseau wifi configuré.
+- _conf\_getbonded\_bluetooth_ : retourne tous les équipements bluetooth enregistrés.
+- _conf\_getconnected\_wifi_ : retourne le nom du réseau wifi configuré.
 
 Les commandes suivantes peuvent être utilisées dans une commande 'action' ou scénario (via fonction _setInfoHttpSimple()_ ou commande _Custom Cmd_) :
 
-- _gh_set_donotdisturb_on_ : active la fonction 'Do Not Disturb'.
-- _gh_set_donotdisturb_off_ : désactive la fonction 'Do Not Disturb'.
-- _gh*set_donotdisturb*#_ (#=true/false) : active/désactive la fonction 'Do Not Disturb'
-- _gh*set_alarms_volume*#_ (# = entre 0 et 100 (eg: 10)) : configure le volume des alarmes et timers.
-- _bt_connectdefault_ : connecte l'équipement bluetooth configuré par défaut.
-- _bt_connect_X_ (#=adresse mac au format xx:xx:xx:xx:xx:xx) : connecte l'équipement bluetooth donné en paramètre.
-- _bt_disconnectdefault_ : déconnecte l'équipement bluetooth configuré par défaut.
+- _gh\_set\_donotdisturb\_on_ : active la fonction 'Do Not Disturb'.
+- _gh\_set\_donotdisturb\_off_ : désactive la fonction 'Do Not Disturb'.
+- _gh\_set\_donotdisturb\_#_ (#=true/false) : active/désactive la fonction 'Do Not Disturb'
+- _gh\_set\_alarms\_volume\_#_ (# = entre 0 et 100 (eg: 10)) : configure le volume des alarmes et timers.
+- _bt\_connectdefault_ : connecte l'équipement bluetooth configuré par défaut.
+- _bt\_connect\_X_ (#=adresse mac au format xx:xx:xx:xx:xx:xx) : connecte l'équipement bluetooth donné en paramètre.
+- _bt\_disconnectdefault_ : déconnecte l'équipement bluetooth configuré par défaut.
 
 ```
 Exemples:
