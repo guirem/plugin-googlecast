@@ -177,7 +177,7 @@ To see them on the dashboard, you have to activate 'Show' in the commands tab.
 > 'CMD UNKNOWN' if the command does not exist,
 > 'NOT CONNECTED' if offline or
 > 'ERROR' for other errors
-> - At rest (no action in progress), *status_text* = `& nbsp;`
+> - At rest (no action in progress), *status_text* = `No Media`
 
 
 ### Afficheur Lecture en cours (widget)

@@ -966,7 +966,7 @@ class googlecast extends eqLogic
         $cmd .= ' --ttsdefaultsilenceduration ' . config::byKey('tts_default_silence_duration', 'googlecast', '300');
         $cmd .= ' --daemonname local';
         $cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', 'googlecast', '1');
-        $cmd .= ' --defaultstatus ' . "'". config::byKey('defaultsatus', 'googlecast', "&nbsp;") ."'";
+        $cmd .= ' --defaultstatus ' . "'". config::byKey('defaultsatus', 'googlecast', "No Media") ."'";
         log::add('googlecast', 'info', 'Lancement démon googlecast : ' . $cmd);
         $result = exec($cmd . ' >> ' . log::getPathToLog('googlecast_local') . ' 2>&1 &');
         $i = 0;

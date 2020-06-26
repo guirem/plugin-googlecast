@@ -197,7 +197,7 @@ Pour les voir sur le dashboard, il faut activer 'Afficher' dans l'onglet des com
 >   'CMD UNKNOWN' si la commande n'existe pas,
 >   'NOT CONNECTED' si offline ou
 >   'ERROR' pour les autres erreurs
-> - Au repos (pas d'action en cours), _status_text_ = `&nbsp;`
+> - Au repos (pas d'action en cours), _status_text_ = `No Media`
 
 ### Afficheur Lecture en cours (widget)
 
