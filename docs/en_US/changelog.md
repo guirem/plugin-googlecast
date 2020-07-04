@@ -4,21 +4,28 @@ Version list of googlecast plugin.
 
 *[Back to documentation] (index.md)*
 
-## Version of April 16, 2020 (beta/stable) - 2.16
+## Version of July 04, 2020 (stable) - 2.16
 
-- fix deconnection issue on chromecast device
+- see beta changelog 2.16 below
+
+## Version of May 29, 2020 (beta) - 2.16
+
+- fix deconnexion de chromecast dans certains cas
+- maj des libraries pychromecast et spotipy
+- fix partiellement spotify (voir doc)
+- configuration page UI
 
 ## Version of February 09, 2020 (beta/stable) - 2.15
 
 - added possibility to get alamrs and timers if token is provided
-https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f#the-token
+  https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f#the-token
 - googlecast detection optimization
 - fix volume status control
 - added previous playlist song button
 - update radio list (75 french) and added slector to widget
 - pychromecast library update
 - code cleaning
-  
+
 ## Version of January 20, 2020 (beta/stable) - 2.14
 
 - fix bug ssml (google cloud ttts)
@@ -32,7 +39,7 @@ https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f#the-token
 ## Version of January 08, 2020 (beta) - 2.13
 
 - engine 'TTS Google Speech API' removed and replaced by 'Google Cloud Text-To-Speech' (https://cloud.google.com/text-to-speech/)
-(check doc FAQ if API key doesn't work anymore)
+  (check doc FAQ if API key doesn't work anymore)
 - documentation update
 
 ## Version of January 07, 2020 (beta) - 2.12
@@ -113,7 +120,7 @@ https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f#the-token
 - Cleaning / optimization of the order configuration page
 - Compatibility command action of list type
 - New command 'notif' (similar to tts but to play a local mp3)
-  Test with `cmd=notif|value=bigben1.mp3|vol=100`
+    Test with `cmd=notif|value=bigben1.mp3|vol=100`
 - Possibility to play local files for media app
 - fix getconfig (jsonpath compatibility)
 - fix update of the command info title / artist / player_state
