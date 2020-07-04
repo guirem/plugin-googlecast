@@ -3,7 +3,7 @@ Controller to interface with the YouTube-app.
 Use the media controller to play, pause etc.
 """
 import threading
-from casttube import youtube_session
+from casttube import YouTubeSession
 
 from . import BaseController
 from ..error import UnsupportedNamespace
@@ -101,3 +101,10 @@ class YouTubeController(BaseController):
         """ Process latest status update. """
         self._screen_id = status.get(ATTR_SCREEN_ID)
         self.status_update_event.set()
+
+    def quick_play(self, media_id=None, playlist_id=None, enqueue=False, **kwargs):
+        """ Quick Play """
+        if enqueue:
+            self.add_to_queue(media_id, **kwargs)
+        else:
+            self.play_video(media_id, playlist_id=playlist_id, **kwargs)

@@ -1,6 +1,7 @@
 """Discovers Chromecasts on the network using mDNS/zeroconf."""
 import logging
 import socket
+from threading import Event
 from uuid import UUID
 
 import zeroconf
@@ -41,11 +42,20 @@ class CastListener:
         if self.remove_callback:
             self.remove_callback(name, service)
 
+    def update_service(self, zconf, typ, name):
+        """ Update a service in the collection. """
+        _LOGGER.debug("update_service %s, %s", typ, name)
+        self._add_update_service(zconf, typ, name)
+
     def add_service(self, zconf, typ, name):
         """ Add a service to the collection. """
+        _LOGGER.debug("add_service %s, %s", typ, name)
+        self._add_update_service(zconf, typ, name)
+
+    def _add_update_service(self, zconf, typ, name):
+        """ Add or update a service. """
         service = None
         tries = 0
-        _LOGGER.debug("add_service %s, %s", typ, name)
         while service is None and tries < 4:
             try:
                 service = zconf.get_service_info(typ, name)
@@ -67,8 +77,8 @@ class CastListener:
                 return value
             return value.decode("utf-8")
 
-        ips = zconf.cache.entries_with_name(service.server.lower())
-        host = repr(ips[0]) if ips else service.server
+        addresses = service.parsed_addresses()
+        host = addresses[0] if addresses else service.server
 
         model_name = get_value("md")
         uuid = get_value("id")
@@ -83,7 +93,7 @@ class CastListener:
             self.add_callback(name)
 
 
-def start_discovery(add_callback=None, remove_callback=None):
+def start_discovery(add_callback=None, remove_callback=None, zeroconf_instance=None):
     """
     Start discovering chromecasts on the network.
 
@@ -96,12 +106,17 @@ def start_discovery(add_callback=None, remove_callback=None):
     object. The CastListener object will contain information for the discovered
     chromecasts. To stop discovery, call the stop_discovery method with the
     ServiceBrowser object.
+
+    A shared zeroconf instance can be passed as zeroconf_instance. If no
+    instance is passed, a new instance will be created.
     """
     listener = CastListener(add_callback, remove_callback)
     service_browser = False
     try:
         service_browser = zeroconf.ServiceBrowser(
-            zeroconf.Zeroconf(), "_googlecast._tcp.local.", listener
+            zeroconf_instance or zeroconf.Zeroconf(),
+            "_googlecast._tcp.local.",
+            listener,
         )
     except (
         zeroconf.BadTypeInNameException,
@@ -117,13 +132,12 @@ def start_discovery(add_callback=None, remove_callback=None):
 
 def stop_discovery(browser):
     """Stop the chromecast discovery thread."""
+    browser.cancel()
     browser.zc.close()
 
 
 def discover_chromecasts(max_devices=None, timeout=DISCOVER_TIMEOUT):
     """ Discover chromecasts on the network. """
-    from threading import Event
-
     browser = False
     try:
         # pylint: disable=unused-argument

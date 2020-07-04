@@ -4,10 +4,21 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
-# Version du 09 février 2020 (beta/stable) - 2.15
+## Version du 04 juillet 2020 (stable) - 2.16
+
+- voir changelog version beta
+
+## Version du 29 mai 2020 (beta) - 2.16
+
+- fix deconnexion de chromecast dans certains cas
+- maj des libraries pychromecast et spotipy
+- fix partiellement spotify (voir doc)
+- fix bug de page configuration
+
+## Version du 09 février 2020 (beta/stable) - 2.15
 
 - récupération des alarmes/timers et autres config refonctionne si le jeton est bien renseigné
-https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f#the-token
+  https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f#the-token
 - optimisation de la detection de googlecast
 - correction bug de mise à jour du volume
 - ajout d'un bouton pour aller au média précédant d'une playlist
@@ -15,20 +26,20 @@ https://gist.github.com/rithvikvibhu/1a0f4937af957ef6a78453e3be482c1f#the-token
 - mise à jour de la librairie pychromecast
 - nettoyage de code
 
-# Version du 20 janvier 2020 (beta/stable) - 2.14
+## Version du 20 janvier 2020 (beta/stable) - 2.14
 
 - correction bug ssml (google cloud ttts)
 - correction bug intégration tts webserver
 - optimisations mineures
 
-# Version du 11 janvier 2020 (stable)
+## Version du 11 janvier 2020 (stable)
 
 - Passage des versions 2.11, 2.12 et 2.13 beta en stable.
 
 ## Version du 08 janvier 2020 (beta) - 2.13
 
 - suppression du moteur 'TTS Google Speech API', remplacé par 'Google Cloud Text-To-Speech' (https://cloud.google.com/text-to-speech/)
-(voir FAQ documentation si la clé API ne fonctionne plus)
+  (voir FAQ documentation si la clé API ne fonctionne plus)
 - mise à jour de la documentation
 
 ## Version du 07 janvier 2020 (beta) - 2.12

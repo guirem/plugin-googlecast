@@ -23,10 +23,10 @@ class SpotifyController(BaseController):
     # pylint: disable=useless-super-delegation
     # The pylint rule useless-super-delegation doesn't realize
     # we are setting default values here.
-    def __init__(self, access_token, expires):
+    def __init__(self, access_token=None, expires=None):
         super(SpotifyController, self).__init__(APP_NAMESPACE, APP_SPOTIFY)
-        if access_token is None or expires is None:
-            raise ValueError("access_token and expires cannot be empty")
+        #if access_token is None or expires is None:
+        #    raise ValueError("access_token and expires cannot be empty")
 
         self.logger = logging.getLogger(__name__)
         self.session_started = False
@@ -54,13 +54,17 @@ class SpotifyController(BaseController):
             self.waiting.set()
         return True
 
-    def launch_app(self, timeout=10):
+    def launch_app(self, access_token=None, expires=None, timeout=10):
         """
         Launch Spotify application.
 
         Will raise a LaunchError exception if there is no response from the
         Spotify app within timeout seconds.
         """
+        if access_token is None or expires is None:
+            raise ValueError("access_token and expires cannot be empty")
+        self.access_token = access_token
+        self.expires = expires
 
         def callback():
             """Callback function"""

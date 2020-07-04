@@ -61,41 +61,49 @@ In a few steps:
 Toble of Content
 =======================
 
-- [GoogleCast plugin (googlecast)](#googlecast-plugin--googlecast-)
+- [GoogleCast plugin (googlecast)](#googlecast-plugin-googlecast)
 - [Dashboard](#dashboard)
 - [Quick Start](#quick-start)
 - [Toble of Content](#toble-of-content)
 - [Plugin Configuration](#plugin-configuration)
-- [Configuration des équipements](#configuration-des--quipements)
-    + [Onglet Commandes](#onglet-commandes)
-    + [Afficheur Lecture en cours (widget)](#afficheur-lecture-en-cours--widget-)
-    + [TTS Widget for text entry and volume control](#tts-widget-for-text-entry-and-volume-control)
+- [Configuration des équipements](#configuration-des-%c3%a9quipements)
+    - [Onglet Commandes](#onglet-commandes)
+    - [Afficheur Lecture en cours (widget)](#afficheur-lecture-en-cours-widget)
+    - [TTS Widget for text entry and volume control](#tts-widget-for-text-entry-and-volume-control)
 - [Custom commands](#custom-commands)
-    + [Special applications](#special-applications)
-    + [Advanced commands](#advanced-commands)
+    - [Special applications](#special-applications)
+    - [Advanced commands](#advanced-commands)
       - [Syntax for raw commands](#syntax-for-raw-commands)
-      - [Possible parameters for *play_media* en mode *media* :](#possible-parameters-for--play-media--en-mode--media---)
-      - [Possible parameters for *load_url* en mode *web* :](#possible-parameters-for--load-url--en-mode--web---)
-      - [Possible parameters for *play_media* en mode *plex* :](#possible-parameters-for--play-media--en-mode--plex---)
-      - [Possible parameters for *tts* :](#possible-parameters-for--tts---)
-      - [Possible parameters for *notif* :](#possible-parameters-for--notif---)
+      - [Possible parameters for *play_media* en mode *media*](#possible-parameters-for-playmedia-en-mode-media)
+      - [Possible parameters for *load_url* en mode *web*](#possible-parameters-for-loadurl-en-mode-web)
+      - [Possible parameters for *play_media* en mode *plex*](#possible-parameters-for-playmedia-en-mode-plex)
+      - [Possible parameters for *tts*](#possible-parameters-for-tts)
+      - [Possible parameters for *notif*](#possible-parameters-for-notif)
       - [Command sequences](#command-sequences)
       - [Device advanced configuration](#device-advanced-configuration)
-        * [Retreive a configuration](#retreive-a-configuration)
-          + [available parameters for *getconfig* cmd :](#available-parameters-for--getconfig--cmd--)
-        * [Modify a configuration](#modify-a-configuration)
-          + [available parameters for *setconfig* cmd :](#available-parameters-for--setconfig--cmd--)
-        * [Pre-defined configuration commands](#pre-defined-configuration-commands)
-    + [Adding a command *action* of type *List*](#adding-a-command--action--of-type--list-)
-    + [Use in scenarios](#use-in-scenarios)
-      - [With dedicated command *Custom Cmd*](#with-dedicated-command--custom-cmd-)
+        - [Retreive a configuration](#retreive-a-configuration)
+          - [available parameters for *getconfig* cmd :](#available-parameters-for-getconfig-cmd)
+        - [Modify a configuration](#modify-a-configuration)
+          - [available parameters for *setconfig* cmd :](#available-parameters-for-setconfig-cmd)
+        - [Pre-defined configuration commands](#pre-defined-configuration-commands)
+    - [Adding a command *action* of type *List*](#adding-a-command-action-of-type-list)
+    - [Use in scenarios](#use-in-scenarios)
+      - [With dedicated command *Custom Cmd*](#with-dedicated-command-custom-cmd)
       - [With php bloc code](#with-php-bloc-code)
-    + [Use with interactions and IFTTT](#use-with-interactions-and-ifttt)
+    - [Use with interactions and IFTTT](#use-with-interactions-and-ifttt)
       - [Interactions](#interactions)
-      - [ask type reply](#-ask--type-reply)
+      - [*ask* type reply](#ask-type-reply)
       - [Custom CMD](#custom-cmd)
 - [Known limitations and bugs](#known-limitations-and-bugs)
 - [FAQ](#faq)
+      - [No detection during the scan](#no-detection-during-the-scan)
+      - [No commands seems to work](#no-commands-seems-to-work)
+      - [Some commands do not work](#some-commands-do-not-work)
+      - [Dependencies can't install properly](#dependencies-cant-install-properly)
+      - [Text To Speech (TTS) doen't work](#text-to-speech-tts-doent-work)
+      - [Broadcast Jeedom without authentication on a Google Cast](#broadcast-jeedom-without-authentication-on-a-google-cast)
+      - [Get an API Key for Google Cloud Text-to-Speech' API](#get-an-api-key-for-google-cloud-text-to-speech-api)
+      - [TTS 'Google Cloud Text-to-Speech' API key is not working anymore](#tts-google-cloud-text-to-speech-api-key-is-not-working-anymore)
 - [Changelog](#changelog)
 
 
@@ -284,7 +292,7 @@ ex TTS : cmd=tts|vol=100|value=Mon text a dire
 > **Notes**     
 > String length for commands are limited in Jeedom to 128 characters. Use scenarios (see below to override this limitation)
 
-#### Possible parameters for *play_media* en mode *media* :
+#### Possible parameters for *play_media* en mode *media*
 ```
 - value: str - seperated by ',' (see notes)
     * url: str - url of the media (mandatory).
@@ -319,7 +327,7 @@ ex long : app=media|cmd=play_media|value='http://contentlink','video/mp4',title:
 > - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
 > - Un média local situé dans le répertoire *<jeedom>/plugins/googlecast/localmedia/* peux être utilisé en appelant l'url *local://<nomdufichier>* (ex: local://bigben1.mp3)
 
-#### Possible parameters for *load_url* en mode *web* :
+#### Possible parameters for *load_url* en mode *web*
 ```
 - url: str - website url.
 - force: bool - force mode. To be used if default is not working. (optional, default False).
@@ -334,7 +342,7 @@ ex 3 : app=web|value='http://mywebsite/index.php?apikey%3Dmyapikey' (implicit lo
 > - Urls and strings are surrounded by single quotes ('). Other possible values are True/False/None and integer numeric values.
 > - It is necessary to replace the sign '=' dans les url par '%3D'
 
-#### Possible parameters for *play_media* en mode *plex* :
+#### Possible parameters for *play_media* en mode *plex*
 ```
 - value: str - search query. It will play the first element returned.
 - type: str - type of content. Example: 'video/audio' (optional, default=video).
@@ -359,7 +367,7 @@ ex using token with implicit play_media command call :
 > - Token value is displayed in logs (debug) when user & pass has been used the first time
 > - you can simulate result of search query (value) in main search field of Plex web UI
 
-#### Possible parameters for *tts* :
+#### Possible parameters for *tts*
 ```
 - value: str - text
 - lang: str - fr-FR/en-US or any compatible language (optional, default is configuration)
@@ -390,7 +398,7 @@ ex voice/ssml : cmd=tts|engine=gttsapi|voice=fr-FR-Standard-A|value=<speak>Etape
 > - By default, the plugin will try to resume previous app launched (will only work when previous application has been launched by the plugin).
 > - You can try to force resume to any application using 'forceapplaunch=1' but there is a good chance that it will not resume correctly.
 
-#### Possible parameters for *notif* :
+#### Possible parameters for *notif*
 ```
 - value: str - local media filename (located in '<jeedom>/plugins/googlecast/localmedia/' folder)
 - quit: 0/1 - quit app after notif action.

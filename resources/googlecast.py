@@ -51,6 +51,7 @@ except ImportError:
 try:
     import pychromecast.pychromecast.controllers.dashcast as dashcast
     import pychromecast.pychromecast.controllers.spotify as spotify
+    import pychromecast.pychromecast.controllers.youtube as youtube
 except ImportError:
     logging.error(
         "ERROR: One or several pychromecast controllers are not loaded !")
@@ -60,7 +61,6 @@ except ImportError:
 
 try:
     import pychromecast.pychromecast.customcontrollers.plex2 as plex
-    import pychromecast.pychromecast.customcontrollers.youtube as youtube
 except ImportError:
     logging.error("ERROR: Custom controllers not loaded !")
     logging.error(traceback.format_exc())
@@ -251,7 +251,7 @@ class JeedomChromeCast:
         if new_status.status == "DISCONNECTED" and self.being_shutdown is False:
             self.disconnect()
             logging.info(
-                "JEEDOMCHROMECAST------ Chromecast has beend disconnected : " + self.friendly_name)
+                "JEEDOMCHROMECAST------ Chromecast has been disconnected : " + self.friendly_name)
         if new_status.status == "LOST":
             self.is_recovering = True
             self._internal_refresh_status(True)
@@ -397,6 +397,29 @@ class JeedomChromeCast:
         except Exception:
             pass
         self.free_memory()
+
+    def check_connection(self):
+        reset = False
+        castsocket = self.gcast.socket_client
+        try:
+            # if castsocket.heartbeat_controller.is_expired():
+            castsocket.heartbeat_controller.ping()
+            #    castsocket.heartbeat_controller.reset()
+        except Exception:
+            logging.debug("JEEDOMCHROMECAST------ check_connection : ping failed")
+            reset = True
+            pass
+
+        # if reset:
+        #     for channel in castsocket._open_channels:
+        #         castsocket.disconnect_channel(channel)
+        #     try:
+        #         castsocket.initialize_connection()
+        #     except Exception:
+        #         castsocket.stop.set()
+        #         pass
+
+        return not reset
 
     def free_memory(self):
         try:
@@ -886,35 +909,29 @@ def action_handler(message):
                     if cmd == 'play_media':
                         fallbackMode = False
 
-                        wptoken = None
-                        if 'user' in command and 'pass' in command:
-                            username = command['user']
-                            password = command['pass']
-                            wptoken = stoken.SpotifyWpToken(username, password)
-
-                        if 'token' in command:
-                            token = command['token']
-
                         keepGoing = True
+                        if 'spdc' in command and 'spkey' in command:
+                            spdc = command['spdc']
+                            spkey = command['spkey']
+                            data = stoken.start_session(spdc, spkey)
+                            access_token = data[0]
+                            expires = data[1] - int(time.time())
+                        else:
+                            logging.error(
+                                "ACTION------ Missing spdc and/or spkey")
+                            keepGoing = False
+
                         if value is None:
                             logging.error(
                                 "ACTION------ Missing content id for spotify")
-                            keepGoing = False
-                        if token is None:
-                            logging.error(
-                                "ACTION------ Missing token paramaters for spotify")
                             keepGoing = False
 
                         if keepGoing is True:
                             player = jcast.loadPlayer(
                                 app, {'quitapp': quit_app_before, 'wait': wait})
-                            if wptoken is None:
-                                player.launch_app(token)
-                            else:
-                                time.sleep(1)
-                                player.launch_app(wptoken.value)
+                            player.launch_app(access_token, expires)
 
-                            spotifyClient = spotipy.Spotify(auth=token)
+                            spotifyClient = spotipy.Spotify(auth=access_token)
                             time.sleep(1)
 
                             value = value.replace('spotify:', '')
@@ -947,7 +964,9 @@ def action_handler(message):
                                                     'spotify:', '')
                                                 logging.debug(
                                                     "ACTION------Spotify recently played : " + value)
-                                            # logging.debug("ACTION------Spotify recently played : " + str(recentlyPlayed))
+                                                # logging.debug("ACTION------Spotify recently played : " + str(recentlyPlayed))
+                                                spotifyClient.start_playback(
+                                                    device_id=device_id, uris=['spotify:'+value])
                                         elif 'track' not in value:   # album or playlist
                                             spotifyClient.start_playback(
                                                 device_id=device_id, context_uri='spotify:'+value)
@@ -1199,9 +1218,10 @@ def action_handler(message):
                                     url, 'video/mp4', 'NOTIF', thumb=thumb, stream_type=streamtype)
                             player.block_until_active(timeout=2)
                             jcast.disable_notif = False
+                            duration_total = duration + (globals.tts_default_restoredelay/1000)
                             sleep_done = False
                             if vol is not None:
-                                time.sleep(duration+1)
+                                time.sleep(duration_total)
                                 if sleep > 0:
                                     time.sleep(sleep)
                                     sleep = 0
@@ -1215,7 +1235,7 @@ def action_handler(message):
                                 gcast.media_controller.stop()
                             if quit:
                                 if vol is None:
-                                    time.sleep(duration+1)
+                                    time.sleep(duration_total)
                                     sleep_done = True
                                 if sleep > 0:
                                     time.sleep(sleep)
@@ -1223,7 +1243,7 @@ def action_handler(message):
                                 gcast.quit_app()
                             if resume:
                                 if vol is None and sleep_done is False:
-                                    time.sleep(duration+1)
+                                    time.sleep(duration_total)
                                 if sleep > 0:
                                     time.sleep(sleep)
                                     sleep = 0
@@ -1256,11 +1276,11 @@ def action_handler(message):
                         forcetts = False
                         if 'forcetts' in command:
                             forcetts = True
-                        silence = 300
+                        silence = globals.tts_default_silenceduration
                         if 'silence' in command:
                             silence = int(command['silence'])
                         elif jcast.is_castgroup is True:
-                            silence = 1000
+                            silence = silence + 700
                         generateonly = False
                         if 'generateonly' in command:
                             generateonly = True
@@ -1309,14 +1329,17 @@ def action_handler(message):
                                     gcast.media_controller.pause()
                                     time.sleep(0.1)
                                     gcast.set_volume(vol/100)
-                                    time.sleep(0.1)
+                                    # time.sleep(0.1)
+                                streamtype = 'BUFFERED'
                                 player.play_media(
                                     url, 'audio/mp3', 'TTS', thumb=thumb, stream_type=streamtype)
-                                player.block_until_active(timeout=2)
+                                player.block_until_active(timeout=4)
+                                duration_total = duration + (globals.tts_default_restoredelay/1000)
+                                logging.debug("TTS------Estimated duration of tts media is " + str(duration_total) + " secondes")
                                 jcast.disable_notif = False
                                 vol_done = False
                                 if vol is not None:
-                                    time.sleep(duration+(silence/1000)+1)
+                                    time.sleep(duration_total)
                                     if sleep > 0:
                                         time.sleep(sleep)
                                         sleep = 0
@@ -1326,14 +1349,14 @@ def action_handler(message):
 
                                 if quit:
                                     if vol is None:
-                                        time.sleep(duration+(silence/1000)+1)
+                                        time.sleep(duration_total)
                                     if sleep > 0:
                                         time.sleep(sleep)
                                         sleep = 0
                                     gcast.quit_app()
                                 if resume:
                                     if vol is None and vol_done is False:
-                                        time.sleep(duration+(silence/1000)+1)
+                                        time.sleep(duration_total)
                                     if sleep > 0:
                                         time.sleep(sleep)
                                         sleep = 0
@@ -1549,7 +1572,7 @@ def manage_resume(uuid, source='googlecast', forceapplaunch=False, origin='TTS')
     return False
 
 
-def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=300, quality='32k', ttsparams=None):
+def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=100, quality='32k', ttsparams=None):
     srclanguage = language
     if engine == 'gttsapidev':  # removed this engine but failover to gttsapi
         engine = 'gttsapi'
@@ -1817,7 +1840,7 @@ def logByTTS(text_id):
     else:
         text = "Un erreur s'est produite !"
     url, duration, mp3filename = get_tts_data(
-        text, lang, engine, speed, False, False, 300)
+        text, lang, engine, speed, False, False, globals.tts_default_silenceduration)
     thumb = globals.JEEDOM_WEB + '/plugins/googlecast/desktop/images/tts.png'
     jcast = None  # TODO: get googlecast device first
     player = jcast.loadPlayer('media', {'quitapp': False, 'wait': 0})
@@ -1911,6 +1934,7 @@ def start(cycle=2):
 
             except Exception:
                 logging.error("GLOBAL------Exception on main loop")
+                shutdown()
 
     except KeyboardInterrupt:
         logging.error("GLOBAL------KeyboardInterrupt, shutdown")
@@ -2152,7 +2176,14 @@ def scanner(name='UNKNOWN SOURCE'):
 
             if known in globals.GCAST_DEVICES:
                 if globals.GCAST_DEVICES[known].is_connected is True:
-                    is_not_available = False
+                    
+                    # try to ping it to confirm it's well connected
+                    con_ok = globals.GCAST_DEVICES[known].check_connection()
+                    if con_ok:
+                        is_not_available = False
+                    else:
+                        globals.GCAST_DEVICES[known].disconnect()
+                        logging.warn("SCANNER------Seen as connected but ping failed for " + known)
                 else:
                     # something went wrong so disconnect completely
                     globals.GCAST_DEVICES[known].disconnect()
@@ -2333,6 +2364,8 @@ parser.add_argument("--ttsspeed", help="TTS speech speed", type=str)
 parser.add_argument("--ttsgapikey", help="TTS Google Speech API Key", type=str)
 parser.add_argument(
     "--gcttsvoice", help="TTS Google Speech API default voice", type=str)
+parser.add_argument("--ttsdefaultrestoretime", help="TTS Default restore volume delay", type=str)
+parser.add_argument("--ttsdefaultsilenceduration", help="TTS Default silence duration", type=str)
 parser.add_argument("--socketport", help="Socket Port", type=str)
 parser.add_argument("--sockethost", help="Socket Host", type=str)
 parser.add_argument("--daemonname", help="Daemon Name", type=str)
@@ -2375,6 +2408,10 @@ if args.ttsgapikey:
         globals.tts_gapi_haskey = True
 if args.gcttsvoice:
     globals.tts_gapi_voice = args.gcttsvoice
+if args.ttsdefaultrestoretime:
+    globals.tts_default_restoredelay = int(args.ttsdefaultrestoretime)
+if args.ttsdefaultsilenceduration:
+    globals.tts_default_silenceduration = int(args.ttsdefaultsilenceduration)
 if args.cycle:
     globals.cycle_event = float(args.cycle)
 if args.cyclemain:
@@ -2422,6 +2459,10 @@ if globals.tts_gapi_haskey:
                  str(globals.tts_gapi_voice))
 else:
     logging.info('GLOBAL------TTS Google API Key (optional) : NOK')
+logging.info('GLOBAL------TTS default delay before volume restore : ' +
+             str(globals.tts_default_restoredelay) + ' ms')
+logging.info('GLOBAL------TTS default silence before tts : ' +
+             str(globals.tts_default_silenceduration) + ' ms')
 logging.info('GLOBAL------Cache status : '+str(globals.tts_cacheenabled))
 logging.info('GLOBAL------Callback : '+str(globals.callback))
 logging.info('GLOBAL------Event cycle : '+str(globals.cycle_event))
