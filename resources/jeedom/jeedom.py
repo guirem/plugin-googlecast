@@ -143,7 +143,7 @@ class jeedom_com():
                         'ttsmsg': ttsmessage, 'options': options}
         try:
             response = requests.post(
-                self.url + '?apikey=' + self.apikey, json=proxyttsdata, timeout=4, verify=False)
+                self.url + '?apikey=' + self.apikey, json=proxyttsdata, timeout=8, verify=False)
             filecontent = response.content
 
             if response.status_code != requests.codes.ok:
