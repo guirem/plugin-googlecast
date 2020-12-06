@@ -2176,7 +2176,6 @@ def scanner(name='UNKNOWN SOURCE'):
 
             if known in globals.GCAST_DEVICES:
                 if globals.GCAST_DEVICES[known].is_connected is True:
-                    
                     # try to ping it to confirm it's well connected
                     con_ok = globals.GCAST_DEVICES[known].check_connection()
                     if con_ok:
