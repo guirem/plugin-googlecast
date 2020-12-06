@@ -6,7 +6,7 @@ ABBREVIATIONS = [
     'prof', 'sr', 'st']
 
 SUB_PAIRS = [
-    ('M.', 'Monsieur')
+    ('Esq.', 'Esquire')
 ]
 
 ALL_PUNC = u"?!？！.,¡()[]¿…‥،;:—。，、：\n"
@@ -14,3 +14,5 @@ ALL_PUNC = u"?!？！.,¡()[]¿…‥،;:—。，、：\n"
 TONE_MARKS = u"?!？！"
 
 PERIOD_COMMA = u".,"
+
+COLON = u":"
