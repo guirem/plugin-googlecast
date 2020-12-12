@@ -45,6 +45,8 @@ class googlecast extends eqLogic
             array('logo' => 'model_googlehome_hub.png', 'ga' => true),
         'google nest hub' =>
             array('logo' => 'model_googlehome_hub.png', 'ga' => true),
+        'google nest hub max' =>
+            array('logo' => 'model_googlehome_hub.png', 'ga' => true),
         'google home' =>
             array('logo' => 'model_googlehome.png', 'ga' => true),
         'google home max' =>
@@ -53,6 +55,10 @@ class googlecast extends eqLogic
             array('logo' => 'model_castgroup.png', 'ga' => false),
         'tv' =>
             array('logo' => 'model_tv.png', 'ga' => false),
+        'freebox player pop' =>
+            array('logo' => 'model_androidtv.png', 'ga' => false),
+        'shield android tv' =>
+            array('logo' => 'model_androidtv.png', 'ga' => false),
         'shield' =>
             array('logo' => 'model_androidtv.png', 'ga' => false),
         'android' =>
@@ -743,7 +749,7 @@ class googlecast extends eqLogic
         if (intval($this->getConfiguration('has_googleassistant', '0')) == 1) {
             //$order = googlecast_utils::getCmdDefinition($this, 'googlehome', 210);
         }
-        
+
         // fix to be able to remove old gh_* commands
         $cmd = $this->getCmd(null, 'gh_get_alarm_date_0');
         if (is_object($cmd)) {
@@ -756,7 +762,7 @@ class googlecast extends eqLogic
             $cmd->save();
         }
         // -- end fix
-        
+
         $this->checkAndUpdateCmd('nowplaying', $this->getLogicalId());
 
         if ($this->getIsEnable()) {
@@ -1526,7 +1532,7 @@ class googlecast extends eqLogic
                     $url = 'http://' . $uri . ':8008/setup/set_eureka_info';
                 }
                 $request_http = new com_http($url);
-                
+
                 $headers = array('content-type: application/json');
                 if ($isSSL) {
                     $gatoken = $this->getConfiguration('ga_token', '');
@@ -1537,7 +1543,7 @@ class googlecast extends eqLogic
                     $request_http->setNoSslCheck(true);
                     array_push($headers, 'cast-local-authorization-token: ' . $gatoken);
                 }
-                
+
                 $request_http->setHeader($headers);
                 $request_http->setPost((isset($data['data']) ? $data['data'] : ''));
                 try {
