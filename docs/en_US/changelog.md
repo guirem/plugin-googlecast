@@ -4,9 +4,10 @@ Version list of googlecast plugin.
 
 *[Back to documentation] (index.md)*
 
-## Version of December 06, 2020 (beta) - 2.17
+## Version of December 20, 2020 (beta/stable) - 2.17
 
 - google translate api library update
+- add new device pictures
 
 ## Version of July 04, 2020 (stable) - 2.16
 
