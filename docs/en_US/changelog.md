@@ -4,16 +4,22 @@ Version list of googlecast plugin.
 
 *[Back to documentation] (index.md)*
 
+=======
+## Version of December 20, 2020 (beta/stable) - 2.17
+
+- google translate api library update
+- add new device pictures
+
 ## Version of July 04, 2020 (stable) - 2.16
 
 - see beta changelog 2.16 below
 
 ## Version of May 29, 2020 (beta) - 2.16
 
-- fix deconnexion de chromecast dans certains cas
-- maj des libraries pychromecast et spotipy
-- fix partiellement spotify (voir doc)
-- configuration page UI
+- fix chromecast device deconnection issue in some cases
+- update pychromecast and spotipy libraries
+- fix spotify partially (see doc)
+- fix configuration page bug
 
 ## Version of February 09, 2020 (beta/stable) - 2.15
 

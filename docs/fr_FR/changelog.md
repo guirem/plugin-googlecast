@@ -4,6 +4,11 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
+## Version du 20 décembre 2020 (beta/stable) - 2.17
+
+- maj librairie google translate api
+- ajout de nouvelles images d'appareils
+
 ## Version du 04 juillet 2020 (stable) - 2.16
 
 - voir changelog version beta
@@ -120,7 +125,7 @@ Liste des versions du plugin googlecast.
 - Nettoyage/optimisation de la page de configuration des commandes
 - Compatibilité commande action de type liste
 - Nouvelle commande 'notif' (similaire à tts mais pour jouer un mp3 local)
-  Tester avec `cmd=notif|value=bigben1.mp3|vol=100`
+  Tester avec`cmd=notif|value=bigben1.mp3|vol=100`
 - Possiblité de jouer des fichiers en local pour app media
 - fix getconfig (compatiblité jsonpath)
 - fix update des command info title/artist/player_state

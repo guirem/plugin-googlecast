@@ -7,12 +7,20 @@
 	"hasOwnDeamon" : true,
 	"hasDependency" : true,
 	"maxDependancyInstallTime" : 20,
-	"version" : "2.16",
+	"version" : "2.17",
 	"require" : "3.0",
     "category" : "multimedia",
     "changelog" : "https://github.com/guirem/plugin-googlecast/blob/develop/docs/fr_FR/changelog.md",
     "documentation" : "https://github.com/guirem/plugin-googlecast/blob/develop/docs/fr_FR/index.md",
 	"forum_link" : "https://community.jeedom.com/t/plugin-tiers-sujet-principal-google-cast/12632",
 	"languages" : "french, english, spanish",
-	"compatibility" : "miniplus, smart, docker, rpi, diy, mobileapp"
+	"compatibility" : [
+		"miniplus",
+		"smart",
+		"rpi",
+		"docker",
+		"diy",
+		"mobileapp",
+		"v4"
+	]
 }
