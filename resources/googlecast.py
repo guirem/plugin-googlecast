@@ -2182,7 +2182,7 @@ def scanner(name='UNKNOWN SOURCE'):
                         is_not_available = False
                     else:
                         globals.GCAST_DEVICES[known].disconnect()
-                        logging.warn("SCANNER------Seen as connected but ping failed for " + known)
+                        logging.warning("SCANNER------Seen as connected but ping failed for " + known)
                 else:
                     # something went wrong so disconnect completely
                     globals.GCAST_DEVICES[known].disconnect()
@@ -2296,8 +2296,7 @@ def cleanCache(nbDays=0):
                 shutil.rmtree(globals.tts_cachefoldertmp)
             generate_warmupnotif()
         except Exception:
-            logging.warn(
-                "CLEAN CACHE------Error while cleaning cache entirely")
+            logging.warning("CLEAN CACHE------Error while cleaning cache entirely")
             pass
     else:              # clean only files older than X days
         now = time.time()
@@ -2312,8 +2311,7 @@ def cleanCache(nbDays=0):
                                   " due to expiration (" + str(nbDays) + " days)")
             generate_warmupnotif()
         except Exception:
-            logging.warn(
-                "CLEAN CACHE------Error while cleaning cache based on date number")
+            logging.warning("CLEAN CACHE------Error while cleaning cache based on date number")
             pass
 
 
