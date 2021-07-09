@@ -6,24 +6,36 @@ This can be done by running the following:
 pip install spotify-token
 pip install git+https://github.com/plamere/spotipy.git
 """
+# pylint: disable=invalid-name
+
 import argparse
 import logging
 import time
 import sys
 
+import zeroconf
+import spotify_token as st  # pylint: disable=import-error
+import spotipy  # pylint: disable=import-error
+
 import pychromecast
 from pychromecast.controllers.spotify import SpotifyController
-import spotify_token as st
-import spotipy
 
 CAST_NAME = "My Chromecast"
 
 parser = argparse.ArgumentParser(
     description="Example on how to use the Spotify Controller."
 )
-parser.add_argument("--show-debug", help="Enable debug log", action="store_true")
 parser.add_argument(
     "--cast", help='Name of cast device (default: "%(default)s")', default=CAST_NAME
+)
+parser.add_argument(
+    "--known-host",
+    help="Add known host (IP), can be used multiple times",
+    action="append",
+)
+parser.add_argument("--show-debug", help="Enable debug log", action="store_true")
+parser.add_argument(
+    "--show-zeroconf-debug", help="Enable zeroconf debug log", action="store_true"
 )
 parser.add_argument("--user", help="Spotify username", required=True)
 parser.add_argument("--password", help="Spotify password", required=True)
@@ -39,13 +51,14 @@ if args.show_debug:
     logging.basicConfig(level=logging.DEBUG)
     # Uncomment to enable http.client debug log
     # http_client.HTTPConnection.debuglevel = 1
+if args.show_zeroconf_debug:
+    print("Zeroconf version: " + zeroconf.__version__)
+    logging.getLogger("zeroconf").setLevel(logging.DEBUG)
 
-chromecasts = pychromecast.get_listed_chromecasts(friendly_names=[args.cast])
-cast = None
-for _cast in chromecasts:
-    if _cast.name == args.cast:
-        cast = _cast
-        break
+chromecasts, browser = pychromecast.get_listed_chromecasts(
+    friendly_names=[args.cast], known_hosts=args.known_host
+)
+cast = list(chromecasts)[0]
 
 if not cast:
     print('No chromecast with name "{}" discovered'.format(args.cast))
@@ -53,30 +66,6 @@ if not cast:
     sys.exit(1)
 
 print("cast {}".format(cast))
-
-
-class ConnListener:
-    def __init__(self, mz):
-        self._mz = mz
-
-    def new_connection_status(self, connection_status):
-        """Handle reception of a new ConnectionStatus."""
-        if connection_status.status == "CONNECTED":
-            self._mz.update_members()
-
-
-class MzListener:
-    def __init__(self):
-        self.got_members = False
-
-    def multizone_member_added(self, uuid):
-        pass
-
-    def multizone_member_removed(self, uuid):
-        pass
-
-    def multizone_status_received(self):
-        self.got_members = True
 
 
 # Wait for connection to the chromecast
@@ -126,3 +115,6 @@ if args.uri[0].find("track") > 0:
     client.start_playback(device_id=spotify_device_id, uris=args.uri)
 else:
     client.start_playback(device_id=spotify_device_id, context_uri=args.uri[0])
+
+# Shut down discovery
+browser.stop_discovery()

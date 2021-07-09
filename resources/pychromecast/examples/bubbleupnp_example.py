@@ -1,5 +1,5 @@
 """
-Example on how to use the YouTube Controller
+Example on how to use the BubbleUPNP Controller to play an URL.
 
 """
 # pylint: disable=invalid-name
@@ -7,22 +7,22 @@ Example on how to use the YouTube Controller
 import argparse
 import logging
 import sys
+from time import sleep
+
 import zeroconf
 
 import pychromecast
-from pychromecast.controllers.youtube import YouTubeController
+from pychromecast.controllers.bubbleupnp import BubbleUPNPController
 
 
-# Change to the name of your Chromecast
-CAST_NAME = "Living Room TV"
+# Change to the friendly name of your Chromecast
+CAST_NAME = "Kitchen speaker"
 
-# Change to the video id of the YouTube video
-# video id is the last part of the url http://youtube.com/watch?v=video_id
-VIDEO_ID = "dQw4w9WgXcQ"
-
+# Change to an audio or video url
+MEDIA_URL = "https://c3.toivon.net/toivon/toivon_3?mp=/stream"
 
 parser = argparse.ArgumentParser(
-    description="Example on how to use the Youtube Controller."
+    description="Example on how to use the BubbleUPNP Controller to play an URL."
 )
 parser.add_argument(
     "--cast", help='Name of cast device (default: "%(default)s")', default=CAST_NAME
@@ -37,7 +37,7 @@ parser.add_argument(
     "--show-zeroconf-debug", help="Enable zeroconf debug log", action="store_true"
 )
 parser.add_argument(
-    "--videoid", help='Youtube video ID (default: "%(default)s")', default=VIDEO_ID
+    "--url", help='Media url (default: "%(default)s")', default=MEDIA_URL
 )
 args = parser.parse_args()
 
@@ -47,6 +47,7 @@ if args.show_zeroconf_debug:
     print("Zeroconf version: " + zeroconf.__version__)
     logging.getLogger("zeroconf").setLevel(logging.DEBUG)
 
+# pylint: disable=unbalanced-tuple-unpacking
 chromecasts, browser = pychromecast.get_listed_chromecasts(
     friendly_names=[args.cast], known_hosts=args.known_host
 )
@@ -54,13 +55,19 @@ if not chromecasts:
     print('No chromecast with name "{}" discovered'.format(args.cast))
     sys.exit(1)
 
-cast = chromecasts[0]
+cast = list(chromecasts)[0]
 # Start socket client's worker thread and wait for initial status update
 cast.wait()
+print(
+    'Found chromecast with name "{}", attempting to play "{}"'.format(
+        args.cast, args.url
+    )
+)
+bubbleupnp = BubbleUPNPController()
+cast.register_handler(bubbleupnp)
+bubbleupnp.launch()
+bubbleupnp.play_media(args.url, "audio/mp3", stream_type="LIVE")
 
-yt = YouTubeController()
-cast.register_handler(yt)
-yt.play_video(VIDEO_ID)
+sleep(10)
 
-# Shut down discovery
 browser.stop_discovery()

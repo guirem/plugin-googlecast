@@ -2,34 +2,63 @@
 Implements the DIAL-protocol to communicate with the Chromecast
 """
 from collections import namedtuple
+import json
+import logging
+import socket
+import ssl
+import urllib.request
 from uuid import UUID
 
-import logging
-import requests
+import zeroconf
 
-from .const import CAST_TYPE_CHROMECAST
-from .discovery import get_info_from_service, get_host_from_service_info
+from .const import CAST_TYPE_CHROMECAST, CAST_TYPES, SERVICE_TYPE_HOST
 
 XML_NS_UPNP_DEVICE = "{urn:schemas-upnp-org:device-1-0}"
 
-FORMAT_BASE_URL = "http://{}:8008"
+FORMAT_BASE_URL_HTTP = "http://{}:8008"
+FORMAT_BASE_URL_HTTPS = "https://{}:8443"
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def reboot(host):
-    """ Reboots the chromecast. """
-    headers = {"content-type": "application/json"}
+def get_host_from_service(service, zconf):
+    """Resolve host and port from service."""
+    service_info = None
 
-    requests.post(
-        FORMAT_BASE_URL.format(host) + "/setup/reboot",
-        data='{"params":"now"}',
-        headers=headers,
-        timeout=10,
-    )
+    if service.type == SERVICE_TYPE_HOST:
+        return service.data + (None,)
+
+    try:
+        service_info = zconf.get_service_info("_googlecast._tcp.local.", service.data)
+        if service_info:
+            _LOGGER.debug(
+                "get_info_from_service resolved service %s to service_info %s",
+                service,
+                service_info,
+            )
+    except IOError:
+        pass
+    return _get_host_from_zc_service_info(service_info) + (service_info,)
 
 
-def _get_status(host, services, zconf, path):
+def _get_host_from_zc_service_info(service_info: zeroconf.ServiceInfo):
+    """Get hostname or IP + port from zeroconf service_info."""
+    host = None
+    port = None
+    if (
+        service_info
+        and service_info.port
+        and (service_info.server or len(service_info.addresses) > 0)
+    ):
+        if len(service_info.addresses) > 0:
+            host = socket.inet_ntoa(service_info.addresses[0])
+        else:
+            host = service_info.server.lower()
+        port = service_info.port
+    return (host, port)
+
+
+def _get_status(host, services, zconf, path, secure, timeout, context):
     """
     :param host: Hostname or ip to fetch status from
     :type host: str
@@ -39,31 +68,36 @@ def _get_status(host, services, zconf, path):
 
     if not host:
         for service in services.copy():
-            service_info = get_info_from_service(service, zconf)
-            host, _ = get_host_from_service_info(service_info)
+            host, _, _ = get_host_from_service(service, zconf)
             if host:
                 _LOGGER.debug("Resolved service %s to %s", service, host)
                 break
 
     headers = {"content-type": "application/json"}
 
-    req = requests.get(FORMAT_BASE_URL.format(host) + path, headers=headers, timeout=10)
+    if secure:
+        url = FORMAT_BASE_URL_HTTPS.format(host) + path
+    else:
+        url = FORMAT_BASE_URL_HTTP.format(host) + path
 
-    req.raise_for_status()
+    has_context = bool(context)
+    if secure and not has_context:
+        context = get_ssl_context()
 
-    # The Requests library will fall back to guessing the encoding in case
-    # no encoding is specified in the response headers - which is the case
-    # for the Chromecast.
-    # The standard mandates utf-8 encoding, let's fall back to that instead
-    # if no encoding is provided, since the autodetection does not always
-    # provide correct results.
-    if req.encoding is None:
-        req.encoding = "utf-8"
-
-    return req.json()
+    req = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(req, timeout=timeout, context=context) as response:
+        data = response.read()
+    return json.loads(data.decode("utf-8"))
 
 
-def get_device_status(host, services=None, zconf=None):
+def get_ssl_context():
+    """Create an SSL context."""
+    context = ssl.SSLContext()
+    context.verify_mode = ssl.CERT_NONE
+    return context
+
+
+def get_device_status(host, services=None, zconf=None, timeout=10, context=None):
     """
     :param host: Hostname or ip to fetch status from
     :type host: str
@@ -72,17 +106,26 @@ def get_device_status(host, services=None, zconf=None):
     """
 
     try:
-        status = _get_status(host, services, zconf, "/setup/eureka_info?options=detail")
+        status = _get_status(
+            host,
+            services,
+            zconf,
+            "/setup/eureka_info?options=detail",
+            True,
+            timeout,
+            context,
+        )
 
         friendly_name = status.get("name", "Unknown Chromecast")
-        # model_name and manufacturer is no longer included in the response,
-        # mark as unknown
         model_name = "Unknown model name"
         manufacturer = "Unknown manufacturer"
+        if "detail" in status:
+            model_name = status["detail"].get("model_name", model_name)
+            manufacturer = status["detail"].get("manufacturer", manufacturer)
 
         udn = status.get("ssdp_udn", None)
 
-        cast_type = CAST_TYPE_CHROMECAST
+        cast_type = CAST_TYPES.get(model_name.lower(), CAST_TYPE_CHROMECAST)
 
         uuid = None
         if udn:
@@ -90,9 +133,69 @@ def get_device_status(host, services=None, zconf=None):
 
         return DeviceStatus(friendly_name, model_name, manufacturer, uuid, cast_type)
 
-    except (requests.exceptions.RequestException, OSError, ValueError):
+    except (urllib.error.HTTPError, urllib.error.URLError, OSError, ValueError):
         return None
 
+
+def _get_group_info(host, group):
+    name = group.get("name", "Unknown group name")
+    udn = group.get("uuid", None)
+    uuid = None
+    if udn:
+        uuid = UUID(udn.replace("-", ""))
+    elected_leader = group.get("elected_leader", "")
+    elected_leader_split = elected_leader.rsplit(":", 1)
+
+    leader_host = None
+    leader_port = None
+    if elected_leader == "self" and "cast_port" in group:
+        leader_host = host
+        leader_port = group["cast_port"]
+    elif len(elected_leader_split) == 2:
+        # The port in the URL is not useful, but we can scan the host
+        leader_host = elected_leader_split[0]
+
+    return MultizoneInfo(name, uuid, leader_host, leader_port)
+
+
+def get_multizone_status(host, services=None, zconf=None, timeout=10, context=None):
+    """
+    :param host: Hostname or ip to fetch status from
+    :type host: str
+    :return: The multizone status as a named tuple.
+    :rtype: pychromecast.dial.MultizoneStatus or None
+    """
+
+    try:
+        status = _get_status(
+            host,
+            services,
+            zconf,
+            "/setup/eureka_info?params=multizone",
+            True,
+            timeout,
+            context,
+        )
+
+        dynamic_groups = []
+        if "multizone" in status and "dynamic_groups" in status["multizone"]:
+            for group in status["multizone"]["dynamic_groups"]:
+                dynamic_groups.append(_get_group_info(host, group))
+
+        groups = []
+        if "multizone" in status and "groups" in status["multizone"]:
+            for group in status["multizone"]["groups"]:
+                groups.append(_get_group_info(host, group))
+
+        return MultizoneStatus(dynamic_groups, groups)
+
+    except (urllib.error.HTTPError, urllib.error.URLError, OSError, ValueError):
+        return None
+
+
+MultizoneInfo = namedtuple("MultizoneInfo", ["friendly_name", "uuid", "host", "port"])
+
+MultizoneStatus = namedtuple("MultizoneStatus", ["dynamic_groups", "groups"])
 
 DeviceStatus = namedtuple(
     "DeviceStatus", ["friendly_name", "model_name", "manufacturer", "uuid", "cast_type"]

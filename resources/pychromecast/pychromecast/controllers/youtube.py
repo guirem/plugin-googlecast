@@ -6,6 +6,7 @@ import threading
 from casttube import YouTubeSession
 
 from . import BaseController
+from ..const import MESSAGE_TYPE
 from ..error import UnsupportedNamespace
 from ..config import APP_YOUTUBE
 
@@ -13,14 +14,13 @@ YOUTUBE_NAMESPACE = "urn:x-cast:com.google.youtube.mdx"
 TYPE_GET_SCREEN_ID = "getMdxSessionStatus"
 TYPE_STATUS = "mdxSessionStatus"
 ATTR_SCREEN_ID = "screenId"
-MESSAGE_TYPE = "type"
 
 
 class YouTubeController(BaseController):
-    """ Controller to interact with Youtube."""
+    """Controller to interact with Youtube."""
 
     def __init__(self):
-        super(YouTubeController, self).__init__(YOUTUBE_NAMESPACE, APP_YOUTUBE)
+        super().__init__(YOUTUBE_NAMESPACE, APP_YOUTUBE)
         self.status_update_event = threading.Event()
         self._screen_id = None
         self._session = None
@@ -89,8 +89,8 @@ class YouTubeController(BaseController):
         self.status_update_event.wait()
         self.status_update_event.clear()
 
-    def receive_message(self, message, data):
-        """ Called when a media message is received. """
+    def receive_message(self, _message, data: dict):
+        """Called when a message is received."""
         if data[MESSAGE_TYPE] == TYPE_STATUS:
             self._process_status(data.get("data"))
             return True
@@ -98,12 +98,12 @@ class YouTubeController(BaseController):
         return False
 
     def _process_status(self, status):
-        """ Process latest status update. """
+        """Process latest status update."""
         self._screen_id = status.get(ATTR_SCREEN_ID)
         self.status_update_event.set()
 
     def quick_play(self, media_id=None, playlist_id=None, enqueue=False, **kwargs):
-        """ Quick Play """
+        """Quick Play"""
         if enqueue:
             self.add_to_queue(media_id, **kwargs)
         else:

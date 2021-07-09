@@ -1,11 +1,14 @@
 """
 Example that shows how the DashCast controller can be used.
 """
+# pylint: disable=invalid-name
 
 import argparse
 import logging
 import sys
 import time
+
+import zeroconf
 
 import pychromecast
 import pychromecast.controllers.dashcast as dashcast
@@ -14,18 +17,31 @@ import pychromecast.controllers.dashcast as dashcast
 CAST_NAME = "Living Room"
 
 parser = argparse.ArgumentParser(
-    description="Example on how to use the Media Controller to play an URL."
+    description="Example that shows how the DashCast controller can be used."
+)
+parser.add_argument(
+    "--cast", help='Name of cast device (default: "%(default)s")', default=CAST_NAME
+)
+parser.add_argument(
+    "--known-host",
+    help="Add known host (IP), can be used multiple times",
+    action="append",
 )
 parser.add_argument("--show-debug", help="Enable debug log", action="store_true")
 parser.add_argument(
-    "--cast", help='Name of cast device (default: "%(default)s")', default=CAST_NAME
+    "--show-zeroconf-debug", help="Enable zeroconf debug log", action="store_true"
 )
 args = parser.parse_args()
 
 if args.show_debug:
     logging.basicConfig(level=logging.DEBUG)
+if args.show_zeroconf_debug:
+    print("Zeroconf version: " + zeroconf.__version__)
+    logging.getLogger("zeroconf").setLevel(logging.DEBUG)
 
-chromecasts = pychromecast.get_listed_chromecasts(friendly_names=[args.cast])
+chromecasts, browser = pychromecast.get_listed_chromecasts(
+    friendly_names=[args.cast], known_hosts=args.known_host
+)
 if not chromecasts:
     print('No chromecast with name "{}" discovered'.format(args.cast))
     sys.exit(1)
@@ -68,3 +84,6 @@ d.load_url(
 # If debugging, sleep after running so we can see any error messages.
 if args.show_debug:
     time.sleep(10)
+
+# Shut down discovery
+browser.stop_discovery()

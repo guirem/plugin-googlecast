@@ -9,17 +9,12 @@ APP_NAMESPACE = "urn:x-cast:com.madmod.dashcast"
 
 
 class DashCastController(BaseController):
-    """ Controller to interact with DashCast app namespace. """
+    """Controller to interact with DashCast app namespace."""
 
-    # pylint: disable=useless-super-delegation
-    # The pylint rule useless-super-delegation doesn't realize
-    # we are setting default values here.
     def __init__(self, appNamespace=APP_NAMESPACE, appId=APP_DASHCAST):
-        super(DashCastController, self).__init__(appNamespace, appId)
+        super().__init__(appNamespace, appId)
 
-    # pylint: enable=useless-super-delegation
-
-    def receive_message(self, message, data):
+    def receive_message(self, _message, _data: dict):
         """
         Called when a load complete message is received.
 

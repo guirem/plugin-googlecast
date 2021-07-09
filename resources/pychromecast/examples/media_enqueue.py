@@ -1,5 +1,5 @@
 """
-Example on how to use the YouTube Controller
+Example on how to use queuing with Media Controller
 
 """
 # pylint: disable=invalid-name
@@ -7,22 +7,25 @@ Example on how to use the YouTube Controller
 import argparse
 import logging
 import sys
+import time
+
 import zeroconf
 
 import pychromecast
-from pychromecast.controllers.youtube import YouTubeController
 
+# Change to the friendly name of your Chromecast
+CAST_NAME = "Living Room"
 
-# Change to the name of your Chromecast
-CAST_NAME = "Living Room TV"
-
-# Change to the video id of the YouTube video
-# video id is the last part of the url http://youtube.com/watch?v=video_id
-VIDEO_ID = "dQw4w9WgXcQ"
+# Change to an audio or video url
+MEDIA_URLS = [
+    "https://a.files.bbci.co.uk/media/live/manifesto/audio/simulcast/dash/nonuk/dash_low/llnws/bbc_radio_fourfm.mpd",
+    "https://www.bensound.com/bensound-music/bensound-jazzyfrenchy.mp3",
+    "https://audio.guim.co.uk/2020/08/14-65292-200817TIFXR.mp3",
+]
 
 
 parser = argparse.ArgumentParser(
-    description="Example on how to use the Youtube Controller."
+    description="Example on how to use the Media Controller with a queue."
 )
 parser.add_argument(
     "--cast", help='Name of cast device (default: "%(default)s")', default=CAST_NAME
@@ -35,9 +38,6 @@ parser.add_argument(
 parser.add_argument("--show-debug", help="Enable debug log", action="store_true")
 parser.add_argument(
     "--show-zeroconf-debug", help="Enable zeroconf debug log", action="store_true"
-)
-parser.add_argument(
-    "--videoid", help='Youtube video ID (default: "%(default)s")', default=VIDEO_ID
 )
 args = parser.parse_args()
 
@@ -55,12 +55,27 @@ if not chromecasts:
     sys.exit(1)
 
 cast = chromecasts[0]
+
 # Start socket client's worker thread and wait for initial status update
 cast.wait()
+print('Found chromecast with name "{}"'.format(args.cast))
 
-yt = YouTubeController()
-cast.register_handler(yt)
-yt.play_video(VIDEO_ID)
+cast.media_controller.play_media(MEDIA_URLS[0], "audio/mp3")
+
+# Wait for Chromecast to start playing
+while cast.media_controller.status.player_state != "PLAYING":
+    time.sleep(0.1)
+
+# Queue next items
+for URL in MEDIA_URLS[1:]:
+    print("Enqueuing...")
+    cast.media_controller.play_media(URL, "audio/mp3", enqueue=True)
+
+
+for URL in MEDIA_URLS[1:]:
+    time.sleep(5)
+    print("Skipping...")
+    cast.media_controller.queue_next()
 
 # Shut down discovery
 browser.stop_discovery()

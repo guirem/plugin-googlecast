@@ -5,22 +5,27 @@ Chromecast.connect().
 
 You can use that functionality to include pychromecast into your main loop.
 """
+# pylint: disable=invalid-name
+
 import argparse
 import logging
 import select
 import time
 
+import zeroconf
+
 import pychromecast
 
 CAST_NAME = "Living Room"
 
-"""
-Check for cast.socket_client.get_socket() and
-handle it with cast.socket_client.run_once()
-"""
-
 
 def your_main_loop():
+    """
+    Main loop example.
+    Check for cast.socket_client.get_socket() and
+    handle it with cast.socket_client.run_once()
+    """
+
     t = 1
     cast = None
 
@@ -30,9 +35,8 @@ def your_main_loop():
             chromecast.connect()
             nonlocal cast
             cast = chromecast
-            stop_discovery()
 
-    stop_discovery = pychromecast.get_chromecasts(blocking=False, callback=callback)
+    browser = pychromecast.get_chromecasts(blocking=False, callback=callback)
 
     while True:
         if cast:
@@ -51,13 +55,12 @@ def your_main_loop():
             print("=> Waiting for discovery of cast '{}'...".format(args.cast))
         time.sleep(1)
 
-
-"""
-Your code which is called by main loop
-"""
+    print("All done, shutting down discovery")
+    browser.stop_discovery()
 
 
 def do_actions(cast, t):
+    """Your code which is called by main loop."""
     if t == 5:
         print()
         print("=> Sending non-blocking play_media command")
@@ -89,10 +92,11 @@ def do_actions(cast, t):
         print("Media status", cast.media_controller.status)
 
 
-parser = argparse.ArgumentParser(
-    description="Example on how to use the Media Controller to play an URL."
-)
+parser = argparse.ArgumentParser(description="Example without socket_client thread")
 parser.add_argument("--show-debug", help="Enable debug log", action="store_true")
+parser.add_argument(
+    "--show-zeroconf-debug", help="Enable zeroconf debug log", action="store_true"
+)
 parser.add_argument(
     "--cast", help='Name of cast device (default: "%(default)s")', default=CAST_NAME
 )
@@ -102,5 +106,8 @@ if args.show_debug:
     logging.basicConfig(level=logging.DEBUG)
 else:
     logging.basicConfig(level=logging.INFO)
+if args.show_zeroconf_debug:
+    print("Zeroconf version: " + zeroconf.__version__)
+    logging.getLogger("zeroconf").setLevel(logging.DEBUG)
 
 your_main_loop()

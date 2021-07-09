@@ -1,13 +1,14 @@
 """
 Provides controllers to handle specific namespaces in Chromecast communication.
 """
+import abc
 import logging
 
 from ..error import UnsupportedNamespace, ControllerNotRegistered
 
 
-class BaseController:
-    """ ABC for namespace controllers. """
+class BaseController(abc.ABC):
+    """ABC for namespace controllers."""
 
     def __init__(self, namespace, supporting_app_id=None, target_platform=False):
         """
@@ -30,15 +31,15 @@ class BaseController:
 
     @property
     def is_active(self):
-        """ True if the controller is connected to a socket client and the
-            Chromecast is running an app that supports this controller. """
+        """True if the controller is connected to a socket client and the
+        Chromecast is running an app that supports this controller."""
         return (
             self._socket_client is not None
             and self.namespace in self._socket_client.app_namespaces
         )
 
     def launch(self, callback_function=None):
-        """ If set, launches app related to the controller. """
+        """If set, launches app related to the controller."""
         self._check_registered()
 
         self._socket_client.receiver_controller.launch_app(
@@ -46,7 +47,7 @@ class BaseController:
         )
 
     def registered(self, socket_client):
-        """ Called when a controller is registered. """
+        """Called when a controller is registered."""
         self._socket_client = socket_client
 
         if self.target_platform:
@@ -55,11 +56,11 @@ class BaseController:
             self._message_func = self._socket_client.send_app_message
 
     def channel_connected(self):
-        """ Called when a channel has been openend that supports the
-            namespace of this controller. """
+        """Called when a channel has been openend that supports the
+        namespace of this controller."""
 
     def channel_disconnected(self):
-        """ Called when a channel is disconnected. """
+        """Called when a channel is disconnected."""
 
     def send_message(self, data, inc_session_id=False, callback_function=None):
         """
@@ -82,7 +83,7 @@ class BaseController:
                 return
 
             raise UnsupportedNamespace(
-                ("Namespace {} is not supported by running" "application.").format(
+                ("Namespace {} is not supported by running application.").format(
                     self.namespace
                 )
             )
@@ -93,21 +94,21 @@ class BaseController:
         """Send a message."""
         self._message_func(self.namespace, data, inc_session_id, callback_function)
 
-    # pylint: disable=unused-argument,no-self-use
-    def receive_message(self, message, data):
+    def receive_message(self, _message, _data: dict):  # pylint: disable=no-self-use
         """
         Called when a message is received that matches the namespace.
         Returns boolean indicating if message was handled.
+        data is message.payload_utf8 interpreted as a JSON dict.
         """
         return False
 
     def tear_down(self):
-        """ Called when we are shutting down. """
+        """Called when we are shutting down."""
         self._socket_client = None
         self._message_func = None
 
     def _check_registered(self):
-        """ Helper method to see if we are registered with a Cast object. """
+        """Helper method to see if we are registered with a Cast object."""
         if self._socket_client is None:
             raise ControllerNotRegistered(
                 (
