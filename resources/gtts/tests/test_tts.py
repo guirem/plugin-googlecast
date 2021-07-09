@@ -5,7 +5,8 @@ from mock import Mock
 from six.moves import urllib
 
 from gtts.tts import gTTS, gTTSError
-from gtts.lang import _main_langs, _extra_langs
+from gtts.langs import _main_langs
+from gtts.lang import _extra_langs
 
 # Testing all languages takes some time.
 # Set TEST_LANGS envvar to choose languages to test.
@@ -47,7 +48,7 @@ def test_TTS(tmp_path, lang):
     for slow in (False, True):
         filename = tmp_path / 'test_{}_.mp3'.format(lang)
         # Create gTTS and save
-        tts = gTTS(text=text, lang=lang, slow=slow)
+        tts = gTTS(text=text, lang=lang, slow=slow, lang_check=False)
         tts.save(filename)
 
         # Check if files created is > 1.5
@@ -103,26 +104,13 @@ def test_save(tmp_path):
 
 
 @pytest.mark.net
-def test_get_urls():
-    """Get request URLs list"""
-
-    tts = gTTS(text='test', tld='com', lang='en-uk')
-    urls = tts.get_urls()
-
-    # Check the url
-    r = urllib.parse.urlparse(urls[0])
-    assert r.scheme == 'https'
-    assert r.netloc == 'translate.google.com'
-    assert r.path == '/_/TranslateWebserverUi/data/batchexecute'
-
-
-@pytest.mark.net
 def test_get_bodies():
     """get request bodies list"""
-    tts = gTTS(text='test', tld='com', lang='en-uk')
+    tts = gTTS(text='test', tld='com', lang='en')
     body = tts.get_bodies()[0]
     assert 'test' in body
-    assert 'en-uk' in body
+    # \"en\" url-encoded
+    assert '%5C%22en%5C%22' in body
 
 
 def test_msg():

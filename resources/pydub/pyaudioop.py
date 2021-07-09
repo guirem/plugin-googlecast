@@ -6,7 +6,10 @@ except ImportError:
     from builtins import min as builtin_min
 import math
 import struct
-from fractions import gcd
+try:
+    from fractions import gcd
+except ImportError:  # Python 3.9+
+    from math import gcd
 from ctypes import create_string_buffer
 
 
@@ -523,7 +526,7 @@ def ratecv(cp, size, nchannels, inrate, outrate, state, weightA=1, weightB=0):
                 )
                 _put_sample(result, size, out_i, _overflow(cur_o, size))
                 out_i += 1
-                d -= inrate
+            d -= inrate
 
 
 def lin2ulaw(cp, size):

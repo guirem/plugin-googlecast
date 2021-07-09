@@ -232,7 +232,7 @@ def get_extra_info(stderr):
     """
     extra_info = {}
 
-    re_stream = r'(?P<space_start> +)Stream #0[:\.](?P<stream_id>([0-9]+))(?P<content_0>.+)\n?((?P<space_end> +)(?P<content_1>.+))?'
+    re_stream = r'(?P<space_start> +)Stream #0[:\.](?P<stream_id>([0-9]+))(?P<content_0>.+)\n?(?! *Stream)((?P<space_end> +)(?P<content_1>.+))?'
     for i in re.finditer(re_stream, stderr):
         if i.group('space_end') is not None and len(i.group('space_start')) <= len(
                 i.group('space_end')):
@@ -415,3 +415,20 @@ def get_supported_decoders():
 
 def get_supported_encoders():
     return get_supported_codecs()[1]
+
+def stereo_to_ms(audio_segment):
+	'''
+	Left-Right -> Mid-Side
+	'''
+	channel = audio_segment.split_to_mono()
+	channel = [channel[0].overlay(channel[1]), channel[0].overlay(channel[1].invert_phase())]
+	return AudioSegment.from_mono_audiosegments(channel[0], channel[1])
+
+def ms_to_stereo(audio_segment):
+	'''
+	Mid-Side -> Left-Right
+	'''
+	channel = audio_segment.split_to_mono()
+	channel = [channel[0].overlay(channel[1]) - 3, channel[0].overlay(channel[1].invert_phase()) - 3]
+	return AudioSegment.from_mono_audiosegments(channel[0], channel[1])
+
