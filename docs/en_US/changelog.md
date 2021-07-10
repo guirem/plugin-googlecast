@@ -4,6 +4,11 @@ Version list of googlecast plugin.
 
 *[Back to documentation] (index.md)*
 
+## Version of July 10, 2021 (beta/stable) - 2.18
+
+- pychromcast, pydub, gtts, spotipy library update
+- improve chromecast connection detection
+
 ## Version of December 20, 2020 (beta/stable) - 2.17
 
 - google translate api library update
