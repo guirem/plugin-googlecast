@@ -6,6 +6,7 @@ __all__ = ["CLIENT_CREDS_ENV_VARS", "prompt_for_user_token"]
 
 import logging
 import os
+import warnings
 
 import spotipy
 
@@ -20,7 +21,7 @@ CLIENT_CREDS_ENV_VARS = {
 
 
 def prompt_for_user_token(
-    username,
+    username=None,
     scope=None,
     client_id=None,
     client_secret=None,
@@ -29,19 +30,27 @@ def prompt_for_user_token(
     oauth_manager=None,
     show_dialog=False
 ):
+    warnings.warn(
+        "'prompt_for_user_token' is deprecated."
+        "Use the following instead: "
+        "    auth_manager=SpotifyOAuth(scope=scope)"
+        "    spotipy.Spotify(auth_manager=auth_manager)",
+        DeprecationWarning
+    )
     """ prompts the user to login if necessary and returns
         the user token suitable for use with the spotipy.Spotify
         constructor
 
         Parameters:
 
-         - username - the Spotify username
-         - scope - the desired scope of the request
-         - client_id - the client id of your app
-         - client_secret - the client secret of your app
-         - redirect_uri - the redirect URI of your app
-         - cache_path - path to location to save tokens
-         - oauth_manager - Oauth manager object.
+         - username - the Spotify username (optional)
+         - scope - the desired scope of the request (optional)
+         - client_id - the client id of your app (required)
+         - client_secret - the client secret of your app (required)
+         - redirect_uri - the redirect URI of your app (required)
+         - cache_path - path to location to save tokens (optional)
+         - oauth_manager - Oauth manager object (optional)
+         - show_dialog - If true, a login prompt always shows (optional, defaults to False)
 
     """
     if not oauth_manager:
@@ -70,14 +79,13 @@ def prompt_for_user_token(
             )
             raise spotipy.SpotifyException(550, -1, "no credentials set")
 
-        cache_path = cache_path or ".cache-" + username
-
     sp_oauth = oauth_manager or spotipy.SpotifyOAuth(
         client_id,
         client_secret,
         redirect_uri,
         scope=scope,
         cache_path=cache_path,
+        username=username,
         show_dialog=show_dialog
     )
 
@@ -85,7 +93,7 @@ def prompt_for_user_token(
     # if not in the cache, the create a new (this will send
     # the user to a web page where they can authorize this app)
 
-    token_info = sp_oauth.get_cached_token()
+    token_info = sp_oauth.validate_token(sp_oauth.cache_handler.get_cached_token())
 
     if not token_info:
         code = sp_oauth.get_auth_response()
@@ -109,3 +117,19 @@ def get_host_port(netloc):
         port = None
 
     return host, port
+
+
+def normalize_scope(scope):
+    if scope:
+        if isinstance(scope, str):
+            scopes = scope.split(',')
+        elif isinstance(scope, list) or isinstance(scope, tuple):
+            scopes = scope
+        else:
+            raise Exception(
+                "Unsupported scope value, please either provide a list of scopes, "
+                "or a string of scopes separated by commas"
+            )
+        return " ".join(sorted(scopes))
+    else:
+        return None
