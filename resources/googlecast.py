@@ -49,6 +49,13 @@ except ImportError:
     sys.exit(1)
 
 try:
+    import zeroconf
+except ImportError:
+    logging.error("ERROR: Zeroconf module not loaded !")
+    logging.error(traceback.format_exc())
+    sys.exit(1)
+
+try:
     import pychromecast.pychromecast.controllers.dashcast as dashcast
     import pychromecast.pychromecast.controllers.spotify as spotify
     import pychromecast.pychromecast.controllers.youtube as youtube
@@ -985,9 +992,9 @@ def action_handler(message):
                                 else:
                                     logging.debug(
                                         "ACTION------Spotify : device not found, wait for spotify to set an id...")
-                                    device_id = player.wait()
-                                    logging.debug(
-                                        "ACTION------Spotify : device not found, returned this new id : " + str(device_id))
+                                    time.sleep(1)
+                                    # logging.debug(
+                                    #     "ACTION------Spotify : device not found, returned this new id : " + str(device_id))
                                     trycount = trycount+1
 
                             if success is True:
@@ -1902,6 +1909,9 @@ def start(cycle=2):
         pass
 
     try:
+        globals.NETDISCOVERY_CHROMECASTMANAGER = ChromecastBrowserManager()
+        globals.NETDISCOVERY_CHROMECASTMANAGER.start()
+
         while not globals.IS_SHUTTINGDOWN:
             try:
                 current_time = int(time.time())
@@ -1969,7 +1979,6 @@ def read_socket(cycle):
                                 'options': message['device']['options']
                             }
                             globals.SCAN_LAST = 0
-                            globals.ZEROCONF_RESTART = True
                 elif message['cmd'] == 'remove':
                     logging.debug(
                         'SOCKET-READ------Remove device : '+str(message['device']))
@@ -2055,12 +2064,83 @@ def read_socket(cycle):
         time.sleep(cycle)
 
 
-def zeroconfMonitoring_start():
-    try:
-        logging.debug("ZEROCONF------ Start zeroconf monitoring thread...")
-        globals.NETDISCOVERY_PENDING = True
+class ChromecastBrowserManager:
 
-        def ccdiscovery_callback(chromecast):
+    def __init__(self):
+        self._browser = None
+        self._zeroconf = zeroconf.Zeroconf()
+        self._started = False
+
+    def reset_zeroconf(self):
+        logging.debug("ZEROCONF------ Reset zeroconf monitoring thread...")
+        try:
+            self._zeroconf.close()
+        except Exception:
+            pass
+        self._zeroconf = zeroconf.Zeroconf()
+
+    def reset(self):
+        logging.debug("ZEROCONF------ Reset browser monitoring thread...")
+        if self._started is True:
+            self.stop()
+            self.reset_zeroconf()
+            self.start()
+
+    def stop(self):
+        logging.debug("ZEROCONF------ Stop zeroconf monitoring thread...")
+        if self._started is True:
+            self._browser.stop_discovery()
+            self._started = False
+
+    def start(self):
+        if self._started is False:
+            try:
+                logging.debug("ZEROCONF------ start zeroconf monitoring thread...")
+
+                def add_callback(uuid, _service):
+                    logging.debug("ZEROCONF EVENT--- New cast device with UUID {}".format(uuid))
+                    self._init_chromecast(uuid)
+
+                def remove_callback(uuid, _service, cast_info):
+                    logging.debug(
+                        "ZEROCONF EVENT--- Removed cast device with UUID {}".format(uuid))
+
+                def update_callback(uuid, _service):
+                    logging.debug("ZEROCONF EVENT--- Updated cast device with UUID {}".format(uuid))
+                    uuid_str = str(uuid)
+                    if uuid_str in globals.KNOWN_DEVICES and uuid_str not in globals.GCAST_DEVICES:
+                        self._init_chromecast(uuid)
+
+                logging.debug(
+                    "ZEROCONF START------Starting ChromecastBrowserManager")
+                self._browser = pychromecast.discovery.CastBrowser(
+                        cast_listener=pychromecast.SimpleCastListener(
+                            add_callback, remove_callback, update_callback
+                        ),
+                        zeroconf_instance=self._zeroconf,
+                        known_hosts=None
+                    )
+                time.sleep(1)
+                self._browser.start_discovery()
+                self._started = True
+
+            except Exception as e:
+                logging.error(
+                    "ZEROCONF START------Exception on zeroconf monitoring : %s" % str(e))
+                logging.debug(traceback.format_exc())
+
+        else:
+            logging.debug("ZEROCONF START------ALready started!")
+
+    def _init_chromecast(self, uuid):
+        try:
+            chromecast = pychromecast.get_chromecast_from_cast_info(
+                self._browser.devices[uuid],
+                zconf=self._zeroconf,
+                tries=1,
+                retry_wait=3,
+                timeout=globals.SCAN_TIMEOUT,
+            )
             cast = JeedomChromeCast(chromecast, scan_mode=True)
             uuid = cast.uuid
             logging.debug(
@@ -2070,28 +2150,13 @@ def zeroconfMonitoring_start():
                     "ZEROCONF------ Signal from chromecast will be processed soon (" + cast.friendly_name + ")")
                 globals.SCAN_LAST = 0
                 globals.NETDISCOVERY_DEVICES[cast.uuid] = cast
-
-        globals.NETDISCOVERY_STOPFN = pychromecast.get_chromecasts(
-            tries=1, retry_wait=2, timeout=globals.SCAN_TIMEOUT, blocking=False, callback=ccdiscovery_callback)
-    except Exception as e:
-        logging.error(
-            "ZEROCONF START------Exception on zeroconf monitoring : %s" % str(e))
-        logging.debug(traceback.format_exc())
-
-
-def zeroconfMonitoring_stop():
-    logging.debug("ZEROCONF------ Stopping zeroconf monitoring thread...")
-    try:
-        globals.NETDISCOVERY_PENDING = False
-        if globals.NETDISCOVERY_STOPFN is not None:
-            globals.NETDISCOVERY_STOPFN()
-        # globals.NETDISCOVERY_DEVICES = {}
-
-    except Exception as e:
-        # globals.NETDISCOVERY_DEVICES = {}
-        logging.error(
-            "ZEROCONF STOP------Exception on netdiscovery : %s" % str(e))
-        logging.debug(traceback.format_exc())
+        except pychromecast.ChromecastConnectionError:  # noqa: F405
+            logging.error("ZEROCONF------ChromecastConnectionError")
+            pass
+        except Exception as e:
+            logging.error(
+                "ZEROCONF------Exception on zeroconf new chromecast discovery : %s" % str(e))
+            logging.debug(traceback.format_exc())
 
 
 def scanner(name='UNKNOWN SOURCE'):
@@ -2103,7 +2168,7 @@ def scanner(name='UNKNOWN SOURCE'):
         scanForced = False
         discoveryMode = False
         if (int(time.time())-globals.DISCOVERY_LAST) > globals.DISCOVERY_FREQUENCY:
-            scanForced = True
+            globals.ZEROCONF_RESTART = True
             discoveryMode = True
 
         if globals.ZEROCONF_RESTART is True:
@@ -2111,9 +2176,7 @@ def scanner(name='UNKNOWN SOURCE'):
             scanForced = True
 
         if scanForced is True:
-            zeroconfMonitoring_stop()
-            zeroconfMonitoring_start()
-            time.sleep(1)
+            globals.NETDISCOVERY_CHROMECASTMANAGER.reset()
 
         # go through discovered devices in case new appeared
         tobecleaned = []
@@ -2333,10 +2396,10 @@ def shutdown():
     try:
         globals.JEEDOM_COM.send_change_immediate(
             {'stopped': 1, 'source': globals.daemonname})
-        zeroconfMonitoring_stop()
         for uuid in globals.GCAST_DEVICES:
             globals.GCAST_DEVICES[uuid].disconnect()
         time.sleep(0.5)
+        globals.NETDISCOVERY_CHROMECASTMANAGER.stop()
         jeedom_socket.close()
         logging.debug("GLOBAL------Shutdown completed !")
     except Exception:

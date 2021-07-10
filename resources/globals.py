@@ -36,7 +36,7 @@ LEARN_BEGIN = int(time.time())
 LEARN_MODE = False          # is learn mode ?
 LEARN_TIMEOUT = 90
 
-ZEROCONF_RESTART = True
+ZEROCONF_RESTART = False
 
 HEARTBEAT_FREQUENCY = 900   # 15 minutes
 LAST_BEAT = int(time.time())
@@ -44,10 +44,9 @@ LAST_BEAT = int(time.time())
 SCAN_FREQUENCY = 60         # in seconds
 SCAN_PENDING = False        # is scanner running?
 SCAN_LAST = 0               # when last started
-SCAN_TIMEOUT = 5           # timout of gcast scan
+SCAN_TIMEOUT = 8           # timout of gcast scan
 
-NETDISCOVERY_PENDING = False    # is net discovery running?
-NETDISCOVERY_STOPFN = None      # stop function for net discovery thread
+NETDISCOVERY_CHROMECASTMANAGER = None
 NETDISCOVERY_DEVICES = {}
 
 DISCOVERY_FREQUENCY = 14400         # every 4 hours
