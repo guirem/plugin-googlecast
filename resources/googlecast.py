@@ -886,11 +886,15 @@ def action_handler(message):
                         fallbackMode = False
                         player = jcast.loadPlayer(
                             app, {'quitapp': quit_app_before})
-                        value = value.replace('h:/', 'http://')
-                        value = value.replace('hs:/', 'https://')
-                        eval('player.' + cmd +
-                             '(' + gcast_prepareAppParam(value) + ')')
-                        jcast.savePreviousPlayerCmd(command)
+                        if value is not None:
+                            value = value.replace('h:/', 'http://')
+                            value = value.replace('hs:/', 'https://')
+                            eval('player.' + cmd +
+                                 '(' + gcast_prepareAppParam(value) + ')')
+                            jcast.savePreviousPlayerCmd(command)
+                        else:
+                            logging.error(
+                                "ACTION------ Missing value for web|load_url")
 
                 elif app == 'youtube':  # app=youtube|cmd=play_video|value=fra4QBLF3GU
                     # possibleCmd = ['play_video', 'start_new_session', 'add_to_queue', 'update_screen_id', 'clear_playlist', 'play', 'stop', 'pause']
