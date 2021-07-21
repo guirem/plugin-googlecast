@@ -410,7 +410,8 @@ class JeedomChromeCast:
         castsocket = self.gcast.socket_client
         try:
             # if castsocket.heartbeat_controller.is_expired():
-            castsocket.heartbeat_controller.ping()
+            # castsocket.heartbeat_controller.ping()
+            reset = not castsocket.heartbeat_controller.is_active()
             #    castsocket.heartbeat_controller.reset()
         except Exception:
             logging.debug("JEEDOMCHROMECAST------ check_connection : ping failed")
@@ -2112,7 +2113,7 @@ class ChromecastBrowserManager:
                 def update_callback(uuid, _service):
                     logging.debug("ZEROCONF EVENT--- Updated cast device with UUID {}".format(uuid))
                     uuid_str = str(uuid)
-                    if uuid_str in globals.KNOWN_DEVICES and uuid_str not in globals.GCAST_DEVICES:
+                    if uuid_str in globals.KNOWN_DEVICES and (uuid_str not in globals.GCAST_DEVICES or globals.KNOWN_DEVICES[uuid_str]['online'] is False):
                         self._init_chromecast(uuid)
 
                 logging.debug(

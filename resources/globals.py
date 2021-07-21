@@ -49,7 +49,7 @@ SCAN_TIMEOUT = 8           # timout of gcast scan
 NETDISCOVERY_CHROMECASTMANAGER = None
 NETDISCOVERY_DEVICES = {}
 
-DISCOVERY_FREQUENCY = 14400         # every 4 hours
+DISCOVERY_FREQUENCY = 7200         # every 2 hours
 DISCOVERY_LAST = int(time.time())   # when last started
 
 # Resent offline msg after 15 minutes
