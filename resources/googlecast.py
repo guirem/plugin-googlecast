@@ -407,11 +407,12 @@ class JeedomChromeCast:
 
     def check_connection(self):
         reset = False
-        castsocket = self.gcast.socket_client
+        # castsocket = self.gcast.socket_client
         try:
             # if castsocket.heartbeat_controller.is_expired():
             # castsocket.heartbeat_controller.ping()
-            reset = not castsocket.heartbeat_controller.is_active()
+            # reset = not castsocket.heartbeat_controller.is_active()
+            reset = False  # fix waiting for proper way to check connection...
             #    castsocket.heartbeat_controller.reset()
         except Exception:
             logging.debug("JEEDOMCHROMECAST------ check_connection : ping failed")
