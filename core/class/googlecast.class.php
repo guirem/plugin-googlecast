@@ -273,12 +273,13 @@ class googlecast extends eqLogic {
             $cmd->setName(__('Volume', __FILE__));
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setType('info');
+            $cmd->setSubType('numeric');
+            $cmd->setGeneric_type('VOLUME');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->setUnite('%');
+            $cmd->save();
         }
-        $cmd->setType('info');
-        $cmd->setSubType('numeric');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->setUnite('%');
-        $cmd->save();
         $volume_id = $cmd->getId();
 
         $cmd = $this->getCmd(null, 'volume_set');
@@ -289,14 +290,15 @@ class googlecast extends eqLogic {
             $cmd->setIsVisible(1);
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setType('action');
+            $cmd->setSubType('slider');
+            $cmd->setGeneric_type('SET_VOLUME');
+            $cmd->setConfiguration('minValue', 0);
+            $cmd->setConfiguration('maxValue', 100);
+            $cmd->setValue($volume_id);
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('action');
-        $cmd->setSubType('slider');
-        $cmd->setConfiguration('minValue', 0);
-        $cmd->setConfiguration('maxValue', 100);
-        $cmd->setValue($volume_id);
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'volume_muted');
         if (!is_object($cmd)) {
@@ -306,11 +308,11 @@ class googlecast extends eqLogic {
             $cmd->setName(__('Mute', __FILE__));
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setType('info');
+            $cmd->setSubType('binary');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('info');
-        $cmd->setSubType('binary');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
         $mute_id = $cmd->getId();
 
         $cmd = $this->getCmd(null, 'volume_down');
@@ -322,11 +324,11 @@ class googlecast extends eqLogic {
             $cmd->setDisplay('icon', '<i class="fa fa-volume-down"></i>');
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('action');
-        $cmd->setSubType('other');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'volume_up');
         if (!is_object($cmd)) {
@@ -337,11 +339,11 @@ class googlecast extends eqLogic {
             $cmd->setDisplay('icon', '<i class="fa fa-volume-up"></i>');
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('action');
-        $cmd->setSubType('other');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'mute_on');
         if (!is_object($cmd)) {
@@ -353,12 +355,13 @@ class googlecast extends eqLogic {
             $cmd->setTemplate('mobile', 'circle');
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setGeneric_type('MEDIA_MUTE');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->setValue($mute_id);
+            $cmd->save();
         }
-        $cmd->setType('action');
-        $cmd->setSubType('other');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->setValue($mute_id);
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'mute_off');
         if (!is_object($cmd)) {
@@ -370,12 +373,13 @@ class googlecast extends eqLogic {
             $cmd->setTemplate('mobile', 'circle');
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setGeneric_type('MEDIA_UNMUTE');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->setValue($mute_id);
+            $cmd->save();
         }
-        $cmd->setType('action');
-        $cmd->setSubType('other');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->setValue($mute_id);
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'status_text');
         if (!is_object($cmd)) {
@@ -387,11 +391,11 @@ class googlecast extends eqLogic {
             $cmd->setDisplay('showNameOndashboard', false);
             //$cmd->setDisplay('icon', '<i class="icon techno-tv"></i>');
             $cmd->setOrder($order++);
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('info');
-        $cmd->setSubType('string');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'display_name');
         if (!is_object($cmd)) {
@@ -402,11 +406,11 @@ class googlecast extends eqLogic {
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setDisplay('showNameOndashboard', false);
             $cmd->setOrder($order++);
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('info');
-        $cmd->setSubType('string');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'player_state');
         if (!is_object($cmd)) {
@@ -416,11 +420,11 @@ class googlecast extends eqLogic {
             $cmd->setName(__('Statut Player', __FILE__));
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('info');
-        $cmd->setSubType('string');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'title');
         if (!is_object($cmd)) {
@@ -430,11 +434,12 @@ class googlecast extends eqLogic {
             $cmd->setName(__('Titre', __FILE__));
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+            $cmd->setGeneric_type('MEDIA_TITLE');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('info');
-        $cmd->setSubType('string');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'artist');
         if (!is_object($cmd)) {
@@ -444,11 +449,12 @@ class googlecast extends eqLogic {
             $cmd->setName(__('Artiste', __FILE__));
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+            $cmd->setGeneric_type('MEDIA_ARTIST');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('info');
-        $cmd->setSubType('string');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'quit_app');
         if (!is_object($cmd)) {
@@ -460,11 +466,11 @@ class googlecast extends eqLogic {
             #$cmd->setDisplay('forceReturnLineBefore', 1);
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('action');
-        $cmd->setSubType('other');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'stop');
         if (!is_object($cmd)) {
@@ -475,11 +481,12 @@ class googlecast extends eqLogic {
             $cmd->setDisplay('icon', '<i class="fa fa-stop"></i>');
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setGeneric_type('MEDIA_STOP');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('action');
-        $cmd->setSubType('other');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'pause');
         if (!is_object($cmd)) {
@@ -490,11 +497,12 @@ class googlecast extends eqLogic {
             $cmd->setDisplay('icon', '<i class="fa fa-pause"></i>');
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setGeneric_type('MEDIA_PAUSE');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('action');
-        $cmd->setSubType('other');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'prev');
         if (!is_object($cmd)) {
@@ -505,11 +513,12 @@ class googlecast extends eqLogic {
             $cmd->setDisplay('icon', '<i class="fa fa-step-backward"></i>');
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setGeneric_type('MEDIA_PREVIOUS');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('action');
-        $cmd->setSubType('other');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'skip');
         if (!is_object($cmd)) {
@@ -520,11 +529,12 @@ class googlecast extends eqLogic {
             $cmd->setDisplay('icon', '<i class="fa fa-step-forward"></i>');
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setGeneric_type('MEDIA_NEXT');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('action');
-        $cmd->setSubType('other');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'rewind');
         if (!is_object($cmd)) {
@@ -534,12 +544,12 @@ class googlecast extends eqLogic {
             $cmd->setIsVisible(1);
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setDisplay('icon', '<i class="fa fa-backward"></i>');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setDisplay('icon', '<i class="fa fa-backward"></i>');
-        $cmd->setType('action');
-        $cmd->setSubType('other');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'play');
         if (!is_object($cmd)) {
@@ -550,11 +560,12 @@ class googlecast extends eqLogic {
             $cmd->setDisplay('icon', '<i class="fa fa-play"></i>');
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setGeneric_type('MEDIA_RESUME');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('action');
-        $cmd->setSubType('other');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'nowplaying');
         if (!is_object($cmd)) {
@@ -564,13 +575,13 @@ class googlecast extends eqLogic {
             $cmd->setIsVisible(1);
             $cmd->setConfiguration('googlecast_cmd', true);
             $cmd->setOrder($order++);
+            $cmd->setTemplate('dashboard', 'googlecast_playing');
+            $cmd->setTemplate('mobile', 'googlecast_playing');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setTemplate('dashboard', 'googlecast_playing');
-        $cmd->setTemplate('mobile', 'googlecast_playing');
-        $cmd->setType('info');
-        $cmd->setSubType('string');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'castversion');
         if (!is_object($cmd)) {
@@ -580,11 +591,11 @@ class googlecast extends eqLogic {
             $cmd->setIsVisible(1);
             $cmd->setOrder($order++);
             $cmd->setConfiguration('googlecast_cmd', true);
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('info');
-        $cmd->setSubType('string');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'speak');
         if (!is_object($cmd)) {
@@ -594,13 +605,13 @@ class googlecast extends eqLogic {
             $cmd->setIsVisible(1);
             $cmd->setOrder($order++);
             $cmd->setConfiguration('googlecast_cmd', true);
+            $cmd->setTemplate('dashboard', 'googlecast_speak');
+            $cmd->setTemplate('mobile', 'googlecast_speak');
+            $cmd->setType('action');
+            $cmd->setSubType('message');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setTemplate('dashboard', 'googlecast_speak');
-        $cmd->setTemplate('mobile', 'googlecast_speak');
-        $cmd->setType('action');
-        $cmd->setSubType('message');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'customcmd');
         if (!is_object($cmd)) {
@@ -610,11 +621,11 @@ class googlecast extends eqLogic {
             $cmd->setIsVisible(0);
             $cmd->setOrder($order++);
             $cmd->setConfiguration('googlecast_cmd', true);
+            $cmd->setType('action');
+            $cmd->setSubType('message');
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->save();
         }
-        $cmd->setType('action');
-        $cmd->setSubType('message');
-        $cmd->setEqLogic_id($this->getId());
-        $cmd->save();
 
         $cmd = $this->getCmd(null, 'cmdlist_radiolist');
         if (!is_object($cmd)) {
@@ -630,10 +641,10 @@ class googlecast extends eqLogic {
             $cmd->setEqLogic_id($this->getId());
             $radiolist = googlecast_utils::buildRadioSelectlist();
             $cmd->setConfiguration('listValue', $radiolist);
+            $cmd->setType('action');
+            $cmd->setSubType('select');
+            $cmd->save();
         }
-        $cmd->setType('action');
-        $cmd->setSubType('select');
-        $cmd->save();
 
         $castType = $this->getConfiguration('cast_type');
         if ($this->getConfiguration('firstTimeCreation', true)) {
