@@ -287,7 +287,8 @@ class googlecast extends eqLogic
         $cmd->setSubType('numeric');
         $cmd->setEqLogic_id($this->getId());
         $cmd->setUnite('%');
-        $cmd->setDisplay('generic_type', 'LIGHT_STATE');
+        //$cmd->setDisplay('generic_type', 'LIGHT_STATE');
+        $cmd->setGeneric_type('VOLUME');
         $cmd->save();
         $volume_id = $cmd->getId();
 
@@ -304,6 +305,7 @@ class googlecast extends eqLogic
         $cmd->setSubType('slider');
         $cmd->setConfiguration('minValue', 0);
         $cmd->setConfiguration('maxValue', 100);
+        $cmd->setGeneric_type('SET_VOLUME');
         $cmd->setValue($volume_id);
         $cmd->setEqLogic_id($this->getId());
         $cmd->save();
@@ -320,7 +322,7 @@ class googlecast extends eqLogic
         $cmd->setType('info');
         $cmd->setSubType('binary');
         $cmd->setEqLogic_id($this->getId());
-        $cmd->setDisplay('generic_type', 'SIREN_STATE');
+        //$cmd->setDisplay('generic_type', 'SIREN_STATE');
         $cmd->save();
         $mute_id = $cmd->getId();
 
@@ -368,7 +370,8 @@ class googlecast extends eqLogic
         $cmd->setType('action');
         $cmd->setSubType('other');
         $cmd->setEqLogic_id($this->getId());
-        $cmd->setDisplay('generic_type', 'SIREN_ON');
+        //$cmd->setDisplay('generic_type', 'SIREN_ON');
+        $cmd->setGeneric_type('MEDIA_MUTE');
         $cmd->setValue($mute_id);
         $cmd->save();
 
@@ -386,7 +389,8 @@ class googlecast extends eqLogic
         $cmd->setType('action');
         $cmd->setSubType('other');
         $cmd->setEqLogic_id($this->getId());
-        $cmd->setDisplay('generic_type', 'SIREN_OFF');
+        //$cmd->setDisplay('generic_type', 'SIREN_OFF');
+        $cmd->setGeneric_type('MEDIA_UNMUTE');
         $cmd->setValue($mute_id);
         $cmd->save();
 
@@ -404,7 +408,7 @@ class googlecast extends eqLogic
         $cmd->setType('info');
         $cmd->setSubType('string');
         $cmd->setEqLogic_id($this->getId());
-        $cmd->setDisplay('generic_type', 'GENERIC');
+        //$cmd->setDisplay('generic_type', 'GENERIC');
         $cmd->save();
 
         $cmd = $this->getCmd(null, 'display_name');
@@ -420,7 +424,7 @@ class googlecast extends eqLogic
         $cmd->setType('info');
         $cmd->setSubType('string');
         $cmd->setEqLogic_id($this->getId());
-        $cmd->setDisplay('generic_type', 'GENERIC');
+        //$cmd->setDisplay('generic_type', 'GENERIC');
         $cmd->save();
 
         $cmd = $this->getCmd(null, 'player_state');
@@ -435,7 +439,7 @@ class googlecast extends eqLogic
         $cmd->setType('info');
         $cmd->setSubType('string');
         $cmd->setEqLogic_id($this->getId());
-        $cmd->setDisplay('generic_type', 'GENERIC');
+        //$cmd->setDisplay('generic_type', 'GENERIC');
         $cmd->save();
 
         $cmd = $this->getCmd(null, 'title');
@@ -450,7 +454,8 @@ class googlecast extends eqLogic
         $cmd->setType('info');
         $cmd->setSubType('string');
         $cmd->setEqLogic_id($this->getId());
-        $cmd->setDisplay('generic_type', 'GENERIC');
+        //$cmd->setDisplay('generic_type', 'GENERIC');
+        $cmd->setGeneric_type('MEDIA_TITLE');
         $cmd->save();
 
         $cmd = $this->getCmd(null, 'artist');
@@ -465,7 +470,8 @@ class googlecast extends eqLogic
         $cmd->setType('info');
         $cmd->setSubType('string');
         $cmd->setEqLogic_id($this->getId());
-        $cmd->setDisplay('generic_type', 'GENERIC');
+        //$cmd->setDisplay('generic_type', 'GENERIC');
+        $cmd->setGeneric_type('MEDIA_ARTIST');
         $cmd->save();
 
         $cmd = $this->getCmd(null, 'quit_app');
@@ -496,6 +502,7 @@ class googlecast extends eqLogic
         }
         $cmd->setType('action');
         $cmd->setSubType('other');
+        $cmd->setGeneric_type('MEDIA_STOP');
         $cmd->setEqLogic_id($this->getId());
         $cmd->save();
 
@@ -511,6 +518,7 @@ class googlecast extends eqLogic
         }
         $cmd->setType('action');
         $cmd->setSubType('other');
+        $cmd->setGeneric_type('MEDIA_PAUSE');
         $cmd->setEqLogic_id($this->getId());
         $cmd->save();
 
@@ -526,6 +534,7 @@ class googlecast extends eqLogic
         }
         $cmd->setType('action');
         $cmd->setSubType('other');
+        $cmd->setGeneric_type('MEDIA_PREVIOUS');
         $cmd->setEqLogic_id($this->getId());
         $cmd->save();
 
@@ -541,6 +550,7 @@ class googlecast extends eqLogic
         }
         $cmd->setType('action');
         $cmd->setSubType('other');
+        $cmd->setGeneric_type('MEDIA_NEXT');
         $cmd->setEqLogic_id($this->getId());
         $cmd->save();
 
@@ -571,6 +581,7 @@ class googlecast extends eqLogic
         }
         $cmd->setType('action');
         $cmd->setSubType('other');
+        $cmd->setGeneric_type('MEDIA_RESUME');
         $cmd->setEqLogic_id($this->getId());
         $cmd->save();
 
