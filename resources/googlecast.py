@@ -59,6 +59,7 @@ try:
     import pychromecast.pychromecast.controllers.dashcast as dashcast
     import pychromecast.pychromecast.controllers.spotify as spotify
     import pychromecast.pychromecast.controllers.youtube as youtube
+    import pychromecast.pychromecast.controllers.bubbleupnp as mediabubble
 except ImportError:
     logging.error(
         "ERROR: One or several pychromecast controllers are not loaded !")
@@ -102,14 +103,15 @@ except ImportError:
 
 class JeedomChromeCast:
     def __init__(self, gcast, options=None, scan_mode=False):
-        self.uuid = str(gcast.device.uuid)
-        self.friendly_name = gcast.device.friendly_name
+        self.uuid = str(gcast.cast_info.uuid)
+        self.friendly_name = gcast.cast_info.friendly_name
         self.gcast = gcast
         self.previous_status = {"uuid": self.uuid, "online": False}
         self.now_playing = False
         self.online = True
         self.scan_mode = scan_mode
         self.error_count = 0
+        self.cast_type = gcast.cast_info.cast_type
         if scan_mode is False:
             self.gcast.wait(timeout=globals.SCAN_TIMEOUT)
             self.being_shutdown = False
@@ -134,10 +136,11 @@ class JeedomChromeCast:
             if options and 'ignore_CEC' in options:
                 if options['ignore_CEC'] == "1" and self.friendly_name not in pychromecast.IGNORE_CEC:
                     pychromecast.IGNORE_CEC.append(
-                        self.gcast.device.friendly_name)
+                        self.friendly_name)
             # CEC always disable for audio chromecast
-            if self.gcast.device.cast_type != 'cast' and self.friendly_name not in pychromecast.IGNORE_CEC:
-                pychromecast.IGNORE_CEC.append(self.gcast.device.friendly_name)
+            if self.cast_type != 'cast' and self.friendly_name not in pychromecast.IGNORE_CEC:
+                pychromecast.IGNORE_CEC.append(
+                    self.friendly_name)
 
             if self.gcast.socket_client:
                 self.gcast.socket_client.tries = int(
@@ -147,7 +150,7 @@ class JeedomChromeCast:
 
     @property
     def device(self):
-        return self.gcast.device
+        return self.gcast.cast_info
 
     @property
     def is_connected(self):
@@ -159,13 +162,13 @@ class JeedomChromeCast:
 
     @property
     def is_castgroup(self):
-        if self.gcast.device.cast_type != 'group':
+        if self.cast_type != 'group':
             return False
         return True
 
     @property
     def support_video(self):
-        if self.gcast.device.cast_type == 'cast':
+        if self.cast_type == 'cast':
             return True
         return False
 
@@ -402,6 +405,8 @@ class JeedomChromeCast:
         try:
             self.gcast.disconnect()
         except Exception:
+            logging.debug(
+                "JEEDOMCHROMECAST------ Chromecast disconnected : " + self.friendly_name)
             pass
         self.free_memory()
 
@@ -461,6 +466,10 @@ class JeedomChromeCast:
                         player = plex.PlexController()
                         self.gcast.register_handler(player)
                         time.sleep(2)
+                    elif playername == 'bubble':
+                        player = mediabubble.BubbleUPNPController()
+                        self.gcast.register_handler(player)
+                        time.sleep(2)
                     else:
                         player = self.gcast.media_controller
                     logging.debug(
@@ -516,7 +525,7 @@ class JeedomChromeCast:
             playStatus = self.gcast.media_controller.status
             status = {
                 "uuid": uuid, "uri": self.gcast.uri,
-                "friendly_name": self.gcast.device.friendly_name,
+                "friendly_name": self.gcast.cast_info.friendly_name,
                 "is_active_input": True if self.gcast.status.is_active_input else False,
                 "is_stand_by":  True if self.gcast.status.is_stand_by else False,
                 "volume_level": int(self.gcast.status.volume_level*100),
@@ -588,10 +597,10 @@ class JeedomChromeCast:
 
     def getDefinition(self):
         status = {
-            "friendly_name": self.gcast.device.friendly_name,
-            "model_name": self.gcast.device.model_name,
-            "manufacturer": self.gcast.device.manufacturer,
-            "cast_type": self.gcast.device.cast_type,
+            "friendly_name": self.friendly_name,
+            "model_name": self.gcast.cast_info.model_name,
+            "manufacturer": self.gcast.cast_info.manufacturer,
+            "cast_type": self.cast_type,
             "uri": self.gcast.uri
         }
         return status
@@ -641,7 +650,7 @@ class JeedomChromeCast:
             data = {
                 "uuid": uuid,
                 "online": True,
-                "friendly_name": self.gcast.device.friendly_name,
+                "friendly_name": self.gcast.cast_info.friendly_name,
                 "is_active_input": True if self.gcast.status.is_active_input else False,
                 "is_stand_by":  True if self.gcast.status.is_stand_by else False,
                 # "{0:.2f}".format(cast.status.volume_level),
@@ -842,7 +851,7 @@ def action_handler(message):
             gcast = jcast.gcast
             try:
                 jcast.applaunch_callback_reset()
-                if app == 'media':    # app=media|cmd=play_media|value=http://bit.ly/2JzYtfX,video/mp4,Mon film
+                if app == 'media' or app == 'bubble':    # app=media|cmd=play_media|value=http://bit.ly/2JzYtfX,video/mp4,Mon film
                     if cmd == 'NONE':
                         cmd = 'play_media'
                     possibleCmd = ['play_media']
@@ -871,7 +880,7 @@ def action_handler(message):
                             'logo://', globals.JEEDOM_WEB+'/plugins/googlecast/desktop/images/')
                         fallbackMode = False
                         player = jcast.loadPlayer(
-                            'media', {'quitapp': quit_app_before})
+                            app, {'quitapp': quit_app_before})
                         eval('player.' + cmd +
                              '(' + gcast_prepareAppParam(value) + ')')
                         jcast.savePreviousPlayerCmd(command)
@@ -2254,6 +2263,8 @@ def scanner(name='UNKNOWN SOURCE'):
                         logging.warning("SCANNER------Seen as connected but ping failed for " + known)
                 else:
                     # something went wrong so disconnect completely
+                    logging.debug(
+                        "SCANNER------Something went wrong so disconnect completely " + known)
                     globals.GCAST_DEVICES[known].disconnect()
 
             if is_not_available is True:
