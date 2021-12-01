@@ -4,7 +4,12 @@ Liste des versions du plugin googlecast.
 
 *[Retour à la documentation](index.md)*
 
-## Version du 10 juillet 2021 (beta/stable) - 2.18
+## Version du 01 décembre 2021 (beta/stable) - 2.19
+
+- maj librairies pychromecast
+- compatibilité jeedom 4.2
+
+## Version du 10 juillet 2021 (beta) - 2.18
 
 - maj librairies pychromecast, gtts, pydub, spotipy
 - amelioration de le detection de connexion des équipements chromecast
