@@ -14,3 +14,23 @@ if [[ ! -z  $pip3cmd ]]; then     # pip3 found
 else
     echo "Error: Cound not found pip3 program to update python dependencies !"
 fi
+
+
+#### JEEDOM 4.2 MIGRATION
+# migrate media files from jeedom version prior to 4.2 
+BASEDIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
+if [[ ! -z  $BASEDIR ]]; then   # basedir is not empty
+
+    MIGRATION_SRC=$BASEDIR/localmedia
+    MIGRATION_DEST=$BASEDIR/data/media
+    if [[ -d "$MIGRATION_SRC" ]]; then
+        cp -n $MIGRATION_SRC/* $MIGRATION_DEST
+        rm -Rf $MIGRATION_SRC
+    fi
+    # clean old temp folder symlinkg for jeedom version prior to 4.2 
+    OLDTMPDIR=$BASEDIR/tmp
+    if [[ -d "$OLDTMPDIR" ]]; then
+        rm -f $OLDTMPDIR
+    fi
+
+fi
