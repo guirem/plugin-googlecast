@@ -1036,7 +1036,7 @@ class googlecast extends eqLogic
         } else {
             $testAddress .= network::getNetworkAccess('internal');
         }
-        return $testAddress . "/plugins/googlecast/localmedia/bigben1.mp3";
+        return $testAddress . "/plugins/googlecast/data/media/bigben1.mp3";
     }
 
     public static function deamon_stop()

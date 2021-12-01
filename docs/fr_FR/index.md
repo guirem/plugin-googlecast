@@ -101,7 +101,7 @@ En quelques étapes :
       - [Les dépendances sont 'ok' mais le démon ne se lance pas](#les-d%c3%a9pendances-sont-ok-mais-le-d%c3%a9mon-ne-se-lance-pas)
       - [Le Text To Speech (TTS) ne fonctionne pas](#le-text-to-speech-tts-ne-fonctionne-pas)
       - [Le Text To Speech (TTS) fonctionne mais a des coupures pendant le message ou se termine trop tôt](#le-text-to-speech-tts-fonctionne-mais-a-des-coupures-pendant-le-message-ou-se-termine-trop-t%c3%b4t)
-      - [Les fichiers nouvellement placés dans le repertoire 'localmedia' ne fonctionnent pas](#les-fichiers-nouvellement-plac%c3%a9s-dans-le-repertoire-localmedia-ne-fonctionnent-pas)
+      - [Les fichiers nouvellement placés dans le repertoire 'data/media' ne fonctionnent pas](#les-fichiers-nouvellement-plac%c3%a9s-dans-le-repertoire-data-media-ne-fonctionnent-pas)
       - [Diffuser Jeedom sans authentification sur un Google Cast](#diffuser-jeedom-sans-authentification-sur-un-google-cast)
       - [La commande est tronquée au dela de 128 caractères](#la-commande-est-tronqu%c3%a9e-au-dela-de-128-caract%c3%a8res)
       - [Récupérer une clé API pour utiliser TTS 'Google Cloud Text-to-Speech'](#r%c3%a9cup%c3%a9rer-une-cl%c3%a9-api-pour-utiliser-tts-google-cloud-text-to-speech)
@@ -359,7 +359,7 @@ ex long : app=media|cmd=play_media|value='http://contentlink','video/mp4',title:
 >
 > - Les url et chaînes de caractères sont entourées de guillemets simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
 > - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
-> - Un média local situé dans le répertoire _<jeedom>/plugins/googlecast/localmedia/_ peut être utilisé en appelant l'url _local://<nomdufichier>_ (ex: local://bigben1.mp3)
+> - Un média local situé dans le répertoire _<jeedom>/plugins/googlecast/data/media/_ peut être utilisé en appelant l'url _local://<nomdufichier>_ (ex: local://bigben1.mp3)
 
 #### Paramètres possibles pour _load_url_ en mode _web_
 
@@ -473,7 +473,7 @@ ex voice/ssml : cmd=tts|engine=gttsapi|voice=fr-CA-Standard-A|value=<speak>Etape
 #### Paramètres possibles pour cmd _notif_
 
 ```
-- value: str - local media filename (located in '<jeedom>/plugins/googlecast/localmedia/' folder)
+- value: str - local media filename (located in '<jeedom>/plugins/googlecast/data/media/' folder)
 - quit: 0/1 - quit app after notif action.
 - vol: int (default=previous) - set the volume for the time notif message is broadcast. Previous volume is resumed when done.
 - duration: float (default=file duration) - override play duration of notification.
@@ -491,7 +491,7 @@ ex : cmd=notif|value=tornado_siren.mp3|vol=100|duration=11
 > - By default, the plugin will try to resume previous app launched (will only work when previous application has been launched by the plugin).
 > - You can try to force resume to any application using 'forceapplaunch=1' but there is a good chance of failure.
 > - Existing sounds in plugin : house_firealarm.mp3, railroad_crossing_bell.mp3, submarine_diving.mp3, tornado_siren.mp3, bigben1.mp3, bigben2.mp3
-> - files added to localmedia folder must have approriate rights
+> - files added to data/media folder must have approriate rights
 
 #### Séquence de commandes
 
@@ -874,10 +874,10 @@ Le type d'équipements utilisés (wifi, serveur Jeedom) ou la longueur du messag
 - Tester avec le paramètre 'buffered=1' pour voir si cela règle le problème.
 - Utiliser le paramêtre 'forcetts' durant les tests pour être certain que le cache n'est pas utilisé.
 
-#### Les fichiers nouvellement placés dans le repertoire 'localmedia' ne fonctionnent pas
+#### Les fichiers nouvellement placés dans le repertoire 'data/media' ne fonctionnent pas
 
 Les nouveaux fichiers doivent avoir les droits de lecture
-A partir du répertoire localmedia, corriger les droits avec la commande :  
+A partir du répertoire data/media, corriger les droits avec la commande :  
 `sudo chown www-data:www-data * && sudo chmod 775 *`
 
 #### Diffuser Jeedom sans authentification sur un Google Cast

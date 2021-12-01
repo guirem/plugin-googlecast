@@ -325,7 +325,7 @@ ex long : app=media|cmd=play_media|value='http://contentlink','video/mp4',title:
 > **Notes**   
 > - Les url et chaînes de caractères sont entourées de guillements simples ('). Les autres valeurs possibles sont True/False/None ainsi que des valeurs numériques entières.
 > - Il est nécessaire de remplacer le signe '=' dans les url par '%3D'
-> - Un média local situé dans le répertoire *<jeedom>/plugins/googlecast/localmedia/* peux être utilisé en appelant l'url *local://<nomdufichier>* (ex: local://bigben1.mp3)
+> - Un média local situé dans le répertoire *<jeedom>/plugins/googlecast/data/media/* peux être utilisé en appelant l'url *local://<nomdufichier>* (ex: local://bigben1.mp3)
 
 #### Possible parameters for *load_url* en mode *web*
 ```
@@ -400,7 +400,7 @@ ex voice/ssml : cmd=tts|engine=gttsapi|voice=fr-FR-Standard-A|value=<speak>Etape
 
 #### Possible parameters for *notif*
 ```
-- value: str - local media filename (located in '<jeedom>/plugins/googlecast/localmedia/' folder)
+- value: str - local media filename (located in '<jeedom>/plugins/googlecast/data/media/' folder)
 - quit: 0/1 - quit app after notif action.
 - vol: int (default=previous) - set the volume for the time notif message is broadcast. Previous volume is resumed when done.
 - duration: float (default=file duration) - override play duration of notification.

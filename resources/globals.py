@@ -79,7 +79,7 @@ tts_gapi_haskey = False
 tts_default_restoredelay = 1300       # additionnal time in ms to add after tts (before vol up command)
 tts_default_silenceduration = 300       # default silence duration added at tts start
 
-localmedia_folder = 'localmedia'
+localmedia_folder = 'data/media'
 localmedia_fullpath = os.path.abspath(os.path.join(
     os.path.dirname(os.path.dirname(__file__)), localmedia_folder))
 
