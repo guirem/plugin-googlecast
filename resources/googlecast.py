@@ -1565,7 +1565,7 @@ def generate_warmupnotif():
             except Exception:
                 logging.debug("WARMUPNOTIF------Touching file failed !")
                 pass
-        urltoplay = globals.JEEDOM_WEB+'/plugins/googlecast/tmp/'+file+'.mp3'
+        urltoplay = globals.JEEDOM_WEB+'/plugins/googlecast/data/cache/'+file+'.mp3'
     except Exception as e:
         logging.error(
             "WARMUPNOTIF------Exception while generating warmupnotif file : %s" % str(e))
