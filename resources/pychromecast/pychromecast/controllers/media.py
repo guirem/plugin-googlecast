@@ -116,9 +116,9 @@ class MediaStatus:
     @property
     def player_is_playing(self):
         """Return True if player is PLAYING."""
-        return (
-            self.player_state == MEDIA_PLAYER_STATE_PLAYING
-            or self.player_state == MEDIA_PLAYER_STATE_BUFFERING
+        return self.player_state in (
+            MEDIA_PLAYER_STATE_PLAYING,
+            MEDIA_PLAYER_STATE_BUFFERING,
         )
 
     @property
@@ -306,7 +306,7 @@ class MediaStatus:
             "supports_skip_backward": self.supports_skip_backward,
         }
         info.update(self.__dict__)
-        return "<MediaStatus {}>".format(info)
+        return f"<MediaStatus {info}>"
 
 
 class MediaStatusListener(abc.ABC):
@@ -489,7 +489,7 @@ class MediaController(BaseController):
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Exception thrown when calling media status callback")
 
-    def play_media(
+    def play_media(  # pylint: disable=too-many-locals
         self,
         url,
         content_type,
@@ -535,7 +535,7 @@ class MediaController(BaseController):
         https://developers.google.com/cast/docs/reference/messages#MediaData
         https://developers.google.com/cast/docs/reference/web_receiver/cast.framework.messages.MediaInformation
         """
-        # pylint: disable=too-many-locals
+
         def app_launched_callback():
             """Plays media after chromecast has switched to requested app."""
             self._send_start_play_media(
@@ -558,7 +558,7 @@ class MediaController(BaseController):
         receiver_ctrl = self._socket_client.receiver_controller
         receiver_ctrl.launch_app(self.app_id, callback_function=app_launched_callback)
 
-    def _send_start_play_media(
+    def _send_start_play_media(  # pylint: disable=too-many-locals
         self,
         url,
         content_type,
@@ -575,7 +575,6 @@ class MediaController(BaseController):
         enqueue=False,
         media_info=None,
     ):
-        # pylint: disable=too-many-locals
         media_info = media_info or {}
         media = {
             "contentId": url,
@@ -595,6 +594,12 @@ class MediaController(BaseController):
                 media["metadata"]["images"] = []
 
             media["metadata"]["images"].append({"url": thumb})
+
+        # Need to set metadataType if not specified
+        # https://developers.google.com/cast/docs/reference/messages#MediaInformation
+        if media["metadata"] and "metadataType" not in media["metadata"]:
+            media["metadata"]["metadataType"] = METADATA_TYPE_GENERIC
+
         if subtitles:
             sub_msg = [
                 {
@@ -604,7 +609,7 @@ class MediaController(BaseController):
                     "subtype": "SUBTITLES",
                     "type": "TEXT",
                     "trackContentType": subtitles_mime,
-                    "name": "{} - {} Subtitle".format(subtitles_lang, subtitle_id),
+                    "name": f"{subtitles_lang} - {subtitle_id} Subtitle",
                 }
             ]
             media["tracks"] = sub_msg

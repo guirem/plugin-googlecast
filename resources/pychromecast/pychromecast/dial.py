@@ -11,7 +11,13 @@ from uuid import UUID
 
 import zeroconf
 
-from .const import CAST_TYPE_CHROMECAST, CAST_TYPES, SERVICE_TYPE_HOST
+from .const import (
+    CAST_TYPE_AUDIO,
+    CAST_TYPE_CHROMECAST,
+    CAST_TYPE_GROUP,
+    SERVICE_TYPE_HOST,
+)
+from .models import ZEROCONF_ERRORS, CastInfo, ServiceInfo
 
 XML_NS_UPNP_DEVICE = "{urn:schemas-upnp-org:device-1-0}"
 
@@ -36,8 +42,15 @@ def get_host_from_service(service, zconf):
                 service,
                 service_info,
             )
-    except IOError:
-        pass
+        else:
+            _LOGGER.debug(
+                "get_info_from_service failed to resolve service %s",
+                service,
+            )
+    except ZEROCONF_ERRORS:
+        # We do not catch zeroconf.NotRunningException as it's
+        # an unrecoverable error.
+        _LOGGER.debug("get_info_from_service raised:", exc_info=True)
     return _get_host_from_zc_service_info(service_info) + (service_info,)
 
 
@@ -58,20 +71,14 @@ def _get_host_from_zc_service_info(service_info: zeroconf.ServiceInfo):
     return (host, port)
 
 
-def _get_status(host, services, zconf, path, secure, timeout, context):
-    """
-    :param host: Hostname or ip to fetch status from
-    :type host: str
-    :return: The device status as a named tuple.
-    :rtype: pychromecast.dial.DeviceStatus or None
-    """
+def _get_status(services, zconf, path, secure, timeout, context):
+    """Query a cast device via http(s)."""
 
-    if not host:
-        for service in services.copy():
-            host, _, _ = get_host_from_service(service, zconf)
-            if host:
-                _LOGGER.debug("Resolved service %s to %s", service, host)
-                break
+    for service in services.copy():
+        host, _, _ = get_host_from_service(service, zconf)
+        if host:
+            _LOGGER.debug("Resolved service %s to %s", service, host)
+            break
 
     headers = {"content-type": "application/json"}
 
@@ -97,7 +104,58 @@ def get_ssl_context():
     return context
 
 
-def get_device_status(host, services=None, zconf=None, timeout=10, context=None):
+def get_cast_type(cast_info, zconf=None, timeout=30, context=None):
+    """
+    :param cast_info: cast_info
+    :return: An updated cast_info with filled cast_type
+    :rtype: pychromecast.models.CastInfo
+    """
+    cast_type = CAST_TYPE_CHROMECAST
+    manufacturer = "Unknown manufacturer"
+    if cast_info.port != 8009:
+        cast_type = CAST_TYPE_GROUP
+        manufacturer = "Google Inc."
+    else:
+        try:
+            display_supported = True
+            status = _get_status(
+                cast_info.services,
+                zconf,
+                "/setup/eureka_info?params=device_info,name",
+                True,
+                timeout,
+                context,
+            )
+            if "device_info" in status:
+                device_info = status["device_info"]
+
+                capabilities = device_info.get("capabilities", {})
+                display_supported = capabilities.get("display_supported", True)
+                manufacturer = device_info.get("manufacturer", manufacturer)
+
+            if not display_supported:
+                cast_type = CAST_TYPE_AUDIO
+            _LOGGER.debug("cast type: %s, manufacturer: %s", cast_type, manufacturer)
+
+        except (urllib.error.HTTPError, urllib.error.URLError, OSError, ValueError):
+            _LOGGER.warning("Failed to determine cast type")
+            cast_type = CAST_TYPE_CHROMECAST
+
+    return CastInfo(
+        cast_info.services,
+        cast_info.uuid,
+        cast_info.model_name,
+        cast_info.friendly_name,
+        cast_info.host,
+        cast_info.port,
+        cast_type,
+        manufacturer,
+    )
+
+
+def get_device_info(  # pylint: disable=too-many-locals
+    host, services=None, zconf=None, timeout=30, context=None
+):
     """
     :param host: Hostname or ip to fetch status from
     :type host: str
@@ -106,32 +164,51 @@ def get_device_status(host, services=None, zconf=None, timeout=10, context=None)
     """
 
     try:
+        if services is None:
+            services = [ServiceInfo(SERVICE_TYPE_HOST, (host, 8009))]
         status = _get_status(
-            host,
             services,
             zconf,
-            "/setup/eureka_info?options=detail",
+            "/setup/eureka_info?params=device_info,name",
             True,
             timeout,
             context,
         )
 
+        cast_type = CAST_TYPE_CHROMECAST
+        display_supported = True
         friendly_name = status.get("name", "Unknown Chromecast")
-        model_name = "Unknown model name"
         manufacturer = "Unknown manufacturer"
-        if "detail" in status:
-            model_name = status["detail"].get("model_name", model_name)
-            manufacturer = status["detail"].get("manufacturer", manufacturer)
+        model_name = "Unknown model name"
+        multizone_supported = False
+        udn = None
 
-        udn = status.get("ssdp_udn", None)
+        if "device_info" in status:
+            device_info = status["device_info"]
 
-        cast_type = CAST_TYPES.get(model_name.lower(), CAST_TYPE_CHROMECAST)
+            capabilities = device_info.get("capabilities", {})
+            display_supported = capabilities.get("display_supported", True)
+            multizone_supported = capabilities.get("multizone_supported", True)
+            friendly_name = device_info.get("name", friendly_name)
+            model_name = device_info.get("model_name", model_name)
+            manufacturer = device_info.get("manufacturer", manufacturer)
+            udn = device_info.get("ssdp_udn", None)
+
+        if not display_supported:
+            cast_type = CAST_TYPE_AUDIO
 
         uuid = None
         if udn:
             uuid = UUID(udn.replace("-", ""))
 
-        return DeviceStatus(friendly_name, model_name, manufacturer, uuid, cast_type)
+        return DeviceStatus(
+            friendly_name,
+            model_name,
+            manufacturer,
+            uuid,
+            cast_type,
+            multizone_supported,
+        )
 
     except (urllib.error.HTTPError, urllib.error.URLError, OSError, ValueError):
         return None
@@ -158,7 +235,7 @@ def _get_group_info(host, group):
     return MultizoneInfo(name, uuid, leader_host, leader_port)
 
 
-def get_multizone_status(host, services=None, zconf=None, timeout=10, context=None):
+def get_multizone_status(host, services=None, zconf=None, timeout=30, context=None):
     """
     :param host: Hostname or ip to fetch status from
     :type host: str
@@ -167,8 +244,9 @@ def get_multizone_status(host, services=None, zconf=None, timeout=10, context=No
     """
 
     try:
+        if services is None:
+            services = [ServiceInfo(SERVICE_TYPE_HOST, (host, 8009))]
         status = _get_status(
-            host,
             services,
             zconf,
             "/setup/eureka_info?params=multizone",
@@ -198,5 +276,13 @@ MultizoneInfo = namedtuple("MultizoneInfo", ["friendly_name", "uuid", "host", "p
 MultizoneStatus = namedtuple("MultizoneStatus", ["dynamic_groups", "groups"])
 
 DeviceStatus = namedtuple(
-    "DeviceStatus", ["friendly_name", "model_name", "manufacturer", "uuid", "cast_type"]
+    "DeviceStatus",
+    [
+        "friendly_name",
+        "model_name",
+        "manufacturer",
+        "uuid",
+        "cast_type",
+        "multizone_supported",
+    ],
 )

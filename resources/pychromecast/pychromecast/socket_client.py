@@ -24,7 +24,7 @@ from . import cast_channel_pb2
 from .controllers import BaseController
 from .controllers.media import MediaController
 from .controllers.receiver import ReceiverController
-from .const import CAST_TYPE_CHROMECAST, MESSAGE_TYPE, REQUEST_ID, SESSION_ID
+from .const import MESSAGE_TYPE, REQUEST_ID, SESSION_ID
 from .dial import get_host_from_service
 from .error import (
     ChromecastConnectionError,
@@ -97,11 +97,9 @@ def _message_to_string(message, data=None):
     if data is None:
         data = _dict_from_message_payload(message)
 
-    return "Message {} from {} to {}: {}".format(
-        message.namespace,
-        message.source_id,
-        message.destination_id,
-        data or message.payload_utf8,
+    return (
+        f"Message {message.namespace} from {message.source_id} to "
+        f"{message.destination_id}: {data or message.payload_utf8}"
     )
 
 
@@ -141,7 +139,7 @@ class ConnectionStatusListener(abc.ABC):
         """Updated connection status."""
 
 
-# pylint: disable=too-many-instance-attributes
+# pylint: disable-next=too-many-instance-attributes
 class SocketClient(threading.Thread):
     """
     Class to interact with a Chromecast through a socket.
@@ -170,13 +168,17 @@ class SocketClient(threading.Thread):
                   pychromecast.start_discovery().
     """
 
-    def __init__(self, host, port=None, cast_type=CAST_TYPE_CHROMECAST, **kwargs):
-        tries = kwargs.pop("tries", None)
-        timeout = kwargs.pop("timeout", None)
-        retry_wait = kwargs.pop("retry_wait", None)
-        services = kwargs.pop("services", None)
-        zconf = kwargs.pop("zconf", None)
-
+    # pylint: disable-next=too-many-arguments
+    def __init__(
+        self,
+        *,
+        cast_type,
+        tries,
+        timeout,
+        retry_wait,
+        services,
+        zconf,
+    ):
         super().__init__()
 
         self.daemon = True
@@ -190,10 +192,11 @@ class SocketClient(threading.Thread):
         self.tries = tries
         self.timeout = timeout or TIMEOUT_TIME
         self.retry_wait = retry_wait or RETRY_TIME
-        self.host = host
-        self.services = services or [None]
+        self.services = services
         self.zconf = zconf
-        self.port = port or 8009
+
+        self.host = "unknown"
+        self.port = 8009
 
         self.source_id = "sender-0"
         self.stop = threading.Event()
@@ -276,8 +279,7 @@ class SocketClient(threading.Thread):
                 retry = retries.get(
                     service, {"delay": self.retry_wait, "next_retry": now}
                 )
-                # If we're connecting to a named service, check if it's time
-                if service and now < retry["next_retry"]:
+                if now < retry["next_retry"]:
                     continue
                 try:
                     self.socket = new_socket()
@@ -288,51 +290,47 @@ class SocketClient(threading.Thread):
                             NetworkAddress(self.host, self.port),
                         )
                     )
-                    # Resolve the service name. If service is None, we're
-                    # connecting directly to a host name or IP-address
-                    if service:
-                        host = None
-                        port = None
-                        host, port, service_info = get_host_from_service(
-                            service, self.zconf
+                    # Resolve the service name.
+                    host = None
+                    port = None
+                    host, port, service_info = get_host_from_service(
+                        service, self.zconf
+                    )
+                    if host and port:
+                        if service_info:
+                            try:
+                                self.fn = service_info.properties[b"fn"].decode("utf-8")
+                            except (AttributeError, KeyError, UnicodeError):
+                                pass
+                        self.logger.debug(
+                            "[%s(%s):%s] Resolved service %s to %s:%s",
+                            self.fn or "",
+                            self.host,
+                            self.port,
+                            service,
+                            host,
+                            port,
                         )
-                        if host and port:
-                            if service_info:
-                                try:
-                                    self.fn = service_info.properties[b"fn"].decode(
-                                        "utf-8"
-                                    )
-                                except (AttributeError, KeyError, UnicodeError):
-                                    pass
-                            self.logger.debug(
-                                "[%s(%s):%s] Resolved service %s to %s:%s",
-                                self.fn or "",
-                                self.host,
-                                self.port,
-                                service,
-                                host,
-                                port,
+                        self.host = host
+                        self.port = port
+                    else:
+                        self.logger.debug(
+                            "[%s(%s):%s] Failed to resolve service %s",
+                            self.fn or "",
+                            self.host,
+                            self.port,
+                            service,
+                        )
+                        self._report_connection_status(
+                            ConnectionStatus(
+                                CONNECTION_STATUS_FAILED_RESOLVE,
+                                NetworkAddress(service, None),
                             )
-                            self.host = host
-                            self.port = port
-                        else:
-                            self.logger.debug(
-                                "[%s(%s):%s] Failed to resolve service %s",
-                                self.fn or "",
-                                self.host,
-                                self.port,
-                                service,
-                            )
-                            self._report_connection_status(
-                                ConnectionStatus(
-                                    CONNECTION_STATUS_FAILED_RESOLVE,
-                                    NetworkAddress(service, None),
-                                )
-                            )
-                            mdns_backoff(service, retry)
-                            # If zeroconf fails to receive the necessary data,
-                            # try next service
-                            continue
+                        )
+                        mdns_backoff(service, retry)
+                        # If zeroconf fails to receive the necessary data,
+                        # try next service
+                        continue
 
                     self.logger.debug(
                         "[%s(%s):%s] Connecting to %s:%s",
@@ -910,9 +908,7 @@ class SocketClient(threading.Thread):
                     self.port,
                 )
         else:
-            raise NotConnected(
-                "Chromecast {}:{} is connecting...".format(self.host, self.port)
-            )
+            raise NotConnected("Chromecast {self.host}:{self.port} is connecting...")
 
     def send_platform_message(
         self, namespace, message, inc_session_id=False, callback_function_param=False
@@ -932,9 +928,8 @@ class SocketClient(threading.Thread):
         """Helper method to send a message to current running app."""
         if namespace not in self.app_namespaces:
             raise UnsupportedNamespace(
-                (
-                    "Namespace {} is not supported by current app. Supported are {}"
-                ).format(namespace, ", ".join(self.app_namespaces))
+                f"Namespace {namespace} is not supported by current app. "
+                f"Supported are {', '.join(self.app_namespaces)}"
             )
 
         return self.send_message(

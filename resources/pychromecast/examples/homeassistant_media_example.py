@@ -1,23 +1,30 @@
 """
-Example that shows how the DashCast controller can be used.
+Example on how to use the Home Assistant Media app to play an URL.
+
 """
 # pylint: disable=invalid-name
 
 import argparse
 import logging
 import sys
-import time
+from time import sleep
 
 import zeroconf
 
 import pychromecast
-from pychromecast.controllers import dashcast
+from pychromecast import quick_play
+
 
 # Change to the friendly name of your Chromecast
-CAST_NAME = "Living Room"
+CAST_NAME = "Kitchen speaker"
+
+# Change to an audio or video url
+MEDIA_URL = (
+    "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+)
 
 parser = argparse.ArgumentParser(
-    description="Example that shows how the DashCast controller can be used."
+    description="Example on how to use the Home Asssitant Media Controller to play an URL."
 )
 parser.add_argument(
     "--cast", help='Name of cast device (default: "%(default)s")', default=CAST_NAME
@@ -31,7 +38,15 @@ parser.add_argument("--show-debug", help="Enable debug log", action="store_true"
 parser.add_argument(
     "--show-zeroconf-debug", help="Enable zeroconf debug log", action="store_true"
 )
+parser.add_argument(
+    "--url", help='Media url (default: "%(default)s")', default=MEDIA_URL
+)
 args = parser.parse_args()
+
+app_name = "homeassistant_media"
+app_data = {
+    "media_id": args.url,
+}
 
 if args.show_debug:
     logging.basicConfig(level=logging.DEBUG)
@@ -39,6 +54,7 @@ if args.show_zeroconf_debug:
     print("Zeroconf version: " + zeroconf.__version__)
     logging.getLogger("zeroconf").setLevel(logging.DEBUG)
 
+# pylint: disable=unbalanced-tuple-unpacking
 chromecasts, browser = pychromecast.get_listed_chromecasts(
     friendly_names=[args.cast], known_hosts=args.known_host
 )
@@ -46,44 +62,13 @@ if not chromecasts:
     print(f'No chromecast with name "{args.cast}" discovered')
     sys.exit(1)
 
-cast = chromecasts[0]
+cast = list(chromecasts)[0]
 # Start socket client's worker thread and wait for initial status update
 cast.wait()
+print(f'Found chromecast with name "{args.cast}", attempting to play "{args.url}"')
 
-d = dashcast.DashCastController()
-cast.register_handler(d)
+quick_play.quick_play(cast, app_name, app_data)
 
-print()
-print(cast.cast_info)
-time.sleep(1)
-print()
-print(cast.status)
-print()
-print(cast.media_controller.status)
-print()
+sleep(10)
 
-if not cast.is_idle:
-    print("Killing current running app")
-    cast.quit_app()
-    t = 5
-    while cast.status.app_id is not None and t > 0:
-        time.sleep(0.1)
-        t = t - 0.1
-
-time.sleep(1)
-
-# Test that the callback chain works. This should send a message to
-# load the first url, but immediately after send a message load the
-# second url.
-warning_message = "If you see this on your TV then something is broken"
-d.load_url(
-    "https://home-assistant.io/? " + warning_message,
-    callback_function=lambda result: d.load_url("https://home-assistant.io/"),
-)
-
-# If debugging, sleep after running so we can see any error messages.
-if args.show_debug:
-    time.sleep(10)
-
-# Shut down discovery
 browser.stop_discovery()
