@@ -1146,15 +1146,17 @@ def action_handler(message):
                         fallbackMode = False
                     elif cmd == 'volume_up':
                         logging.debug("ACTION------Volumme up action")
-                        gcast.volume_up(value if value is not None else 0.1)
+                        gcast.volume_up(
+                            float(value) if value is not None else 0.1)
                         fallbackMode = False
                     elif cmd == 'volume_down':
                         logging.debug("ACTION------Volume down action")
-                        gcast.volume_down(value if value is not None else 0.1)
+                        gcast.volume_down(
+                            float(value) if value is not None else 0.1)
                         fallbackMode = False
                     elif cmd == 'volume_set':
                         logging.debug("ACTION------Volume set action")
-                        gcast.set_volume(int(value)/100)
+                        gcast.set_volume(int(float(value))/100)
                         fallbackMode = False
                     elif cmd == 'start_app':
                         logging.debug("ACTION------Start app action")
