@@ -93,7 +93,7 @@ if [[ ! -z  $pip3cmd ]]; then     # pip3 found
     echo 87 > /tmp/dependancy_googlecast_in_progress
     echo ""
     echo "-- Installation of python library 'zeroconf' with command $pip3cmd"
-    $(sudo $pip3cmd install 'zeroconf>=0.25.1' > /tmp/dependancy_googlecast)
+    $(sudo $pip3cmd install 'zeroconf>=0.37.0' > /tmp/dependancy_googlecast)
     cat /tmp/dependancy_googlecast
     echo 92 > /tmp/dependancy_googlecast_in_progress
     echo ""
