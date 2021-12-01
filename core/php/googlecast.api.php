@@ -183,7 +183,7 @@ if (isset($result['ttsproxy'])) {
         if ($result['options'] && $result['options']['language']) {
             $additionnalOptions = '&voice=' . $result['options']['language'];
         }
-        $ttsdata = file_get_contents(network::getNetworkAccess('internal') . '/core/api/tts.php?apikey=' . jeedom::getApiKey('core') . $additionnalOptions . '&path=0&text=' . urlencode($ttsmsg));
+        $ttsdata = file_get_contents(network::getNetworkAccess('internal') . '/core/api/tts.php?apikey=' . jeedom::getApiKey('apitts') . $additionnalOptions . '&path=0&text=' . urlencode($ttsmsg));
 	}
 
     if ($result['ttsproxy'] == 'ttswebserver') {
