@@ -15,10 +15,18 @@ else
     echo "Error: Cound not found pip3 program to update python dependencies !"
 fi
 
+BASEDIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
+
+# make sure htaccess is created
+HTACCESS="$BASEDIR/.htaccess"
+if [[ ! -f  "$HTACCESS" ]]; then   # htaccess created
+    echo "Options +FollowSymLinks\n" >> $HTACCESS
+    chown www-data:www-data $HTACCESS
+    chmod 644 $HTACCESS
+fi
 
 #### JEEDOM 4.2 MIGRATION
 # migrate media files from jeedom version prior to 4.2 
-BASEDIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
 if [[ ! -z  $BASEDIR ]]; then   # basedir is not empty
 
     MIGRATION_SRC=$BASEDIR/localmedia
@@ -34,3 +42,4 @@ if [[ ! -z  $BASEDIR ]]; then   # basedir is not empty
     fi
 
 fi
+

@@ -113,5 +113,17 @@ else
     echo ""
     echo "Error: Cound not found pip3 program to install python dependencies ! Check doc FAQ for possible resolution."
 fi
+
+# misc
+BASEDIR="$(dirname "$(dirname "$(readlink -fm "$0")")")"
+# make sure htaccess is created
+HTACCESS="$BASEDIR/.htaccess"
+if [[ ! -f  "$HTACCESS" ]]; then   # htaccess created
+    echo "Options +FollowSymLinks\n" >> $HTACCESS
+    chown www-data:www-data $HTACCESS
+    chmod 644 $HTACCESS
+fi
+#end misc 
+
 echo 100 > /tmp/dependancy_googlecast_in_progress
 rm /tmp/dependancy_googlecast_in_progress
