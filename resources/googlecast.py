@@ -1359,6 +1359,8 @@ def action_handler(message):
                                     url, 'audio/mp3', 'TTS', thumb=thumb, stream_type=streamtype)
                                 player.block_until_active(timeout=4)
                                 duration_total = duration + (globals.tts_default_restoredelay/1000)
+                                logging.debug(
+                                    "TTS------Generated tts file url to be played is " + url)
                                 logging.debug("TTS------Estimated duration of tts media is " + str(duration_total) + " secondes")
                                 jcast.disable_notif = False
                                 vol_done = False
@@ -1812,7 +1814,7 @@ def get_tts_data(text, language, engine, speed, forcetts, calcduration, silence=
         except Exception:
             logging.debug("CMD-TTS------Touching file failed !")
             pass
-        urltoplay = globals.JEEDOM_WEB+'/plugins/googlecast/tmp/'+file+'.mp3'
+        urltoplay = globals.JEEDOM_WEB+'/plugins/googlecast/data/cache/'+file+'.mp3'
     except Exception as e:
         logging.error(
             "CMD-TTS------Exception while generating tts file : %s" % str(e))
