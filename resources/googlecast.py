@@ -1360,8 +1360,7 @@ def action_handler(message):
                                 player.block_until_active(timeout=4)
                                 duration_total = duration + (globals.tts_default_restoredelay/1000)
                                 logging.debug(
-                                    "TTS------Generated tts file url to be played is " + url)
-                                logging.debug("TTS------Estimated duration of tts media is " + str(duration_total) + " secondes")
+                                    "TTS------Generated tts file url to be played is " + url + "  (" + str(duration_total) + "s)")
                                 jcast.disable_notif = False
                                 vol_done = False
                                 if vol is not None:
