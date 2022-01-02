@@ -247,16 +247,22 @@ class Spotify(object):
         except requests.exceptions.HTTPError as http_error:
             response = http_error.response
             try:
-                msg = response.json()["error"]["message"]
-            except (ValueError, KeyError):
-                msg = "error"
-            try:
-                reason = response.json()["error"]["reason"]
-            except (ValueError, KeyError):
+                json_response = response.json()
+                error = json_response.get("error", {})
+                msg = error.get("message")
+                reason = error.get("reason")
+            except ValueError:
+                # if the response cannnot be decoded into JSON (which raises a ValueError),
+                # then try to decode it into text
+
+                # if we receive an empty string (which is falsy), then replace it with `None`
+                msg = response.text or None
                 reason = None
 
-            logger.error('HTTP Error for %s to %s returned %s due to %s',
-                         method, url, response.status_code, msg)
+            logger.error(
+                'HTTP Error for %s to %s with Params: %s returned %s due to %s',
+                method, url, args.get("params"), response.status_code, msg
+            )
 
             raise SpotifyException(
                 response.status_code,
@@ -627,7 +633,7 @@ class Spotify(object):
         """ Get full details of the tracks of a playlist.
 
             Parameters:
-                - playlist_id - the id of the playlist
+                - playlist_id - the playlist ID, URI or URL
                 - fields - which fields to return
                 - limit - the maximum number of tracks to return
                 - offset - the index of the first track to return
@@ -655,7 +661,7 @@ class Spotify(object):
         """ Get full details of the tracks and episodes of a playlist.
 
             Parameters:
-                - playlist_id - the id of the playlist
+                - playlist_id - the playlist ID, URI or URL
                 - fields - which fields to return
                 - limit - the maximum number of tracks to return
                 - offset - the index of the first track to return
@@ -677,7 +683,7 @@ class Spotify(object):
         """ Get cover of a playlist.
 
             Parameters:
-                - playlist_id - the id of the playlist
+                - playlist_id - the playlist ID, URI or URL
         """
         plid = self._get_id("playlist", playlist_id)
         return self._get("playlists/%s/images" % (plid))
@@ -1176,7 +1182,7 @@ class Spotify(object):
             "Your Music" library
 
             Parameters:
-                - limit - the number of albums to return
+                - limit - the number of albums to return (MAX_LIMIT=50)
                 - offset - the index of the first album to return
                 - market - an ISO 3166-1 alpha-2 country code.
 
@@ -1907,7 +1913,7 @@ class Spotify(object):
             if type != fields[-2]:
                 logger.warning('Expected id of type %s but found type %s %s',
                                type, fields[-2], id)
-            return fields[-1]
+            return fields[-1].split("?")[0]
         fields = id.split("/")
         if len(fields) >= 3:
             itype = fields[-2]

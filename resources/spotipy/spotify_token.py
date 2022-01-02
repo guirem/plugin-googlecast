@@ -1,5 +1,7 @@
 """Utility module that helps get a webplayer access token"""
+import os
 import requests
+from bs4 import BeautifulSoup
 import json
 
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) \

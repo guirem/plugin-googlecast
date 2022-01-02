@@ -129,6 +129,28 @@ class SpotifyAuthBase(object):
         )
         return needle_scope <= haystack_scope
 
+    def _handle_oauth_error(self, http_error):
+        response = http_error.response
+        try:
+            error_payload = response.json()
+            error = error_payload.get('error')
+            error_description = error_payload.get('error_description')
+        except ValueError:
+            # if the response cannnot be decoded into JSON (which raises a ValueError),
+            # then try do decode it into text
+
+            # if we receive an empty string (which is falsy), then replace it with `None`
+            error = response.txt or None
+            error_description = None
+
+        raise SpotifyOauthError(
+            'error: {0}, error_description: {1}'.format(
+                error, error_description
+            ),
+            error=error,
+            error_description=error_description
+        )
+
     def __del__(self):
         """Make sure the connection (pool) gets closed"""
         if isinstance(self._session, requests.Session):
@@ -231,23 +253,20 @@ class SpotifyClientCredentials(SpotifyAuthBase):
             self.OAUTH_TOKEN_URL, headers, payload
         )
 
-        response = self._session.post(
-            self.OAUTH_TOKEN_URL,
-            data=payload,
-            headers=headers,
-            verify=True,
-            proxies=self.proxies,
-            timeout=self.requests_timeout,
-        )
-        if response.status_code != 200:
-            error_payload = response.json()
-            raise SpotifyOauthError(
-                'error: {0}, error_description: {1}'.format(
-                    error_payload['error'], error_payload['error_description']),
-                error=error_payload['error'],
-                error_description=error_payload['error_description'])
-        token_info = response.json()
-        return token_info
+        try:
+            response = self._session.post(
+                self.OAUTH_TOKEN_URL,
+                data=payload,
+                headers=headers,
+                verify=True,
+                proxies=self.proxies,
+                timeout=self.requests_timeout,
+            )
+            response.raise_for_status()
+            token_info = response.json()
+            return token_info
+        except requests.exceptions.HTTPError as http_error:
+            self._handle_oauth_error(http_error)
 
     def _add_custom_values_to_token_info(self, token_info):
         """
@@ -315,7 +334,6 @@ class SpotifyOAuth(SpotifyAuthBase):
         self.redirect_uri = redirect_uri
         self.state = state
         self.scope = self._normalize_scope(scope)
-        username = (username or os.getenv(CLIENT_CREDS_ENV_VARS["client_username"]))
         if username or cache_path:
             warnings.warn("Specifying cache_path or username as arguments to SpotifyOAuth " +
                           "will be deprecated. Instead, please create a CacheFileHandler " +
@@ -338,7 +356,7 @@ class SpotifyOAuth(SpotifyAuthBase):
                 + " != " + str(CacheHandler)
             self.cache_handler = cache_handler
         else:
-
+            username = (username or os.getenv(CLIENT_CREDS_ENV_VARS["client_username"]))
             self.cache_handler = CacheFileHandler(
                 username=username,
                 cache_path=cache_path
@@ -440,13 +458,12 @@ class SpotifyOAuth(SpotifyAuthBase):
         self._open_auth_url()
         server.handle_request()
 
-        if self.state is not None and server.state != self.state:
-            raise SpotifyStateError(self.state, server.state)
-
-        if server.auth_code is not None:
-            return server.auth_code
-        elif server.error is not None:
+        if server.error is not None:
             raise server.error
+        elif self.state is not None and server.state != self.state:
+            raise SpotifyStateError(self.state, server.state)
+        elif server.auth_code is not None:
+            return server.auth_code
         else:
             raise SpotifyOauthError("Server listening on localhost has not been accessed")
 
@@ -530,25 +547,22 @@ class SpotifyOAuth(SpotifyAuthBase):
             self.OAUTH_TOKEN_URL, headers, payload
         )
 
-        response = self._session.post(
-            self.OAUTH_TOKEN_URL,
-            data=payload,
-            headers=headers,
-            verify=True,
-            proxies=self.proxies,
-            timeout=self.requests_timeout,
-        )
-        if response.status_code != 200:
-            error_payload = response.json()
-            raise SpotifyOauthError(
-                'error: {0}, error_description: {1}'.format(
-                    error_payload['error'], error_payload['error_description']),
-                error=error_payload['error'],
-                error_description=error_payload['error_description'])
-        token_info = response.json()
-        token_info = self._add_custom_values_to_token_info(token_info)
-        self.cache_handler.save_token_to_cache(token_info)
-        return token_info if as_dict else token_info["access_token"]
+        try:
+            response = self._session.post(
+                self.OAUTH_TOKEN_URL,
+                data=payload,
+                headers=headers,
+                verify=True,
+                proxies=self.proxies,
+                timeout=self.requests_timeout,
+            )
+            response.raise_for_status()
+            token_info = response.json()
+            token_info = self._add_custom_values_to_token_info(token_info)
+            self.cache_handler.save_token_to_cache(token_info)
+            return token_info if as_dict else token_info["access_token"]
+        except requests.exceptions.HTTPError as http_error:
+            self._handle_oauth_error(http_error)
 
     def refresh_access_token(self, refresh_token):
         payload = {
@@ -563,28 +577,23 @@ class SpotifyOAuth(SpotifyAuthBase):
             self.OAUTH_TOKEN_URL, headers, payload
         )
 
-        response = self._session.post(
-            self.OAUTH_TOKEN_URL,
-            data=payload,
-            headers=headers,
-            proxies=self.proxies,
-            timeout=self.requests_timeout,
-        )
-
-        if response.status_code != 200:
-            error_payload = response.json()
-            raise SpotifyOauthError(
-                'error: {0}, error_description: {1}'.format(
-                    error_payload['error'], error_payload['error_description']),
-                error=error_payload['error'],
-                error_description=error_payload['error_description'])
-
-        token_info = response.json()
-        token_info = self._add_custom_values_to_token_info(token_info)
-        if "refresh_token" not in token_info:
-            token_info["refresh_token"] = refresh_token
-        self.cache_handler.save_token_to_cache(token_info)
-        return token_info
+        try:
+            response = self._session.post(
+                self.OAUTH_TOKEN_URL,
+                data=payload,
+                headers=headers,
+                proxies=self.proxies,
+                timeout=self.requests_timeout,
+            )
+            response.raise_for_status()
+            token_info = response.json()
+            token_info = self._add_custom_values_to_token_info(token_info)
+            if "refresh_token" not in token_info:
+                token_info["refresh_token"] = refresh_token
+            self.cache_handler.save_token_to_cache(token_info)
+            return token_info
+        except requests.exceptions.HTTPError as http_error:
+            self._handle_oauth_error(http_error)
 
     def _add_custom_values_to_token_info(self, token_info):
         """
@@ -673,7 +682,6 @@ class SpotifyPKCE(SpotifyAuthBase):
         self.redirect_uri = redirect_uri
         self.state = state
         self.scope = self._normalize_scope(scope)
-        username = (username or os.getenv(CLIENT_CREDS_ENV_VARS["client_username"]))
         if username or cache_path:
             warnings.warn("Specifying cache_path or username as arguments to SpotifyPKCE " +
                           "will be deprecated. Instead, please create a CacheFileHandler " +
@@ -694,6 +702,7 @@ class SpotifyPKCE(SpotifyAuthBase):
                 "type(cache_handler): " + str(type(cache_handler)) + " != " + str(CacheHandler)
             self.cache_handler = cache_handler
         else:
+            username = (username or os.getenv(CLIENT_CREDS_ENV_VARS["client_username"]))
             self.cache_handler = CacheFileHandler(
                 username=username,
                 cache_path=cache_path
@@ -902,26 +911,22 @@ class SpotifyPKCE(SpotifyAuthBase):
             self.OAUTH_TOKEN_URL, headers, payload
         )
 
-        response = self._session.post(
-            self.OAUTH_TOKEN_URL,
-            data=payload,
-            headers=headers,
-            verify=True,
-            proxies=self.proxies,
-            timeout=self.requests_timeout,
-        )
-        if response.status_code != 200:
-            error_payload = response.json()
-            raise SpotifyOauthError('error: {0}, error_descr: {1}'.format(error_payload['error'],
-                                                                          error_payload[
-                                                                              'error_description'
-            ]),
-                error=error_payload['error'],
-                error_description=error_payload['error_description'])
-        token_info = response.json()
-        token_info = self._add_custom_values_to_token_info(token_info)
-        self.cache_handler.save_token_to_cache(token_info)
-        return token_info["access_token"]
+        try:
+            response = self._session.post(
+                self.OAUTH_TOKEN_URL,
+                data=payload,
+                headers=headers,
+                verify=True,
+                proxies=self.proxies,
+                timeout=self.requests_timeout,
+            )
+            response.raise_for_status()
+            token_info = response.json()
+            token_info = self._add_custom_values_to_token_info(token_info)
+            self.cache_handler.save_token_to_cache(token_info)
+            return token_info["access_token"]
+        except requests.exceptions.HTTPError as http_error:
+            self._handle_oauth_error(http_error)
 
     def refresh_access_token(self, refresh_token):
         payload = {
@@ -937,28 +942,23 @@ class SpotifyPKCE(SpotifyAuthBase):
             self.OAUTH_TOKEN_URL, headers, payload
         )
 
-        response = self._session.post(
-            self.OAUTH_TOKEN_URL,
-            data=payload,
-            headers=headers,
-            proxies=self.proxies,
-            timeout=self.requests_timeout,
-        )
-
-        if response.status_code != 200:
-            error_payload = response.json()
-            raise SpotifyOauthError(
-                'error: {0}, error_description: {1}'.format(
-                    error_payload['error'], error_payload['error_description']),
-                error=error_payload['error'],
-                error_description=error_payload['error_description'])
-
-        token_info = response.json()
-        token_info = self._add_custom_values_to_token_info(token_info)
-        if "refresh_token" not in token_info:
-            token_info["refresh_token"] = refresh_token
-        self.cache_handler.save_token_to_cache(token_info)
-        return token_info
+        try:
+            response = self._session.post(
+                self.OAUTH_TOKEN_URL,
+                data=payload,
+                headers=headers,
+                proxies=self.proxies,
+                timeout=self.requests_timeout,
+            )
+            response.raise_for_status()
+            token_info = response.json()
+            token_info = self._add_custom_values_to_token_info(token_info)
+            if "refresh_token" not in token_info:
+                token_info["refresh_token"] = refresh_token
+            self.cache_handler.save_token_to_cache(token_info)
+            return token_info
+        except requests.exceptions.HTTPError as http_error:
+            self._handle_oauth_error(http_error)
 
     def parse_response_code(self, url):
         """ Parse the response code in the given response url
@@ -1071,7 +1071,6 @@ class SpotifyImplicitGrant(SpotifyAuthBase):
         self.client_id = client_id
         self.redirect_uri = redirect_uri
         self.state = state
-        username = (username or os.getenv(CLIENT_CREDS_ENV_VARS["client_username"]))
         if username or cache_path:
             warnings.warn("Specifying cache_path or username as arguments to " +
                           "SpotifyImplicitGrant will be deprecated. Instead, please create " +
@@ -1093,6 +1092,7 @@ class SpotifyImplicitGrant(SpotifyAuthBase):
                 "type(cache_handler): " + str(type(cache_handler)) + " != " + str(CacheHandler)
             self.cache_handler = cache_handler
         else:
+            username = (username or os.getenv(CLIENT_CREDS_ENV_VARS["client_username"]))
             self.cache_handler = CacheFileHandler(
                 username=username,
                 cache_path=cache_path
