@@ -4,6 +4,10 @@ Version list of googlecast plugin.
 
 *[Back to documentation] (index.md)*
 
+## Version of January 8th, 2022 (beta) - 2.20
+
+- fix googlecast connection issue (lib zeroconf) 
+
 ## Version of December 1st, 2021 (beta/stable) - 2.19
 
 - pychromecast library update
