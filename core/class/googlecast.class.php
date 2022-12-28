@@ -186,12 +186,18 @@ class googlecast extends eqLogic
     }
     */
 
+
+    public function preSave() {
+        $this->setGenericType('Multimedia');
+    }
+    
     //public function postInsert() {
     public function postSave()
     {
         if ($this->_lightsave == true) {
             return true;
         }
+
         $order = 1;
 
         $cmd = $this->getCmd(null, 'refresh');
@@ -232,6 +238,7 @@ class googlecast extends eqLogic
         $cmd->setType('info');
         $cmd->setSubType('binary');
         $cmd->setEqLogic_id($this->getId());
+        $cmd->setGeneric_type('MEDIA_STATE');
         $cmd->setDisplay('generic_type', 'ENERGY_STATE');
         $cmd->save();
 
@@ -269,9 +276,8 @@ class googlecast extends eqLogic
         $cmd->setTemplate('dashboard', 'googlecast_busy');
         $cmd->setType('info');
         $cmd->setSubType('binary');
-
         $cmd->setEqLogic_id($this->getId());
-        $cmd->setDisplay('generic_type', 'ENERGY_STATE');
+        $cmd->setGeneric_type('MEDIA_STATE');
         $cmd->save();
 
         $cmd = $this->getCmd(null, 'volume_level');
