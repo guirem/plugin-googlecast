@@ -523,6 +523,10 @@ class JeedomChromeCast:
         if self.gcast.status is not None and self.online is True:
             uuid = self.uuid
             playStatus = self.gcast.media_controller.status
+            if len(playStatus.images) > 0:
+                img = str(playStatus.images[0].url)
+            else:
+                img = ""
             status = {
                 "uuid": uuid, "uri": self.gcast.uri,
                 "friendly_name": self.gcast.cast_info.friendly_name,
@@ -536,6 +540,8 @@ class JeedomChromeCast:
                 "status_text": self.gcast.status.status_text if self.gcast.status.status_text != "" else globals.DEFAULT_NOSTATUS,
                 "is_busy": not self.gcast.is_idle,
                 "title": "" if playStatus.title is None else playStatus.title,
+                "album_name": "" if playStatus.album_name is None else playStatus.album_name,
+                "image": img,
                 "artist": "" if playStatus.artist is None else playStatus.artist,
                 "series_title": "" if playStatus.series_title is None else playStatus.series_title,
                 "stream_type": "" if playStatus.stream_type is None else playStatus.stream_type,
@@ -582,10 +588,16 @@ class JeedomChromeCast:
             test_dif = True
 
         if test_dif is True:
+            if len(new_nowplaying.images) > 0:
+                img = str(new_nowplaying.images[0].url)
+            else:
+                img = ""
             mediastatus = {
                 "uuid": self.uuid,
                 "title": '' if new_nowplaying.title is None else new_nowplaying.title,
                 "artist": '' if new_nowplaying.artist is None else new_nowplaying.artist,
+                "album_name": '' if new_nowplaying.album_name is None else new_nowplaying.album_name,
+                "image": img,
                 "series_title": '' if new_nowplaying.series_title is None else new_nowplaying.series_title,
                 "player_state": '' if new_nowplaying.player_state is None else new_nowplaying.player_state,
             }

@@ -186,12 +186,18 @@ class googlecast extends eqLogic
     }
     */
 
+
+    public function preSave() {
+        $this->setGenericType('Multimedia');
+    }
+    
     //public function postInsert() {
     public function postSave()
     {
         if ($this->_lightsave == true) {
             return true;
         }
+
         $order = 1;
 
         $cmd = $this->getCmd(null, 'refresh');
@@ -232,6 +238,7 @@ class googlecast extends eqLogic
         $cmd->setType('info');
         $cmd->setSubType('binary');
         $cmd->setEqLogic_id($this->getId());
+        $cmd->setGeneric_type('MEDIA_STATE');
         $cmd->setDisplay('generic_type', 'ENERGY_STATE');
         $cmd->save();
 
@@ -269,9 +276,8 @@ class googlecast extends eqLogic
         $cmd->setTemplate('dashboard', 'googlecast_busy');
         $cmd->setType('info');
         $cmd->setSubType('binary');
-
         $cmd->setEqLogic_id($this->getId());
-        $cmd->setDisplay('generic_type', 'ENERGY_STATE');
+        $cmd->setGeneric_type('MEDIA_STATE');
         $cmd->save();
 
         $cmd = $this->getCmd(null, 'volume_level');
@@ -440,6 +446,34 @@ class googlecast extends eqLogic
         $cmd->setSubType('string');
         $cmd->setEqLogic_id($this->getId());
         //$cmd->setDisplay('generic_type', 'GENERIC');
+        $cmd->save();
+
+        $cmd = $this->getCmd(null, 'image');
+        if (!is_object($cmd)) {
+            $cmd = new googlecastCmd();
+            $cmd->setLogicalId('image');
+            $cmd->setIsVisible(0);
+            $cmd->setName(__('Image', __FILE__));
+            $cmd->setConfiguration('googlecast_cmd', true);
+            $cmd->setOrder($order++);
+        }
+        $cmd->setType('info');
+        $cmd->setSubType('string');
+        $cmd->setEqLogic_id($this->getId());
+        $cmd->save();
+
+        $cmd = $this->getCmd(null, 'album_name');
+        if (!is_object($cmd)) {
+            $cmd = new googlecastCmd();
+            $cmd->setLogicalId('album_name');
+            $cmd->setIsVisible(0);
+            $cmd->setName(__('Nom album', __FILE__));
+            $cmd->setConfiguration('googlecast_cmd', true);
+            $cmd->setOrder($order++);
+        }
+        $cmd->setType('info');
+        $cmd->setSubType('string');
+        $cmd->setEqLogic_id($this->getId());
         $cmd->save();
 
         $cmd = $this->getCmd(null, 'title');
