@@ -582,10 +582,16 @@ class JeedomChromeCast:
             test_dif = True
 
         if test_dif is True:
+            if len(new_nowplaying.images) > 0:
+                img = str(new_nowplaying.images[0].url)
+            else:
+                img = None
             mediastatus = {
                 "uuid": self.uuid,
                 "title": '' if new_nowplaying.title is None else new_nowplaying.title,
                 "artist": '' if new_nowplaying.artist is None else new_nowplaying.artist,
+                "album_name": '' if new_nowplaying.album_name is None else new_nowplaying.album_name,
+                "image": img,
                 "series_title": '' if new_nowplaying.series_title is None else new_nowplaying.series_title,
                 "player_state": '' if new_nowplaying.player_state is None else new_nowplaying.player_state,
             }

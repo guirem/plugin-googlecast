@@ -442,6 +442,34 @@ class googlecast extends eqLogic
         //$cmd->setDisplay('generic_type', 'GENERIC');
         $cmd->save();
 
+        $cmd = $this->getCmd(null, 'image');
+        if (!is_object($cmd)) {
+            $cmd = new googlecastCmd();
+            $cmd->setLogicalId('image');
+            $cmd->setIsVisible(0);
+            $cmd->setName(__('Image', __FILE__));
+            $cmd->setConfiguration('googlecast_cmd', true);
+            $cmd->setOrder($order++);
+        }
+        $cmd->setType('info');
+        $cmd->setSubType('string');
+        $cmd->setEqLogic_id($this->getId());
+        $cmd->save();
+
+        $cmd = $this->getCmd(null, 'album_name');
+        if (!is_object($cmd)) {
+            $cmd = new googlecastCmd();
+            $cmd->setLogicalId('album_name');
+            $cmd->setIsVisible(0);
+            $cmd->setName(__('Nom album', __FILE__));
+            $cmd->setConfiguration('googlecast_cmd', true);
+            $cmd->setOrder($order++);
+        }
+        $cmd->setType('info');
+        $cmd->setSubType('string');
+        $cmd->setEqLogic_id($this->getId());
+        $cmd->save();
+
         $cmd = $this->getCmd(null, 'title');
         if (!is_object($cmd)) {
             $cmd = new googlecastCmd();
