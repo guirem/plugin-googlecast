@@ -53,6 +53,8 @@ class googlecast extends eqLogic
             array('logo' => 'model_googlehome.png', 'ga' => true),
         'google cast group' =>
             array('logo' => 'model_castgroup.png', 'ga' => false),
+        'nest audio' =>
+            array('logo' => 'model_googlenest_audio.png', 'ga' => true),
         'tv' =>
             array('logo' => 'model_tv.png', 'ga' => false),
         'freebox player pop' =>
