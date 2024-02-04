@@ -325,7 +325,7 @@ if (!isConnect('admin')) {
 	    <div class="col-lg-2">
 	        <input class="configKey form-control" type="number" data-l1key="tts_default_restoretime" min="-1000" max="10000" placeholder="{{Durée en milisecondes}}" />
 	    </div>
-		<div class="col-lg-2">ms (défaut: 1000)</div>
+		<div class="col-lg-2">ms (défaut: 1300)</div>
     </div>
 	<div class="form-group">
 		<label class="col-lg-4 control-label">{{Durée du silence ajouté avant la notification}}</label>
